@@ -713,9 +713,10 @@ h4, .h4 {
               From breaking news to compliance-approved, multi-language reports in 30 minutes.
               Built on a decade of translating for the world's leading brokers.
             </p>
-            <div style="margin-top: 36px; display: flex; gap: 16px;">
-              <a class="btn" onclick="Reveal.slide(18); return false;" style="cursor:pointer;">Request Demo</a>
-              <a class="btn btn--accent" onclick="Reveal.slide(16); return false;" style="cursor:pointer;">View Architecture</a>
+            <div style="margin-top: 36px; display: flex; gap: 16px; visibility: hidden;">
+              <a class="btn">Request Demo</a>
+              <a class="btn btn--accent">View Architecture</a>
+              <a class="btn btn--accent">Sample Reports</a>
             </div>
           </div>
         </div>
@@ -1743,8 +1744,8 @@ h4, .h4 {
             </p>
             <p class="gold" style="font-style: italic; margin-bottom: 24px;">"Let's turn our decade of working together into your competitive advantage."</p>
             <div style="display: flex; gap: 16px;">
-              <a class="btn" onclick="Reveal.slide(18); return false;" style="cursor:pointer;">4-Week Pilot Program</a>
-              <a class="btn btn--accent" onclick="Reveal.slide(18); return false;" style="cursor:pointer;">Schedule a Demo</a>
+              <a class="btn" style="visibility: hidden;">4-Week Pilot Program</a>
+              <a class="btn btn--accent" style="visibility: hidden;">Schedule a Demo</a>
             </div>
             <div class="contact-grid" style="width: 100%; max-width: 600px; margin-top: 40px;">
               <div class="contact-item">
@@ -1793,6 +1794,125 @@ h4, .h4 {
     });
 
     lucide.createIcons();
+  </script>
+
+  <!--
+    CLICKABLE BUTTONS — Outside .reveal so click events work.
+    Positioned over the placeholder buttons on slides 0 (title) and 19 (CTA).
+  -->
+  <style>
+    .floating-btns {
+      position: fixed;
+      z-index: 100;
+      display: none;
+      gap: 16px;
+      pointer-events: auto;
+    }
+    .floating-btns a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 28px;
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid #f5f4f0;
+      background: transparent;
+      color: #f5f4f0;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    .floating-btns a:hover {
+      background: #f5f4f0;
+      color: #0a0a0a;
+    }
+    .floating-btns a.accent {
+      border-color: #5ba8a0;
+      color: #5ba8a0;
+    }
+    .floating-btns a.accent:hover {
+      background: #5ba8a0;
+      color: #0a0a0a;
+    }
+
+    #title-float {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 120px);
+    }
+    #cta-float {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 80px);
+    }
+  </style>
+
+  <div class="floating-btns" id="title-float">
+    <a onclick="Reveal.slide(18)">Request Demo</a>
+    <a class="accent" onclick="Reveal.slide(16)">View Architecture</a>
+    <a class="accent" onclick="window.open('beginner.html','_blank')">Sample Reports</a>
+  </div>
+
+  <div class="floating-btns" id="cta-float">
+    <a onclick="Reveal.slide(18)">4-Week Pilot</a>
+    <a class="accent" onclick="Reveal.slide(18)">Schedule a Demo</a>
+  </div>
+
+  <!-- Sample reports navigation overlay (shown on slide 17) -->
+  <style>
+    #samples-overlay {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: none;
+      gap: 12px;
+      pointer-events: auto;
+    }
+    #samples-overlay a {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 18px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #5ba8a0;
+      background: rgba(91, 168, 160, 0.1);
+      color: #5ba8a0;
+      font-family: 'Inter', -apple-system, sans-serif;
+      transition: all 0.2s;
+    }
+    #samples-overlay a:hover {
+      background: #5ba8a0;
+      color: #0a0a0a;
+    }
+  </style>
+
+  <div id="samples-overlay">
+    <a href="beginner.html" target="_blank">Beginner Report</a>
+    <a href="intermediate.html" target="_blank">Intermediate Report</a>
+    <a href="professional.html" target="_blank">Professional Report</a>
+    <a href="scenarios.html" target="_blank">Scenario Analysis</a>
+  </div>
+
+  <script>
+    // Show/hide floating buttons based on active slide
+    Reveal.on('slidechanged', function(event) {
+      var idx = event.indexh;
+      document.getElementById('title-float').style.display = (idx === 0) ? 'flex' : 'none';
+      document.getElementById('cta-float').style.display = (idx === 19) ? 'flex' : 'none';
+      document.getElementById('samples-overlay').style.display = (idx === 17) ? 'flex' : 'none';
+    });
+
+    // Initial state
+    document.getElementById('title-float').style.display = 'flex';
   </script>
 </body>
 </html>
