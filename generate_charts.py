@@ -1,23 +1,75 @@
 #!/usr/bin/env python3
 """
-Technical Analysis Chart Generator
-Generates professional charts for Gold, Oil, and EUR/USD
+FinFlow Professional Chart Generator
+Bloomberg/TradingView-inspired dark theme charts for EUR/USD
+Three audience levels: Beginner, Intermediate, Professional
 """
 
 import yfinance as yf
-import mplfinance as mpf
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.ticker as mticker
+import matplotlib.patheffects as pe
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from matplotlib.patches import FancyBboxPatch
 import os
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 CHARTS_DIR = os.path.join(OUTPUT_DIR, "charts")
 os.makedirs(CHARTS_DIR, exist_ok=True)
 
-# ── Helpers ──────────────────────────────────────────────────────────────
+# ── Professional Dark Theme ──────────────────────────────────────────────
+
+DARK = {
+    'bg': '#0d1117',
+    'panel': '#161b22',
+    'grid': '#21262d',
+    'border': '#30363d',
+    'text': '#e6edf3',
+    'text_dim': '#8b949e',
+    'text_muted': '#484f58',
+    'green': '#3fb950',
+    'green_dim': '#238636',
+    'red': '#f85149',
+    'red_dim': '#da3633',
+    'blue': '#58a6ff',
+    'orange': '#d29922',
+    'purple': '#bc8cff',
+    'teal': '#56d4dd',
+    'cyan': '#39d353',
+    'gold': '#e3b341',
+    'white': '#ffffff',
+}
+
+def setup_dark_style():
+    plt.rcParams.update({
+        'figure.facecolor': DARK['bg'],
+        'axes.facecolor': DARK['panel'],
+        'axes.edgecolor': DARK['border'],
+        'axes.labelcolor': DARK['text_dim'],
+        'text.color': DARK['text'],
+        'xtick.color': DARK['text_muted'],
+        'ytick.color': DARK['text_muted'],
+        'grid.color': DARK['grid'],
+        'grid.alpha': 0.5,
+        'grid.linewidth': 0.4,
+        'font.family': ['Helvetica Neue', 'Arial', 'sans-serif'],
+        'font.size': 10,
+        'axes.titlesize': 14,
+        'axes.labelsize': 10,
+        'xtick.labelsize': 8.5,
+        'ytick.labelsize': 9,
+        'legend.fontsize': 8,
+        'legend.facecolor': DARK['panel'],
+        'legend.edgecolor': DARK['border'],
+        'legend.labelcolor': DARK['text_dim'],
+    })
+
+# ── Indicators ───────────────────────────────────────────────────────────
 
 def compute_rsi(series, period=14):
     delta = series.diff()
@@ -39,336 +91,487 @@ def compute_macd(series, fast=12, slow=26, signal=9):
 def compute_bollinger(series, period=20, std_dev=2):
     sma = series.rolling(window=period).mean()
     std = series.rolling(window=period).std()
-    upper = sma + std_dev * std
-    lower = sma - std_dev * std
-    return sma, upper, lower
+    return sma, sma + std_dev * std, sma - std_dev * std
 
 def compute_fibonacci(high, low):
     diff = high - low
-    levels = {
-        '0.0% (High)': high,
+    return {
+        '0.0%': high,
         '23.6%': high - 0.236 * diff,
         '38.2%': high - 0.382 * diff,
         '50.0%': high - 0.500 * diff,
         '61.8%': high - 0.618 * diff,
         '78.6%': high - 0.786 * diff,
-        '100.0% (Low)': low,
+        '100.0%': low,
     }
-    return levels
 
-# ── Chart 1: Beginner-friendly overview chart ────────────────────────────
+# ── Candlestick Drawing ─────────────────────────────────────────────────
 
-def chart_beginner(df, title, support, resistance, filename):
-    """Simple candlestick with support/resistance zones and moving averages."""
-    fig, ax = plt.subplots(figsize=(14, 7))
-
-    # Candlesticks manually
+def draw_candles(ax, df, width=0.6):
     up = df[df.Close >= df.Open]
     down = df[df.Close < df.Open]
+    # Up candles
+    ax.bar(up.index, up.Close - up.Open, bottom=up.Open, width=width,
+           color=DARK['green'], alpha=0.9, zorder=3)
+    ax.bar(up.index, up.High - up.Close, bottom=up.Close, width=width*0.15,
+           color=DARK['green'], zorder=3)
+    ax.bar(up.index, up.Low - up.Open, bottom=up.Open, width=width*0.15,
+           color=DARK['green'], zorder=3)
+    # Down candles
+    ax.bar(down.index, down.Close - down.Open, bottom=down.Open, width=width,
+           color=DARK['red'], alpha=0.9, zorder=3)
+    ax.bar(down.index, down.High - down.Open, bottom=down.Open, width=width*0.15,
+           color=DARK['red'], zorder=3)
+    ax.bar(down.index, down.Low - down.Close, bottom=down.Close, width=width*0.15,
+           color=DARK['red'], zorder=3)
 
-    ax.bar(up.index, up.Close - up.Open, bottom=up.Open, width=0.6, color='#26a69a', alpha=0.9)
-    ax.bar(up.index, up.High - up.Close, bottom=up.Close, width=0.15, color='#26a69a')
-    ax.bar(up.index, up.Low - up.Open, bottom=up.Open, width=0.15, color='#26a69a')
+def add_watermark(fig, text="FinFlow by WordwideFX"):
+    fig.text(0.99, 0.01, text, fontsize=8, color=DARK['text_muted'],
+             ha='right', va='bottom', alpha=0.6,
+             fontstyle='italic')
 
-    ax.bar(down.index, down.Close - down.Open, bottom=down.Open, width=0.6, color='#ef5350', alpha=0.9)
-    ax.bar(down.index, down.High - down.Open, bottom=down.Open, width=0.15, color='#ef5350')
-    ax.bar(down.index, down.Low - down.Close, bottom=down.Close, width=0.15, color='#ef5350')
+def add_header(ax, title, subtitle=None, badge=None):
+    ax.set_title(title, fontsize=14, fontweight='600', color=DARK['text'],
+                 loc='left', pad=12)
+    if subtitle:
+        ax.text(1.0, 1.02, subtitle, transform=ax.transAxes,
+                fontsize=8.5, color=DARK['text_muted'], ha='right', va='bottom')
+    if badge:
+        ax.text(1.0, 1.06, badge, transform=ax.transAxes,
+                fontsize=7, color=DARK['teal'], ha='right', va='bottom',
+                fontweight='600',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor=DARK['panel'],
+                          edgecolor=DARK['teal'], alpha=0.8, linewidth=0.8))
 
-    # Moving averages
-    sma20 = df.Close.rolling(20).mean()
-    sma50 = df.Close.rolling(50).mean()
-    ax.plot(df.index, sma20, color='#2196F3', linewidth=1.5, label='SMA 20', alpha=0.8)
-    ax.plot(df.index, sma50, color='#FF9800', linewidth=1.5, label='SMA 50', alpha=0.8)
-
-    # Support & resistance zones
-    ax.axhspan(support * 0.995, support * 1.005, color='green', alpha=0.15, label=f'Support ~{support:,.0f}')
-    ax.axhspan(resistance * 0.995, resistance * 1.005, color='red', alpha=0.15, label=f'Resistance ~{resistance:,.0f}')
-    ax.axhline(y=support, color='green', linestyle='--', linewidth=1, alpha=0.6)
-    ax.axhline(y=resistance, color='red', linestyle='--', linewidth=1, alpha=0.6)
-
-    # Annotations
-    ax.annotate('SUPPORT', xy=(df.index[-10], support), fontsize=9, color='green', fontweight='bold',
-                ha='center', va='top')
-    ax.annotate('RESISTANCE', xy=(df.index[-10], resistance), fontsize=9, color='red', fontweight='bold',
-                ha='center', va='bottom')
-
-    ax.set_title(f'{title} — Beginner Overview', fontsize=16, fontweight='bold', pad=15)
-    ax.set_ylabel('Price', fontsize=12)
-    ax.legend(loc='upper left', fontsize=10)
-    ax.grid(True, alpha=0.3)
+def format_xaxis(ax):
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
-    plt.xticks(rotation=45)
-    fig.tight_layout()
-    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=150, bbox_inches='tight')
+    for label in ax.get_xticklabels():
+        label.set_rotation(0)
+        label.set_ha('center')
+
+def add_last_price(ax, df):
+    last = float(df.Close.iloc[-1])
+    color = DARK['green'] if df.Close.iloc[-1] >= df.Close.iloc[-2] else DARK['red']
+    ax.axhline(y=last, color=color, linewidth=0.6, linestyle='--', alpha=0.5, zorder=1)
+    ax.text(df.index[-1] + timedelta(days=2), last, f' {last:.4f}',
+            fontsize=8, fontweight='600', color=DARK['bg'],
+            va='center', ha='left', zorder=5,
+            bbox=dict(boxstyle='round,pad=0.25', facecolor=color, edgecolor='none'))
+
+# ── Chart 1: Beginner ───────────────────────────────────────────────────
+
+def chart_beginner(df, filename):
+    setup_dark_style()
+    fig, ax = plt.subplots(figsize=(16, 8))
+    fig.patch.set_facecolor(DARK['bg'])
+
+    draw_candles(ax, df, width=0.5)
+
+    # Simple moving averages
+    sma20 = df.Close.rolling(20).mean()
+    sma50 = df.Close.rolling(50).mean()
+    ax.plot(df.index, sma20, color=DARK['blue'], linewidth=1.8, label='SMA 20', alpha=0.9)
+    ax.plot(df.index, sma50, color=DARK['orange'], linewidth=1.8, label='SMA 50', alpha=0.9)
+
+    # Support & Resistance zones
+    last = float(df.Close.iloc[-1])
+    support = 1.1300
+    resistance = 1.1686
+
+    ax.axhspan(support - 0.002, support + 0.002, color=DARK['green'], alpha=0.08, zorder=0)
+    ax.axhline(y=support, color=DARK['green'], linewidth=1.2, linestyle='--', alpha=0.6, zorder=1)
+    ax.axhspan(resistance - 0.002, resistance + 0.002, color=DARK['red'], alpha=0.08, zorder=0)
+    ax.axhline(y=resistance, color=DARK['red'], linewidth=1.2, linestyle='--', alpha=0.6, zorder=1)
+
+    # Zone labels
+    ax.text(df.index[5], support + 0.003, 'SUPPORT  1.1300',
+            fontsize=9, fontweight='600', color=DARK['green'], alpha=0.9,
+            path_effects=[pe.withStroke(linewidth=3, foreground=DARK['bg'])])
+    ax.text(df.index[5], resistance + 0.003, 'RESISTANCE  1.1686',
+            fontsize=9, fontweight='600', color=DARK['red'], alpha=0.9,
+            path_effects=[pe.withStroke(linewidth=3, foreground=DARK['bg'])])
+
+    add_last_price(ax, df)
+    add_header(ax, 'EUR/USD', 'Daily  |  March 25, 2026', badge='BEGINNER')
+
+    ax.set_ylabel('Price', fontsize=10, color=DARK['text_dim'])
+    ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.4f'))
+    ax.grid(True, alpha=0.3, linewidth=0.3)
+    format_xaxis(ax)
+
+    leg = ax.legend(loc='upper left', framealpha=0.9, borderpad=0.8)
+    leg.get_frame().set_facecolor(DARK['panel'])
+    leg.get_frame().set_edgecolor(DARK['border'])
+
+    add_watermark(fig)
+    fig.tight_layout(pad=1.5)
+    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=200, bbox_inches='tight',
+                facecolor=DARK['bg'], edgecolor='none')
     plt.close(fig)
-    print(f"  ✓ Saved {filename}")
+    print(f"  ✓ {filename}")
 
-# ── Chart 2: Intermediate with RSI + MACD panels ────────────────────────
+# ── Chart 2: Intermediate ───────────────────────────────────────────────
 
-def chart_intermediate(df, title, support, resistance, filename):
-    """Candlestick + Bollinger Bands + RSI + MACD (3 panels)."""
-    rsi = compute_rsi(df.Close)
-    macd_line, signal_line, macd_hist = compute_macd(df.Close)
-    bb_mid, bb_upper, bb_lower = compute_bollinger(df.Close)
-
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(14, 12),
-                                         gridspec_kw={'height_ratios': [3, 1, 1]},
+def chart_intermediate(df, filename):
+    setup_dark_style()
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 11),
+                                         gridspec_kw={'height_ratios': [3, 1, 1],
+                                                      'hspace': 0.08},
                                          sharex=True)
+    fig.patch.set_facecolor(DARK['bg'])
 
-    # Panel 1: Price + Bollinger Bands
-    up = df[df.Close >= df.Open]
-    down = df[df.Close < df.Open]
+    # --- Price + Bollinger Bands ---
+    draw_candles(ax1, df, width=0.5)
 
-    ax1.bar(up.index, up.Close - up.Open, bottom=up.Open, width=0.6, color='#26a69a', alpha=0.9)
-    ax1.bar(up.index, up.High - up.Close, bottom=up.Close, width=0.15, color='#26a69a')
-    ax1.bar(up.index, up.Low - up.Open, bottom=up.Open, width=0.15, color='#26a69a')
-    ax1.bar(down.index, down.Close - down.Open, bottom=down.Open, width=0.6, color='#ef5350', alpha=0.9)
-    ax1.bar(down.index, down.High - down.Open, bottom=down.Open, width=0.15, color='#ef5350')
-    ax1.bar(down.index, down.Low - down.Close, bottom=down.Close, width=0.15, color='#ef5350')
-
-    ax1.plot(df.index, bb_upper, color='#9C27B0', linewidth=1, alpha=0.6, label='BB Upper')
-    ax1.plot(df.index, bb_mid, color='#9C27B0', linewidth=1, linestyle='--', alpha=0.4, label='BB Mid')
-    ax1.plot(df.index, bb_lower, color='#9C27B0', linewidth=1, alpha=0.6, label='BB Lower')
-    ax1.fill_between(df.index, bb_upper, bb_lower, color='#9C27B0', alpha=0.05)
-
-    ax1.axhline(y=support, color='green', linestyle='--', linewidth=1, alpha=0.6)
-    ax1.axhline(y=resistance, color='red', linestyle='--', linewidth=1, alpha=0.6)
+    bb_mid, bb_upper, bb_lower = compute_bollinger(df.Close)
+    ax1.plot(df.index, bb_upper, color=DARK['purple'], linewidth=0.8, alpha=0.6)
+    ax1.plot(df.index, bb_mid, color=DARK['purple'], linewidth=0.6, linestyle=':', alpha=0.4)
+    ax1.plot(df.index, bb_lower, color=DARK['purple'], linewidth=0.8, alpha=0.6)
+    ax1.fill_between(df.index, bb_upper, bb_lower, color=DARK['purple'], alpha=0.04)
 
     sma50 = df.Close.rolling(50).mean()
     sma200 = df.Close.rolling(200).mean()
-    ax1.plot(df.index, sma50, color='#FF9800', linewidth=1.2, label='SMA 50', alpha=0.7)
-    if sma200.notna().sum() > 0:
-        ax1.plot(df.index, sma200, color='#F44336', linewidth=1.2, label='SMA 200', alpha=0.7)
+    ax1.plot(df.index, sma50, color=DARK['orange'], linewidth=1.3, label='SMA 50', alpha=0.8)
+    if sma200.notna().sum() > 20:
+        ax1.plot(df.index, sma200, color=DARK['red'], linewidth=1.3, label='SMA 200', alpha=0.8)
 
-    ax1.set_title(f'{title} — Intermediate Technical Analysis', fontsize=16, fontweight='bold', pad=15)
-    ax1.set_ylabel('Price', fontsize=11)
-    ax1.legend(loc='upper left', fontsize=8)
-    ax1.grid(True, alpha=0.2)
+    # Key levels
+    ax1.axhline(y=1.1550, color=DARK['green'], linewidth=0.8, linestyle='--', alpha=0.5)
+    ax1.axhline(y=1.1648, color=DARK['red'], linewidth=0.8, linestyle='--', alpha=0.5)
+    ax1.text(df.index[-1] + timedelta(days=1), 1.1550, ' S1 1.1550', fontsize=7.5,
+             color=DARK['green'], va='center', fontweight='500')
+    ax1.text(df.index[-1] + timedelta(days=1), 1.1648, ' R1 1.1648', fontsize=7.5,
+             color=DARK['red'], va='center', fontweight='500')
 
-    # Panel 2: RSI
-    ax2.plot(df.index, rsi, color='#2196F3', linewidth=1.2)
-    ax2.axhline(y=70, color='red', linestyle='--', linewidth=0.8, alpha=0.6)
-    ax2.axhline(y=30, color='green', linestyle='--', linewidth=0.8, alpha=0.6)
-    ax2.axhline(y=50, color='gray', linestyle=':', linewidth=0.5)
-    ax2.fill_between(df.index, rsi, 70, where=(rsi >= 70), color='red', alpha=0.2)
-    ax2.fill_between(df.index, rsi, 30, where=(rsi <= 30), color='green', alpha=0.2)
-    ax2.set_ylabel('RSI (14)', fontsize=11)
-    ax2.set_ylim(10, 90)
-    ax2.grid(True, alpha=0.2)
+    add_last_price(ax1, df)
+    add_header(ax1, 'EUR/USD  —  Technical Analysis',
+               'Daily  |  BB(20,2) + SMA 50/200 + RSI + MACD', badge='INTERMEDIATE')
 
-    # Panel 3: MACD
-    colors = ['#26a69a' if v >= 0 else '#ef5350' for v in macd_hist]
-    ax3.bar(df.index, macd_hist, color=colors, width=0.6, alpha=0.7)
-    ax3.plot(df.index, macd_line, color='#2196F3', linewidth=1.2, label='MACD')
-    ax3.plot(df.index, signal_line, color='#FF9800', linewidth=1.2, label='Signal')
-    ax3.axhline(y=0, color='gray', linewidth=0.5)
-    ax3.set_ylabel('MACD', fontsize=11)
-    ax3.legend(loc='upper left', fontsize=8)
-    ax3.grid(True, alpha=0.2)
+    ax1.set_ylabel('Price', fontsize=10)
+    ax1.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.4f'))
+    ax1.grid(True, alpha=0.25, linewidth=0.3)
 
-    ax3.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
-    ax3.xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
-    plt.xticks(rotation=45)
-    fig.tight_layout()
-    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=150, bbox_inches='tight')
+    leg = ax1.legend(loc='upper left', framealpha=0.9, borderpad=0.6)
+    leg.get_frame().set_facecolor(DARK['panel'])
+    leg.get_frame().set_edgecolor(DARK['border'])
+
+    # --- RSI ---
+    rsi = compute_rsi(df.Close)
+    ax2.plot(df.index, rsi, color=DARK['blue'], linewidth=1.2)
+    ax2.axhline(y=70, color=DARK['red'], linewidth=0.7, linestyle='--', alpha=0.5)
+    ax2.axhline(y=30, color=DARK['green'], linewidth=0.7, linestyle='--', alpha=0.5)
+    ax2.axhline(y=50, color=DARK['text_muted'], linewidth=0.4, linestyle=':', alpha=0.4)
+    ax2.fill_between(df.index, rsi, 70, where=(rsi >= 70), color=DARK['red'], alpha=0.15)
+    ax2.fill_between(df.index, rsi, 30, where=(rsi <= 30), color=DARK['green'], alpha=0.15)
+    ax2.set_ylabel('RSI(14)', fontsize=9)
+    ax2.set_ylim(15, 85)
+    ax2.grid(True, alpha=0.2, linewidth=0.3)
+
+    # RSI current value
+    rsi_last = float(rsi.iloc[-1]) if not np.isnan(rsi.iloc[-1]) else 50
+    ax2.text(df.index[-1] + timedelta(days=1), rsi_last, f' {rsi_last:.1f}',
+             fontsize=7.5, color=DARK['blue'], va='center', fontweight='500')
+
+    # --- MACD ---
+    macd_line, signal_line, macd_hist = compute_macd(df.Close)
+    colors = [DARK['green'] if v >= 0 else DARK['red'] for v in macd_hist]
+    alphas = [0.7 if abs(v) > macd_hist.abs().mean() else 0.4 for v in macd_hist]
+    ax3.bar(df.index, macd_hist, color=colors, width=0.5, alpha=0.6, zorder=2)
+    ax3.plot(df.index, macd_line, color=DARK['blue'], linewidth=1.1, label='MACD', zorder=3)
+    ax3.plot(df.index, signal_line, color=DARK['orange'], linewidth=1.1, label='Signal', zorder=3)
+    ax3.axhline(y=0, color=DARK['text_muted'], linewidth=0.4, zorder=1)
+    ax3.set_ylabel('MACD', fontsize=9)
+    ax3.grid(True, alpha=0.2, linewidth=0.3)
+
+    leg3 = ax3.legend(loc='upper left', framealpha=0.9, borderpad=0.4)
+    leg3.get_frame().set_facecolor(DARK['panel'])
+    leg3.get_frame().set_edgecolor(DARK['border'])
+
+    format_xaxis(ax3)
+    add_watermark(fig)
+    fig.tight_layout(pad=1.0)
+    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=200, bbox_inches='tight',
+                facecolor=DARK['bg'], edgecolor='none')
     plt.close(fig)
-    print(f"  ✓ Saved {filename}")
+    print(f"  ✓ {filename}")
 
-# ── Chart 3: Expert with Fibonacci + Volume Profile ─────────────────────
+# ── Chart 3: Professional ───────────────────────────────────────────────
 
-def chart_expert(df, title, fib_high, fib_low, filename):
-    """Candlestick + Fibonacci retracements + Volume + EMA ribbons."""
-    fibs = compute_fibonacci(fib_high, fib_low)
+def chart_professional(df, filename):
+    setup_dark_style()
+    fig = plt.figure(figsize=(16, 14))
+    fig.patch.set_facecolor(DARK['bg'])
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10),
-                                    gridspec_kw={'height_ratios': [3, 1]},
-                                    sharex=True)
+    gs = fig.add_gridspec(4, 1, height_ratios=[3, 0.8, 0.8, 1], hspace=0.08)
+    ax1 = fig.add_subplot(gs[0])
+    ax2 = fig.add_subplot(gs[1], sharex=ax1)
+    ax3 = fig.add_subplot(gs[2], sharex=ax1)
+    ax4 = fig.add_subplot(gs[3], sharex=ax1)
 
-    # Price
-    up = df[df.Close >= df.Open]
-    down = df[df.Close < df.Open]
-    ax1.bar(up.index, up.Close - up.Open, bottom=up.Open, width=0.6, color='#26a69a', alpha=0.9)
-    ax1.bar(up.index, up.High - up.Close, bottom=up.Close, width=0.15, color='#26a69a')
-    ax1.bar(up.index, up.Low - up.Open, bottom=up.Open, width=0.15, color='#26a69a')
-    ax1.bar(down.index, down.Close - down.Open, bottom=down.Open, width=0.6, color='#ef5350', alpha=0.9)
-    ax1.bar(down.index, down.High - down.Open, bottom=down.Open, width=0.15, color='#ef5350')
-    ax1.bar(down.index, down.Low - down.Close, bottom=down.Close, width=0.15, color='#ef5350')
+    # --- Price + Fibonacci + EMA Ribbon ---
+    draw_candles(ax1, df, width=0.5)
 
     # EMA ribbon
-    for span, alpha in [(8, 0.3), (13, 0.35), (21, 0.4), (34, 0.45), (55, 0.5)]:
+    ema_spans = [8, 13, 21, 34, 55]
+    for i, span in enumerate(ema_spans):
         ema = df.Close.ewm(span=span, adjust=False).mean()
-        ax1.plot(df.index, ema, linewidth=0.8, alpha=alpha, color='#2196F3')
+        alpha = 0.25 + (i * 0.12)
+        ax1.plot(df.index, ema, linewidth=0.7, alpha=alpha, color=DARK['teal'], zorder=2)
+
+    # EMA 200
     ema200 = df.Close.ewm(span=200, adjust=False).mean()
-    if ema200.notna().sum() > 0:
-        ax1.plot(df.index, ema200, color='#F44336', linewidth=1.5, alpha=0.7, label='EMA 200')
+    if ema200.notna().sum() > 20:
+        ax1.plot(df.index, ema200, color=DARK['red'], linewidth=1.5, alpha=0.7,
+                 label='EMA 200', zorder=2)
 
     # Fibonacci levels
-    fib_colors = ['#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722', '#F44336']
-    for (label, level), color in zip(fibs.items(), fib_colors):
-        ax1.axhline(y=level, color=color, linestyle='--', linewidth=0.8, alpha=0.7)
-        ax1.text(df.index[-1], level, f'  {label}: {level:,.1f}', fontsize=8,
-                 color=color, va='center', fontweight='bold')
+    fib_high = float(df.High.max())
+    fib_low = float(df.Low.min())
+    fibs = compute_fibonacci(fib_high, fib_low)
+    fib_colors = {
+        '0.0%': '#3fb950', '23.6%': '#56d4dd', '38.2%': '#58a6ff',
+        '50.0%': '#d29922', '61.8%': '#d29922', '78.6%': '#f85149', '100.0%': '#da3633'
+    }
 
-    ax1.set_title(f'{title} — Expert: Fibonacci + EMA Ribbon + Volume', fontsize=16, fontweight='bold', pad=15)
-    ax1.set_ylabel('Price', fontsize=11)
-    ax1.legend(loc='upper left', fontsize=9)
-    ax1.grid(True, alpha=0.15)
+    for label, level in fibs.items():
+        color = fib_colors.get(label, DARK['text_muted'])
+        ax1.axhline(y=level, color=color, linewidth=0.6, linestyle='--', alpha=0.4, zorder=1)
+        ax1.text(df.index[-1] + timedelta(days=2), level,
+                 f'  {label}  {level:.4f}', fontsize=7, color=color,
+                 va='center', fontweight='500',
+                 path_effects=[pe.withStroke(linewidth=2, foreground=DARK['bg'])])
 
-    # Volume
-    vol_colors = ['#26a69a' if c >= o else '#ef5350' for c, o in zip(df.Close, df.Open)]
-    ax2.bar(df.index, df.Volume, color=vol_colors, width=0.6, alpha=0.7)
-    vol_sma = df.Volume.rolling(20).mean()
-    ax2.plot(df.index, vol_sma, color='#FF9800', linewidth=1.2, label='Vol SMA 20')
-    ax2.set_ylabel('Volume', fontsize=11)
-    ax2.legend(loc='upper left', fontsize=8)
-    ax2.grid(True, alpha=0.2)
+    add_last_price(ax1, df)
+    add_header(ax1, 'EUR/USD  —  Institutional Research',
+               'Daily  |  Fibonacci + EMA Ribbon + RSI + MACD + Stochastic',
+               badge='PROFESSIONAL')
 
-    ax2.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
-    ax2.xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
-    plt.xticks(rotation=45)
-    fig.tight_layout()
-    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=150, bbox_inches='tight')
+    ax1.set_ylabel('Price', fontsize=10)
+    ax1.yaxis.set_major_formatter(mticker.FormatStrFormatter('%.4f'))
+    ax1.grid(True, alpha=0.2, linewidth=0.3)
+
+    leg = ax1.legend(loc='upper left', framealpha=0.9, borderpad=0.6)
+    leg.get_frame().set_facecolor(DARK['panel'])
+    leg.get_frame().set_edgecolor(DARK['border'])
+
+    # --- RSI ---
+    rsi = compute_rsi(df.Close)
+    ax2.plot(df.index, rsi, color=DARK['blue'], linewidth=1.0)
+    ax2.axhline(y=70, color=DARK['red'], linewidth=0.6, linestyle='--', alpha=0.4)
+    ax2.axhline(y=30, color=DARK['green'], linewidth=0.6, linestyle='--', alpha=0.4)
+    ax2.axhline(y=50, color=DARK['text_muted'], linewidth=0.3, linestyle=':', alpha=0.3)
+    ax2.fill_between(df.index, rsi, 70, where=(rsi >= 70), color=DARK['red'], alpha=0.12)
+    ax2.fill_between(df.index, rsi, 30, where=(rsi <= 30), color=DARK['green'], alpha=0.12)
+    ax2.set_ylabel('RSI(14)', fontsize=8)
+    ax2.set_ylim(15, 85)
+    ax2.grid(True, alpha=0.15, linewidth=0.3)
+
+    rsi_last = float(rsi.dropna().iloc[-1])
+    ax2.text(df.index[-1] + timedelta(days=1), rsi_last, f' {rsi_last:.1f}',
+             fontsize=7, color=DARK['blue'], va='center', fontweight='500')
+
+    # --- MACD ---
+    macd_line, signal_line, macd_hist = compute_macd(df.Close)
+    colors = [DARK['green'] if v >= 0 else DARK['red'] for v in macd_hist]
+    ax3.bar(df.index, macd_hist, color=colors, width=0.5, alpha=0.5, zorder=2)
+    ax3.plot(df.index, macd_line, color=DARK['blue'], linewidth=0.9, label='MACD(12,26,9)', zorder=3)
+    ax3.plot(df.index, signal_line, color=DARK['orange'], linewidth=0.9, label='Signal', zorder=3)
+    ax3.axhline(y=0, color=DARK['text_muted'], linewidth=0.3, zorder=1)
+    ax3.set_ylabel('MACD', fontsize=8)
+    ax3.grid(True, alpha=0.15, linewidth=0.3)
+
+    leg3 = ax3.legend(loc='upper left', framealpha=0.9, borderpad=0.3, fontsize=7)
+    leg3.get_frame().set_facecolor(DARK['panel'])
+    leg3.get_frame().set_edgecolor(DARK['border'])
+
+    # --- Stochastic ---
+    low_14 = df.Low.rolling(14).min()
+    high_14 = df.High.rolling(14).max()
+    stoch_k = 100 * (df.Close - low_14) / (high_14 - low_14)
+    stoch_d = stoch_k.rolling(3).mean()
+
+    ax4.plot(df.index, stoch_k, color=DARK['teal'], linewidth=1.0, label='%K(14,3)')
+    ax4.plot(df.index, stoch_d, color=DARK['orange'], linewidth=1.0, label='%D(3)')
+    ax4.axhline(y=80, color=DARK['red'], linewidth=0.6, linestyle='--', alpha=0.4)
+    ax4.axhline(y=20, color=DARK['green'], linewidth=0.6, linestyle='--', alpha=0.4)
+    ax4.fill_between(df.index, stoch_k, 80, where=(stoch_k >= 80), color=DARK['red'], alpha=0.1)
+    ax4.fill_between(df.index, stoch_k, 20, where=(stoch_k <= 20), color=DARK['green'], alpha=0.1)
+    ax4.set_ylabel('Stoch', fontsize=8)
+    ax4.set_ylim(0, 100)
+    ax4.grid(True, alpha=0.15, linewidth=0.3)
+
+    leg4 = ax4.legend(loc='upper left', framealpha=0.9, borderpad=0.3, fontsize=7)
+    leg4.get_frame().set_facecolor(DARK['panel'])
+    leg4.get_frame().set_edgecolor(DARK['border'])
+
+    stoch_k_last = float(stoch_k.dropna().iloc[-1])
+    stoch_d_last = float(stoch_d.dropna().iloc[-1])
+    ax4.text(df.index[-1] + timedelta(days=1), stoch_k_last,
+             f' {stoch_k_last:.0f}/{stoch_d_last:.0f}',
+             fontsize=7, color=DARK['teal'], va='center', fontweight='500')
+
+    format_xaxis(ax4)
+    add_watermark(fig)
+    fig.tight_layout(pad=1.0)
+    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=200, bbox_inches='tight',
+                facecolor=DARK['bg'], edgecolor='none')
     plt.close(fig)
-    print(f"  ✓ Saved {filename}")
+    print(f"  ✓ {filename}")
 
-# ── Chart 4: Scenario / Decision Tree visual ────────────────────────────
+# ── Scenario Dashboard ──────────────────────────────────────────────────
 
-def chart_scenario_dashboard(filename):
-    """Visual scenario matrix for all 3 assets."""
-    fig, ax = plt.subplots(figsize=(16, 10))
+def chart_scenario(filename):
+    setup_dark_style()
+    fig, ax = plt.subplots(figsize=(16, 9))
+    fig.patch.set_facecolor(DARK['bg'])
+    ax.set_facecolor(DARK['bg'])
     ax.axis('off')
 
+    # Title
+    ax.text(0.5, 0.96, 'EUR/USD  SCENARIO ANALYSIS',
+            fontsize=22, fontweight='700', ha='center', va='top',
+            transform=ax.transAxes, color=DARK['text'])
+    ax.text(0.5, 0.91, 'March 25, 2026  |  Central Variable: Middle East Conflict & ECB Policy Response',
+            fontsize=10, ha='center', va='top', transform=ax.transAxes,
+            color=DARK['text_dim'])
+
     scenarios = [
-        ('Rapid De-escalation\n(15%)', 'Gold ↓ $3,800–4,100\nOil ↓ $70–80\nEUR/USD ↑ 1.17–1.19', '#4CAF50'),
-        ('Gradual Normalization\n(35%)', 'Gold → $4,200–4,600\nOil ↓ $85–100\nEUR/USD → 1.14–1.16', '#2196F3'),
-        ('Prolonged Disruption\n(35%)', 'Gold ↑ $5,000–5,500\nOil → $100–130\nEUR/USD ↓ 1.11–1.13', '#FF9800'),
-        ('Major Escalation\n(15%)', 'Gold ↑↑ $6,000+\nOil ↑↑ $130–150+\nEUR/USD ↓↓ 1.08–1.10', '#F44336'),
+        {
+            'title': 'RANGE-BOUND',
+            'prob': '50%',
+            'target': '1.1525 — 1.1650',
+            'catalyst': 'Mixed data, CBs on hold',
+            'color': DARK['blue'],
+            'bias': 'NEUTRAL'
+        },
+        {
+            'title': 'BEARISH BREAK',
+            'prob': '30%',
+            'target': '1.1200 — 1.1300',
+            'catalyst': 'Iran escalation, PMIs < 50',
+            'color': DARK['red'],
+            'bias': 'BEARISH'
+        },
+        {
+            'title': 'BULLISH REVERSAL',
+            'prob': '15%',
+            'target': '1.1686 — 1.1800',
+            'catalyst': 'Ceasefire, accelerated Fed cuts',
+            'color': DARK['green'],
+            'bias': 'BULLISH'
+        },
+        {
+            'title': 'TAIL RISK',
+            'prob': '5%',
+            'target': '1.0943 — 1.1000',
+            'catalyst': 'Energy embargo, EU recession',
+            'color': DARK['orange'],
+            'bias': 'EXTREME BEAR'
+        },
     ]
 
-    # Title
-    ax.text(0.5, 0.95, 'SCENARIO ANALYSIS DASHBOARD — March 24, 2026',
-            fontsize=20, fontweight='bold', ha='center', va='top',
-            transform=ax.transAxes)
-    ax.text(0.5, 0.90, 'Central Variable: Middle East Conflict / Strait of Hormuz Resolution Timeline',
-            fontsize=13, ha='center', va='top', transform=ax.transAxes,
-            style='italic', color='#666')
+    box_w = 0.21
+    box_h = 0.42
+    start_x = 0.04
+    y = 0.38
 
-    # Boxes
-    box_width = 0.20
-    box_height = 0.35
-    start_x = 0.05
-    y_pos = 0.45
-
-    for i, (title, body, color) in enumerate(scenarios):
+    for i, s in enumerate(scenarios):
         x = start_x + i * 0.24
-        rect = plt.Rectangle((x, y_pos), box_width, box_height,
-                              linewidth=2, edgecolor=color, facecolor=color,
-                              alpha=0.1, transform=ax.transAxes)
+
+        # Card background
+        rect = FancyBboxPatch((x, y), box_w, box_h, transform=ax.transAxes,
+                               boxstyle="round,pad=0.01",
+                               facecolor=DARK['panel'], edgecolor=s['color'],
+                               linewidth=1.5, alpha=0.9, zorder=2)
         ax.add_patch(rect)
-        # Header
-        ax.text(x + box_width/2, y_pos + box_height - 0.03, title,
-                fontsize=12, fontweight='bold', ha='center', va='top',
-                transform=ax.transAxes, color=color)
-        # Body
-        ax.text(x + box_width/2, y_pos + box_height/2 - 0.03, body,
-                fontsize=11, ha='center', va='center',
-                transform=ax.transAxes, family='monospace')
 
-    # Key insight box
-    insight_y = 0.12
-    rect2 = plt.Rectangle((0.05, insight_y - 0.02), 0.90, 0.22,
-                           linewidth=1.5, edgecolor='#333', facecolor='#f5f5f5',
-                           transform=ax.transAxes)
+        # Probability badge
+        badge_y = y + box_h - 0.04
+        ax.text(x + box_w/2, badge_y + 0.02, s['prob'],
+                fontsize=24, fontweight='700', ha='center', va='top',
+                transform=ax.transAxes, color=s['color'])
+
+        # Title
+        ax.text(x + box_w/2, badge_y - 0.06, s['title'],
+                fontsize=10, fontweight='600', ha='center', va='top',
+                transform=ax.transAxes, color=DARK['text'],
+                )
+
+        # Bias tag
+        ax.text(x + box_w/2, badge_y - 0.12, s['bias'],
+                fontsize=7, fontweight='500', ha='center', va='top',
+                transform=ax.transAxes, color=s['color'],
+                bbox=dict(boxstyle='round,pad=0.3', facecolor=DARK['bg'],
+                          edgecolor=s['color'], linewidth=0.8, alpha=0.9))
+
+        # Target
+        ax.text(x + box_w/2, y + 0.18, 'TARGET', fontsize=7,
+                ha='center', va='top', transform=ax.transAxes,
+                color=DARK['text_muted'], fontweight='500')
+        ax.text(x + box_w/2, y + 0.13, s['target'], fontsize=11,
+                ha='center', va='top', transform=ax.transAxes,
+                color=DARK['text'], fontweight='500', family='monospace')
+
+        # Catalyst
+        ax.text(x + box_w/2, y + 0.06, 'CATALYST', fontsize=7,
+                ha='center', va='top', transform=ax.transAxes,
+                color=DARK['text_muted'], fontweight='500')
+        ax.text(x + box_w/2, y + 0.02, s['catalyst'], fontsize=8.5,
+                ha='center', va='top', transform=ax.transAxes,
+                color=DARK['text_dim'], style='italic')
+
+    # Bottom insight bar
+    insight_y = 0.05
+    rect2 = FancyBboxPatch((0.04, insight_y), 0.92, 0.22, transform=ax.transAxes,
+                             boxstyle="round,pad=0.01",
+                             facecolor=DARK['panel'], edgecolor=DARK['border'],
+                             linewidth=1, alpha=0.9, zorder=2)
     ax.add_patch(rect2)
-    ax.text(0.5, insight_y + 0.17, 'KEY CROSS-ASSET INSIGHTS', fontsize=13,
-            fontweight='bold', ha='center', va='top', transform=ax.transAxes)
-    insights = (
-        '● Gold: Most asymmetric — bullish in 3/4 scenarios. Best risk/reward.\n'
-        '● Oil: Most binary — $75 or $150 on one variable. Size positions carefully.\n'
-        '● EUR/USD: Clearest directional — bearish in 3/4 scenarios. Highest conviction short.'
-    )
-    ax.text(0.5, insight_y + 0.11, insights, fontsize=11, ha='center', va='top',
-            transform=ax.transAxes, family='monospace', linespacing=1.5)
 
-    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=150, bbox_inches='tight',
-                facecolor='white')
+    ax.text(0.5, insight_y + 0.19, 'KEY INDICATORS', fontsize=10,
+            fontweight='600', ha='center', va='top', transform=ax.transAxes,
+            color=DARK['text'])
+
+    indicators = [
+        ('RSI(14)', '53.1', DARK['blue']),
+        ('MACD', 'Bearish X', DARK['red']),
+        ('ATR(14)', '0.0068 (compressed)', DARK['orange']),
+        ('COT', 'Net-long -36K', DARK['red']),
+        ('DXY', '99.28 (+1.6%)', DARK['green']),
+        ('90% CI', '1.1480 — 1.1700', DARK['teal']),
+    ]
+
+    for j, (label, value, color) in enumerate(indicators):
+        ix = 0.08 + j * 0.15
+        ax.text(ix, insight_y + 0.12, label, fontsize=7.5, ha='center', va='top',
+                transform=ax.transAxes, color=DARK['text_muted'], fontweight='500')
+        ax.text(ix, insight_y + 0.06, value, fontsize=9, ha='center', va='top',
+                transform=ax.transAxes, color=color, fontweight='500')
+
+    add_watermark(fig)
+    fig.savefig(os.path.join(CHARTS_DIR, filename), dpi=200, bbox_inches='tight',
+                facecolor=DARK['bg'], edgecolor='none')
     plt.close(fig)
-    print(f"  ✓ Saved {filename}")
+    print(f"  ✓ {filename}")
 
 # ── Main ─────────────────────────────────────────────────────────────────
 
 def main():
-    print("Fetching market data...")
+    print("Fetching EUR/USD data...")
+    df = yf.download('EURUSD=X', period='1y', interval='1d', progress=False)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    df.index = pd.DatetimeIndex(df.index)
+    print(f"  {len(df)} rows, last: {df.index[-1].strftime('%Y-%m-%d')}")
 
-    # Fetch 1 year of data for each asset
-    tickers = {
-        'Gold': 'GC=F',
-        'Oil (Brent)': 'BZ=F',
-        'EUR/USD': 'EURUSD=X',
-    }
+    print("\nGenerating professional charts...")
+    chart_beginner(df, 'eurusd_beginner.png')
+    chart_intermediate(df, 'eurusd_intermediate.png')
+    chart_professional(df, 'eurusd_professional.png')
+    chart_scenario('eurusd_scenarios.png')
 
-    data = {}
-    for name, ticker in tickers.items():
-        print(f"  Downloading {name} ({ticker})...")
-        df = yf.download(ticker, period='1y', interval='1d', progress=False)
-        # Flatten multi-level columns if present
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        df.index = pd.DatetimeIndex(df.index)
-        data[name] = df
-        print(f"    Got {len(df)} rows, last date: {df.index[-1].strftime('%Y-%m-%d')}")
-
-    # ── Gold charts ──────────────────────────────────────────────────────
-    gold = data['Gold']
-    gold_high = gold.High.max()
-    gold_low = gold.Low.min()
-    gold_last = float(gold.Close.iloc[-1])
-
-    # Estimate support/resistance from data
-    gold_support = round(gold_last * 0.95, -1)   # ~5% below
-    gold_resistance = round(gold_last * 1.05, -1) # ~5% above
-
-    print("\nGenerating Gold charts...")
-    chart_beginner(gold, 'GOLD (XAU/USD)', gold_support, gold_resistance, 'gold_beginner.png')
-    chart_intermediate(gold, 'GOLD (XAU/USD)', gold_support, gold_resistance, 'gold_intermediate.png')
-    chart_expert(gold, 'GOLD (XAU/USD)', gold_high, gold_low, 'gold_expert.png')
-
-    # ── Oil charts ───────────────────────────────────────────────────────
-    oil = data['Oil (Brent)']
-    oil_high = oil.High.max()
-    oil_low = oil.Low.min()
-    oil_last = float(oil.Close.iloc[-1])
-
-    oil_support = round(oil_last * 0.93, 0)
-    oil_resistance = round(oil_last * 1.06, 0)
-
-    print("\nGenerating Oil charts...")
-    chart_beginner(oil, 'OIL (Brent Crude)', oil_support, oil_resistance, 'oil_beginner.png')
-    chart_intermediate(oil, 'OIL (Brent Crude)', oil_support, oil_resistance, 'oil_intermediate.png')
-    chart_expert(oil, 'OIL (Brent Crude)', oil_high, oil_low, 'oil_expert.png')
-
-    # ── EUR/USD charts ───────────────────────────────────────────────────
-    eurusd = data['EUR/USD']
-    eur_high = eurusd.High.max()
-    eur_low = eurusd.Low.min()
-    eur_last = float(eurusd.Close.iloc[-1])
-
-    eur_support = round(eur_last - 0.03, 4)
-    eur_resistance = round(eur_last + 0.03, 4)
-
-    print("\nGenerating EUR/USD charts...")
-    chart_beginner(eurusd, 'EUR/USD', eur_support, eur_resistance, 'eurusd_beginner.png')
-    chart_intermediate(eurusd, 'EUR/USD', eur_support, eur_resistance, 'eurusd_intermediate.png')
-    chart_expert(eurusd, 'EUR/USD', eur_high, eur_low, 'eurusd_expert.png')
-
-    # ── Scenario dashboard ───────────────────────────────────────────────
-    print("\nGenerating scenario dashboard...")
-    chart_scenario_dashboard('scenario_dashboard.png')
-
-    print(f"\n{'='*50}")
-    print(f"All charts saved to: {CHARTS_DIR}/")
-    print(f"{'='*50}")
+    print(f"\nAll charts saved to: {CHARTS_DIR}/")
 
 if __name__ == '__main__':
     main()
