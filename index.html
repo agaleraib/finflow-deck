@@ -1026,7 +1026,7 @@ h4, .h4 {
       </section>
 
       <!-- ============================================ -->
-      <!-- SLIDE 8: TRANSLATION LEARNING CURVE          -->
+      <!-- SLIDE 8: FEEDBACK LOOP                       -->
       <!-- ============================================ -->
       <section>
         <div class="slide">
@@ -1040,42 +1040,50 @@ h4, .h4 {
             <div>
               <p class="kicker">07 // Adaptive Learning</p>
               <h2>The System Learns<br><span class="accent-text">From Your Experts</span></h2>
-              <p class="lead">Every human correction trains the translation agent. Over time, it masters your client's exact voice &mdash; reducing human intervention while increasing quality.</p>
-              <p class="muted" style="margin-top: 16px; font-size: 0.85rem;">This creates a natural engagement curve: clients stay because the system gets better every month. By month 6-8, translations are indistinguishable from your best human translators.</p>
+              <p class="lead">Every human correction trains the translation agent. The same mistake is never repeated. By month 6, translations are indistinguishable from your best human translators.</p>
+              <p class="muted" style="margin-top: 16px; font-size: 0.85rem;">This is not a static tool &mdash; it's a system that improves with every interaction. Your experts teach it once, and it remembers forever.</p>
               <div style="margin-top: 20px;">
-                <span class="badge--gold badge">Client Retention by Design</span>
+                <span class="badge--gold badge">Continuous Improvement by Design</span>
               </div>
             </div>
             <div>
-              <div style="padding: 0 8px;">
-                <div class="learning-label"><span>Month 1-2</span><span class="fragment" style="color: var(--fin-teal);">100% Human Review</span></div>
-                <div class="learning-bar fragment fade-up">
-                  <div class="learning-bar__human" style="width: 100%;">HITL 100%</div>
+              <!-- Circular feedback loop — 2x2 grid with arrows -->
+              <div style="position: relative; width: 100%; max-width: 420px; margin: 0 auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px 40px;">
+                  <!-- Step 1: Top-left -->
+                  <div class="card fragment fade-up" style="text-align: center; padding: 18px 14px; border-color: var(--fin-teal);">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px; color: var(--fin-teal);">1</div>
+                    <h4 class="card__title" style="font-size: 0.85rem;">AI Translates</h4>
+                    <p class="card__text" style="font-size: 0.75rem;">Using your glossary, tone profile, and past corrections</p>
+                  </div>
+                  <!-- Step 2: Top-right -->
+                  <div class="card fragment fade-up" style="text-align: center; padding: 18px 14px; border-color: var(--fin-gold);">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px; color: var(--fin-gold);">2</div>
+                    <h4 class="card__title" style="font-size: 0.85rem;">Expert Reviews</h4>
+                    <p class="card__text" style="font-size: 0.75rem;">Your translator corrects terminology, tone, or phrasing</p>
+                  </div>
+                  <!-- Step 3: Bottom-right (visually reversed for clockwise) -->
+                  <div class="card fragment fade-up" style="text-align: center; padding: 18px 14px; border-color: var(--success);">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px; color: var(--success);">4</div>
+                    <h4 class="card__title" style="font-size: 0.85rem;">Model Adapts</h4>
+                    <p class="card__text" style="font-size: 0.75rem;">Next translation is better. Same mistake never repeated.</p>
+                  </div>
+                  <!-- Step 4: Bottom-left -->
+                  <div class="card fragment fade-up" style="text-align: center; padding: 18px 14px; border-color: var(--accent);">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px; color: var(--accent);">3</div>
+                    <h4 class="card__title" style="font-size: 0.85rem;">Corrections Stored</h4>
+                    <p class="card__text" style="font-size: 0.75rem;">Every edit becomes training data for this specific client</p>
+                  </div>
                 </div>
-
-                <div class="learning-label"><span>Month 3-4</span><span class="fragment" style="color: var(--fin-teal);">70% Human Review</span></div>
-                <div class="learning-bar fragment fade-up">
-                  <div class="learning-bar__human" style="width: 70%;">HITL 70%</div>
-                  <div class="learning-bar__auto">Auto 30%</div>
+                <!-- Arrows connecting the cycle -->
+                <div style="position: absolute; top: 42%; left: 46%; font-size: 0.7rem; color: var(--text-muted); text-align: center; pointer-events: none;">
+                  <div style="font-size: 1.6rem; color: var(--fin-teal); opacity: 0.6;">&#x21BB;</div>
                 </div>
-
-                <div class="learning-label"><span>Month 5-6</span><span class="fragment" style="color: var(--fin-teal);">50% Human Review</span></div>
-                <div class="learning-bar fragment fade-up">
-                  <div class="learning-bar__human" style="width: 50%;">HITL 50%</div>
-                  <div class="learning-bar__auto">Auto 50%</div>
-                </div>
-
-                <div class="learning-label"><span>Month 7-8</span><span class="fragment" style="color: var(--fin-teal);">20% Human Review</span></div>
-                <div class="learning-bar fragment fade-up">
-                  <div class="learning-bar__human" style="width: 20%;">20%</div>
-                  <div class="learning-bar__auto">Automated 80%</div>
-                </div>
-
-                <div class="learning-label"><span>Month 9-12</span><span class="fragment" style="color: var(--fin-gold);">Spot-Check Only</span></div>
-                <div class="learning-bar fragment fade-up">
-                  <div class="learning-bar__human" style="width: 10%;">10%</div>
-                  <div class="learning-bar__auto">Fully Automated &mdash; 90%</div>
-                </div>
+                <!-- Arrow labels -->
+                <div style="position: absolute; top: 36px; left: 50%; transform: translateX(-50%); color: var(--fin-teal); font-size: 1rem;">&rarr;</div>
+                <div style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); color: var(--fin-gold); font-size: 1rem;">&darr;</div>
+                <div style="position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); color: var(--success); font-size: 1rem;">&larr;</div>
+                <div style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%); color: var(--accent); font-size: 1rem;">&uarr;</div>
               </div>
             </div>
           </div>
@@ -1516,10 +1524,10 @@ h4, .h4 {
               </div>
 
               <div class="fragment fade-up">
-                <div class="learning-label" style="margin-bottom: 4px;"><span style="font-weight: 500; color: var(--text-primary);">Month 4-6 &mdash; Autonomous</span><span style="color: var(--fin-gold);">80%+ Automated</span></div>
+                <div class="learning-label" style="margin-bottom: 4px;"><span style="font-weight: 500; color: var(--text-primary);">Month 4-6 &mdash; Autonomous</span><span style="color: var(--fin-gold);">90%+ Automated</span></div>
                 <div class="learning-bar" style="height: 32px;">
-                  <div class="learning-bar__human" style="width: 20%;">20%</div>
-                  <div class="learning-bar__auto">Automated 80% &mdash; spot-check only</div>
+                  <div class="learning-bar__human" style="width: 10%;">10%</div>
+                  <div class="learning-bar__auto">Automated 90% &mdash; spot-check only</div>
                 </div>
               </div>
 
