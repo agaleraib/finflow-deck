@@ -1,0 +1,29 @@
+{
+  "_client": "OANDA",
+  "_tone": "professional, conservative, institutional. Avoid colloquial language. Use formal register.",
+  "_brand_rules": "Always write 'OANDA' in uppercase, never 'Oanda' or 'oanda'. Refer to the platform as 'OANDA's trading platform'.",
+  "es": {
+    "pip": "pip",
+    "spread": "spread",
+    "margin call": "llamada de margen",
+    "take profit": "toma de beneficios",
+    "stop loss": "stop loss",
+    "key support level": "nivel de soporte clave",
+    "trading platform": "plataforma de trading",
+    "leverage": "apalancamiento",
+    "lot size": "tamaño de lote",
+    "order execution": "ejecución de órdenes"
+  },
+  "zh": {
+    "pip": "点",
+    "spread": "点差",
+    "margin call": "追加保证金通知",
+    "take profit": "止盈",
+    "stop loss": "止损",
+    "key support level": "关键支撑位",
+    "trading platform": "交易平台",
+    "leverage": "杠杆",
+    "lot size": "手数",
+    "order execution": "订单执行"
+  }
+}

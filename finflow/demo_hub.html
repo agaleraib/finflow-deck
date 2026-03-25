@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinFlow Demo Hub — AI-Powered Financial Analysis Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111111;
+  --bg-card-hover: #1a1a1a;
+  --bg-panel: #0f0f0f;
+  --bg-sidebar: #0c0c0c;
+  --accent: #5ba8a0;
+  --accent-light: #7bc4bc;
+  --accent-glow: rgba(91, 168, 160, 0.15);
+  --accent-dim: rgba(91, 168, 160, 0.6);
+  --gold: #c9a85b;
+  --green: #7b9a7b;
+  --green-bright: #4ade80;
+  --red: #c97b7b;
+  --red-bright: #f87171;
+  --amber: #f59e0b;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --text: #f5f4f0;
+  --text-dim: #a8a8a8;
+  --text-muted: #555;
+  --border: #1e1e1e;
+  --border-light: #2a2a2a;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  height: 100vh;
+  overflow: hidden;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── Layout ─────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr 40px;
+  grid-template-columns: 260px 1fr;
+  height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-brand h1 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.header-brand h1 span { color: var(--accent); }
+
+.header-brand .by {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.badge-demo {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── Sidebar (Pipeline Stages) ──────────────────────── */
+.sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0 20px 16px;
+}
+
+.stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 20px;
+  position: relative;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.stage:hover { background: rgba(255,255,255,0.02); }
+
+.stage-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  border: 2px solid var(--border-light);
+  background: var(--bg);
+  transition: all 0.3s;
+  position: relative;
+  z-index: 1;
+}
+
+.stage-line {
+  position: absolute;
+  left: 33px;
+  top: 38px;
+  width: 2px;
+  height: calc(100% - 18px);
+  background: var(--border-light);
+}
+
+.stage:last-child .stage-line { display: none; }
+
+.stage-info { flex: 1; min-width: 0; }
+
+.stage-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+
+.stage-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Stage states */
+.stage.pending .stage-indicator { border-color: var(--border-light); color: var(--text-muted); }
+.stage.running .stage-indicator { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); animation: pulse 1.5s infinite; }
+.stage.running .stage-name { color: var(--accent); }
+.stage.running .stage-line { background: var(--accent); }
+.stage.complete .stage-indicator { border-color: var(--green); color: var(--green-bright); background: rgba(74,222,128,0.1); }
+.stage.complete .stage-name { color: var(--green); }
+.stage.complete .stage-line { background: var(--green); }
+.stage.waiting .stage-indicator { border-color: var(--blue); color: var(--blue); background: rgba(96,165,250,0.1); animation: pulse 2s infinite; }
+.stage.waiting .stage-name { color: var(--blue); }
+.stage.rejected .stage-indicator { border-color: var(--red-bright); color: var(--red-bright); background: rgba(248,113,113,0.1); }
+.stage.rejected .stage-name { color: var(--red-bright); }
+.stage.reprocessing .stage-indicator { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.1); animation: pulse 1s infinite; }
+.stage.reprocessing .stage-name { color: var(--amber); }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 6px rgba(91,168,160,0.15); }
+}
+
+/* ── Main Content ───────────────────────────────────── */
+.main {
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* ── Instrument Cards (Initial View) ────────────────── */
+.instruments-view { display: flex; flex-direction: column; gap: 20px; }
+
+.instruments-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+
+.instruments-subtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.instrument-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.instrument-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.instrument-card:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.instrument-card .ic-name {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.instrument-card .ic-class {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+.instrument-card .ic-price {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.instrument-card .ic-change {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.ic-change.positive { color: var(--green-bright); }
+.ic-change.negative { color: var(--red-bright); }
+
+.instrument-card .ic-levels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+}
+
+.instrument-card .ic-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--accent-dim);
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.instrument-card .ic-btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ── Pipeline View ──────────────────────────────────── */
+.pipeline-view { display: none; flex-direction: column; gap: 16px; height: 100%; }
+.pipeline-view.active { display: flex; }
+
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pipeline-header h2 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.pipeline-timer {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.pipeline-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+/* Event cards in the main area */
+.event-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.event-card .ec-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.event-card .ec-icon { font-size: 16px; }
+
+.event-card .ec-stage {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.event-card .ec-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-left: auto;
+}
+
+.event-card .ec-message {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.event-card .ec-data {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* Agent streaming text */
+.event-card.agent-stream .ec-message {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Deliberation */
+.delib-card {
+  background: var(--bg-card);
+  border: 1px solid var(--purple);
+  border-left: 3px solid var(--purple);
+  border-radius: 8px;
+  padding: 14px 16px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.delib-card .dc-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+
+.delib-card .dc-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  font-family: var(--font-mono);
+}
+
+/* HITL waiting */
+.hitl-card {
+  background: var(--bg-card);
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+.hitl-card .hc-icon { font-size: 32px; margin-bottom: 8px; }
+.hitl-card .hc-title { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 4px; }
+.hitl-card .hc-sub { font-size: 12px; color: var(--text-muted); }
+
+.hitl-card.approved { border-color: var(--green-bright); }
+.hitl-card.approved .hc-title { color: var(--green-bright); }
+.hitl-card.rejected { border-color: var(--red-bright); }
+.hitl-card.rejected .hc-title { color: var(--red-bright); }
+
+/* Rejection / Reprocessing banner */
+.reprocess-banner {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.reprocess-banner .rb-icon { font-size: 20px; }
+.reprocess-banner .rb-text { font-size: 13px; color: var(--amber); }
+
+/* Translation side-by-side */
+.translation-card {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+.translation-card .tc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.translation-card .tc-lang {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.translation-card .tc-compliance {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--green);
+}
+
+.translation-card .tc-body {
+  padding: 14px 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+}
+
+/* Glossary update highlight */
+.glossary-update {
+  background: rgba(91,168,160,0.08);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  padding: 12px 16px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.glossary-update .gu-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.glossary-update .gu-term {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* News headlines */
+.news-list { display: flex; flex-direction: column; gap: 6px; }
+
+.news-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.news-sentiment {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.news-sentiment.bullish { background: rgba(74,222,128,0.15); color: var(--green-bright); }
+.news-sentiment.bearish { background: rgba(248,113,113,0.15); color: var(--red-bright); }
+.news-sentiment.neutral { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+.news-headline {
+  color: var(--text-dim);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+.footer {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 0 24px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.footer-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.6;
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 200px 1fr; }
+  .instrument-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <h1><span>Fin</span>Flow</h1>
+      <span class="by">by WordwideFX</span>
+      <span class="badge-demo">DEMO</span>
+    </div>
+    <div class="header-right">
+      <span id="clock"></span>
+    </div>
+  </header>
+
+  <!-- Sidebar: Pipeline Stages -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Pipeline</div>
+
+    <div class="stage pending" data-stage="news">
+      <div class="stage-indicator">1</div>
+      <div class="stage-info">
+        <div class="stage-name">News</div>
+        <div class="stage-sub">24/7 Monitoring</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="data">
+      <div class="stage-indicator">2</div>
+      <div class="stage-info">
+        <div class="stage-name">Data</div>
+        <div class="stage-sub">Market Ingestion</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="ta_agent">
+      <div class="stage-indicator">3</div>
+      <div class="stage-info">
+        <div class="stage-name">TA Agent</div>
+        <div class="stage-sub">Technical Analysis</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="fa_agent">
+      <div class="stage-indicator">4</div>
+      <div class="stage-info">
+        <div class="stage-name">FA Agent</div>
+        <div class="stage-sub">Fundamental Analysis</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="quality">
+      <div class="stage-indicator">5</div>
+      <div class="stage-info">
+        <div class="stage-name">Quality</div>
+        <div class="stage-sub">Arbitration</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="hitl_quality">
+      <div class="stage-indicator">&#x1F464;</div>
+      <div class="stage-info">
+        <div class="stage-name">HITL Review</div>
+        <div class="stage-sub">Analyst Approval</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="compliance">
+      <div class="stage-indicator">6</div>
+      <div class="stage-info">
+        <div class="stage-name">Compliance</div>
+        <div class="stage-sub">Per Jurisdiction</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="hitl_compliance">
+      <div class="stage-indicator">&#x1F464;</div>
+      <div class="stage-info">
+        <div class="stage-name">HITL Sign-off</div>
+        <div class="stage-sub">Compliance Officer</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="translation">
+      <div class="stage-indicator">7</div>
+      <div class="stage-info">
+        <div class="stage-name">Translate</div>
+        <div class="stage-sub">40+ Languages</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="hitl_translation">
+      <div class="stage-indicator">&#x1F464;</div>
+      <div class="stage-info">
+        <div class="stage-name">HITL Optional</div>
+        <div class="stage-sub">Translator Review</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="report">
+      <div class="stage-indicator">8</div>
+      <div class="stage-info">
+        <div class="stage-name">Report</div>
+        <div class="stage-sub">Multi-Level Output</div>
+      </div>
+      <div class="stage-line"></div>
+    </div>
+
+    <div class="stage pending" data-stage="distribution">
+      <div class="stage-indicator">9</div>
+      <div class="stage-info">
+        <div class="stage-name">Publish</div>
+        <div class="stage-sub">Multi-Channel</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="mainContent">
+    <!-- Instruments View (initial) -->
+    <div class="instruments-view" id="instrumentsView">
+      <h2 class="instruments-title">Select Instrument</h2>
+      <p class="instruments-subtitle">Choose an instrument to run the full AI analysis pipeline</p>
+      <div class="instrument-grid" id="instrumentGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Pipeline View (active during pipeline run) -->
+    <div class="pipeline-view" id="pipelineView">
+      <div class="pipeline-header">
+        <h2 id="pipelineTitle">Pipeline Running...</h2>
+        <span class="pipeline-timer" id="pipelineTimer">00:00</span>
+      </div>
+      <div class="pipeline-content" id="pipelineContent">
+        <!-- Events populated by SSE -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span class="footer-tag">&#x1F310; 40+ Languages</span>
+    <span class="footer-tag">&#x1F4CA; 15+ Instruments</span>
+    <span class="footer-tag">&#x1F3E6; MiFID II / SEC / FCA</span>
+    <span class="footer-tag">&#x1F916; Powered by Claude</span>
+  </footer>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let eventSource = null;
+let timerInterval = null;
+let startTime = null;
+let currentAgent = null;  // Track current streaming agent card
+
+// ── Clock ──────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleDateString('en-US', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Load Instruments ───────────────────────────────────
+async function loadInstruments() {
+  try {
+    const res = await fetch('/api/instruments');
+    const instruments = await res.json();
+    const grid = document.getElementById('instrumentGrid');
+    grid.innerHTML = '';
+
+    instruments.forEach(inst => {
+      const changeClass = inst.change_pct >= 0 ? 'positive' : 'negative';
+      const changeSign = inst.change_pct >= 0 ? '+' : '';
+
+      const card = document.createElement('div');
+      card.className = 'instrument-card';
+      card.onclick = () => startPipeline(inst.slug, inst.name);
+      card.innerHTML = `
+        <div class="ic-name">${inst.name}</div>
+        <div class="ic-class">${inst.asset_class}</div>
+        <div class="ic-price">${inst.price_formatted}</div>
+        <div class="ic-change ${changeClass}">${changeSign}${inst.change_pct}%</div>
+        <div class="ic-levels">
+          <span>S: ${inst.support}</span>
+          <span>R: ${inst.resistance}</span>
+        </div>
+        <button class="ic-btn">Generate Analysis</button>
+      `;
+      grid.appendChild(card);
+    });
+  } catch (e) {
+    document.getElementById('instrumentGrid').innerHTML =
+      '<p style="color:var(--text-muted)">Failed to load instruments. Is the server running?</p>';
+  }
+}
+
+// ── Pipeline ───────────────────────────────────────────
+function startPipeline(slug, name) {
+  // Switch views
+  document.getElementById('instrumentsView').style.display = 'none';
+  document.getElementById('pipelineView').classList.add('active');
+  document.getElementById('pipelineTitle').textContent = `${name} — Pipeline Running`;
+  document.getElementById('pipelineContent').innerHTML = '';
+  currentAgent = null;
+
+  // Reset sidebar
+  document.querySelectorAll('.stage').forEach(s => {
+    s.className = 'stage pending';
+  });
+
+  // Start timer
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const ss = String(elapsed % 60).padStart(2, '0');
+    document.getElementById('pipelineTimer').textContent = `${mm}:${ss}`;
+  }, 1000);
+
+  // Connect SSE
+  eventSource = new EventSource(`/api/pipeline/run/${slug}`);
+  eventSource.onmessage = handleEvent;
+  eventSource.onerror = () => {
+    clearInterval(timerInterval);
+    eventSource.close();
+  };
+}
+
+// ── Stage Mapping ──────────────────────────────────────
+const STAGE_ICONS = {
+  news: '&#x1F4F0;', data: '&#x1F4CA;', ta_agent: '&#x1F4C8;', fa_agent: '&#x1F30D;',
+  quality: '&#x2696;&#xFE0F;', deliberation: '&#x1F4AC;', hitl_quality: '&#x1F464;',
+  compliance: '&#x1F3DB;&#xFE0F;', hitl_compliance: '&#x1F464;',
+  translation: '&#x1F310;', glossary: '&#x1F4D6;', hitl_translation: '&#x1F464;',
+  report: '&#x1F4C4;', distribution: '&#x1F4E4;', reprocessing: '&#x1F504;',
+  pipeline: '&#x1F680;', error: '&#x274C;'
+};
+
+const STAGE_COLORS = {
+  news: 'var(--accent)', data: 'var(--accent)', ta_agent: 'var(--green)',
+  fa_agent: 'var(--blue)', quality: 'var(--purple)', deliberation: 'var(--purple)',
+  hitl_quality: 'var(--blue)', compliance: 'var(--gold)',
+  hitl_compliance: 'var(--blue)', translation: 'var(--accent)',
+  glossary: 'var(--accent)', hitl_translation: 'var(--blue)',
+  report: 'var(--green)', distribution: 'var(--accent)',
+  reprocessing: 'var(--amber)', pipeline: 'var(--accent)', error: 'var(--red)'
+};
+
+// ── Event Handler ──────────────────────────────────────
+function handleEvent(e) {
+  const data = JSON.parse(e.data);
+  const content = document.getElementById('pipelineContent');
+
+  if (data.stage === 'done') {
+    clearInterval(timerInterval);
+    eventSource.close();
+    document.getElementById('pipelineTitle').textContent =
+      document.getElementById('pipelineTitle').textContent.replace('Running', 'Complete');
+    return;
+  }
+
+  // Update sidebar stage
+  updateSidebar(data.stage, data.status);
+
+  // Handle streaming chunks (append to current agent card)
+  if (data.status === 'chunk') {
+    if (currentAgent) {
+      const msgEl = currentAgent.querySelector('.ec-message');
+      if (msgEl) {
+        msgEl.textContent += data.message;
+        msgEl.scrollTop = msgEl.scrollHeight;
+      }
+    }
+    return;
+  }
+
+  // Close current agent stream if we're moving to a new stage
+  if (data.status === 'running' && (data.stage === 'ta_agent' || data.stage === 'fa_agent')) {
+    const card = createAgentStreamCard(data);
+    content.appendChild(card);
+    currentAgent = card;
+    scrollToBottom();
+    return;
+  }
+
+  // Special card types
+  if (data.stage === 'deliberation') {
+    const card = createDeliberationCard(data);
+    content.appendChild(card);
+    currentAgent = null;
+    scrollToBottom();
+    return;
+  }
+
+  if (data.stage.startsWith('hitl_') && data.status === 'waiting') {
+    const card = createHITLCard(data);
+    content.appendChild(card);
+    currentAgent = null;
+    scrollToBottom();
+    return;
+  }
+
+  if (data.stage.startsWith('hitl_') && (data.status === 'approved' || data.status === 'rejected')) {
+    updateLastHITL(data);
+    if (data.status === 'rejected') {
+      currentAgent = null;
+    }
+    return;
+  }
+
+  if (data.stage === 'reprocessing') {
+    const card = createReprocessBanner(data);
+    content.appendChild(card);
+    currentAgent = null;
+    scrollToBottom();
+    return;
+  }
+
+  if (data.stage === 'translation' && data.status === 'translated') {
+    currentAgent = null;
+  }
+
+  if (data.stage === 'glossary' && data.status === 'updated') {
+    const card = createGlossaryCard(data);
+    content.appendChild(card);
+    currentAgent = null;
+    scrollToBottom();
+    return;
+  }
+
+  // News headlines
+  if (data.stage === 'news' && data.status === 'complete' && data.data?.headlines) {
+    const card = createNewsCard(data);
+    content.appendChild(card);
+    currentAgent = null;
+    scrollToBottom();
+    return;
+  }
+
+  // Default event card
+  if (data.message && data.status !== 'chunk') {
+    const card = createEventCard(data);
+    content.appendChild(card);
+    currentAgent = null;
+    scrollToBottom();
+  }
+}
+
+// ── Card Creators ──────────────────────────────────────
+function createEventCard(data) {
+  const card = document.createElement('div');
+  card.className = 'event-card';
+  const icon = STAGE_ICONS[data.stage] || '&#x2022;';
+  const color = STAGE_COLORS[data.stage] || 'var(--text-dim)';
+  const time = new Date(data.timestamp).toLocaleTimeString('en-US', { hour12: false });
+
+  card.innerHTML = `
+    <div class="ec-header">
+      <span class="ec-icon">${icon}</span>
+      <span class="ec-stage" style="color:${color}">${data.stage.replace(/_/g, ' ')}</span>
+      <span class="ec-time">${time}</span>
+    </div>
+    <div class="ec-message">${escapeHtml(data.message)}</div>
+  `;
+  return card;
+}
+
+function createAgentStreamCard(data) {
+  const card = document.createElement('div');
+  card.className = 'event-card agent-stream';
+  const icon = STAGE_ICONS[data.stage] || '&#x2022;';
+  const color = STAGE_COLORS[data.stage] || 'var(--text-dim)';
+  const label = data.stage === 'ta_agent' ? 'TECHNICAL ANALYSIS AGENT' : 'FUNDAMENTAL ANALYSIS AGENT';
+
+  card.innerHTML = `
+    <div class="ec-header">
+      <span class="ec-icon">${icon}</span>
+      <span class="ec-stage" style="color:${color}">${label}</span>
+      <span class="ec-time" style="color:${color}">streaming...</span>
+    </div>
+    <div class="ec-message"></div>
+  `;
+  return card;
+}
+
+function createDeliberationCard(data) {
+  const card = document.createElement('div');
+  card.className = 'delib-card';
+  let label = 'DELIBERATION';
+  if (data.status === 'invoke_ta') label = 'QUALITY &#x2192; TA AGENT';
+  if (data.status === 'invoke_fa') label = 'QUALITY &#x2192; FA AGENT';
+  if (data.status === 'ta_chunk' || data.status === 'fa_chunk') label = data.status === 'ta_chunk' ? 'TA RESPONDS' : 'FA RESPONDS';
+  if (data.status === 'consensus') label = 'CONSENSUS REACHED';
+
+  card.innerHTML = `
+    <div class="dc-label">${label}</div>
+    <div class="dc-text">${escapeHtml(data.message)}</div>
+  `;
+  return card;
+}
+
+function createHITLCard(data) {
+  const card = document.createElement('div');
+  card.className = 'hitl-card';
+  card.id = `hitl-${data.stage}`;
+
+  const labels = {
+    hitl_quality: 'Quality Review',
+    hitl_compliance: 'Compliance Sign-off',
+    hitl_translation: 'Translation Approval'
+  };
+
+  card.innerHTML = `
+    <div class="hc-icon">&#x1F4F1;</div>
+    <div class="hc-title">Awaiting ${labels[data.stage] || 'Approval'} on Telegram</div>
+    <div class="hc-sub">Waiting for human response...</div>
+  `;
+  return card;
+}
+
+function updateLastHITL(data) {
+  const card = document.getElementById(`hitl-${data.stage}`);
+  if (!card) return;
+
+  if (data.status === 'approved') {
+    card.className = 'hitl-card approved';
+    card.querySelector('.hc-icon').innerHTML = '&#x2705;';
+    card.querySelector('.hc-title').textContent = 'Approved';
+    card.querySelector('.hc-sub').textContent = data.message || 'Decision received';
+  } else {
+    card.className = 'hitl-card rejected';
+    card.querySelector('.hc-icon').innerHTML = '&#x274C;';
+    card.querySelector('.hc-title').textContent = 'Rejected';
+    card.querySelector('.hc-sub').textContent = data.message || 'Sending back for revision...';
+  }
+}
+
+function createReprocessBanner(data) {
+  const card = document.createElement('div');
+  card.className = 'reprocess-banner';
+  card.innerHTML = `
+    <span class="rb-icon">&#x1F504;</span>
+    <span class="rb-text">${escapeHtml(data.message)}</span>
+  `;
+  return card;
+}
+
+function createGlossaryCard(data) {
+  const card = document.createElement('div');
+  card.className = 'glossary-update';
+  let termsHtml = '';
+  if (data.data?.corrections) {
+    for (const [en, translated] of Object.entries(data.data.corrections)) {
+      termsHtml += `<div class="gu-term">"${en}" &#x2192; "${translated}"</div>`;
+    }
+  }
+  card.innerHTML = `
+    <div class="gu-title">&#x1F4D6; Glossary Updated — System Learning</div>
+    ${termsHtml || '<div class="gu-term">Terms updated</div>'}
+  `;
+  return card;
+}
+
+function createNewsCard(data) {
+  const card = document.createElement('div');
+  card.className = 'event-card';
+  let newsHtml = '<div class="news-list">';
+  const headlines = data.data.headlines || [];
+  const sentiments = data.data.sentiments || [];
+
+  headlines.forEach((h, i) => {
+    const s = sentiments[i] || 'neutral';
+    newsHtml += `
+      <div class="news-item">
+        <span class="news-sentiment ${s}">${s}</span>
+        <span class="news-headline">${escapeHtml(h)}</span>
+      </div>`;
+  });
+  newsHtml += '</div>';
+
+  card.innerHTML = `
+    <div class="ec-header">
+      <span class="ec-icon">&#x1F4F0;</span>
+      <span class="ec-stage" style="color:var(--accent)">NEWS FEED</span>
+    </div>
+    ${newsHtml}
+  `;
+  return card;
+}
+
+// ── Sidebar Updates ────────────────────────────────────
+function updateSidebar(stage, status) {
+  // Map sub-stages to sidebar stages
+  const stageMap = {
+    deliberation: 'quality',
+    glossary: 'translation',
+    reprocessing: null,  // Don't update sidebar for reprocess events
+  };
+  const sidebarStage = stageMap.hasOwnProperty(stage) ? stageMap[stage] : stage;
+  if (!sidebarStage) return;
+
+  const el = document.querySelector(`.stage[data-stage="${sidebarStage}"]`);
+  if (!el) return;
+
+  // Map event status to CSS class
+  const classMap = {
+    running: 'running', complete: 'complete', waiting: 'waiting',
+    approved: 'complete', rejected: 'rejected', reviewed: 'complete',
+    translated: 'complete', preview: 'complete',
+    chunk: 'running', translating: 'running',
+    loading_glossary: 'running', checking_glossary: 'running',
+    rule_check: 'running', ai_review: 'running', passed: 'complete',
+    flagged: 'rejected', reviewing: 'running', synthesizing: 'running',
+    deliberation_start: 'running',
+  };
+
+  const cssClass = classMap[status];
+  if (cssClass) {
+    el.className = `stage ${cssClass}`;
+  }
+}
+
+// ── Utilities ──────────────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function scrollToBottom() {
+  const content = document.getElementById('pipelineContent');
+  requestAnimationFrame(() => { content.scrollTop = content.scrollHeight; });
+}
+
+// ── Init ───────────────────────────────────────────────
+loadInstruments();
+</script>
+</body>
+</html>

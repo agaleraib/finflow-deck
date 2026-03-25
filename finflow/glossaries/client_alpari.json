@@ -1,0 +1,25 @@
+{
+  "_client": "Alpari",
+  "_tone": "accessible, educational, slightly casual. Suitable for retail traders. Use examples where helpful.",
+  "_brand_rules": "Write 'Alpari' with capital A. Reference 'Alpari's analysis' or 'our team'.",
+  "es": {
+    "pip": "pip",
+    "spread": "spread",
+    "margin call": "aviso de margen",
+    "take profit": "toma de ganancias",
+    "stop loss": "stop loss",
+    "key support level": "soporte principal",
+    "trading platform": "plataforma de operaciones",
+    "leverage": "apalancamiento"
+  },
+  "zh": {
+    "pip": "点",
+    "spread": "点差",
+    "margin call": "保证金催缴",
+    "take profit": "获利了结",
+    "stop loss": "止损",
+    "key support level": "主要支撑位",
+    "trading platform": "交易平台",
+    "leverage": "杠杆"
+  }
+}
