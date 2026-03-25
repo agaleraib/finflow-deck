@@ -1980,14 +1980,14 @@ h4, .h4 {
     #cta-float {
       top: 50%;
       left: 50%;
-      transform: translate(-50%, 80px);
+      transform: translate(-50%, -20px);
     }
   </style>
 
   <div class="floating-btns" id="title-float">
     <a href="mailto:info@wordwidefx.com?subject=FinFlow%20%E2%80%94%20Demo%20Request" target="_blank">Get in Touch</a>
-    <a class="accent" onclick="Reveal.slide(18)">View Architecture</a>
-    <a class="accent" onclick="Reveal.slide(20)">Sample Reports</a>
+    <a class="accent" onclick="Reveal.slide(17)">View Architecture</a>
+    <a class="accent" onclick="Reveal.slide(19)">Sample Reports</a>
   </div>
 
   <div class="floating-btns" id="cta-float">
@@ -2042,7 +2042,7 @@ h4, .h4 {
       var idx = event.indexh;
       document.getElementById('title-float').style.display = (idx === 0) ? 'flex' : 'none';
       document.getElementById('cta-float').style.display = (idx === 21) ? 'flex' : 'none';
-      document.getElementById('samples-overlay').style.display = (idx === 19) ? 'flex' : 'none';
+      document.getElementById('samples-overlay').style.display = (idx === 19 || idx === 20) ? 'flex' : 'none';
     });
 
     // Initial state
