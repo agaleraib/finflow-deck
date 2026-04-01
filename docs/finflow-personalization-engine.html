@@ -773,184 +773,152 @@ tbody td:first-child {
     </p>
 
     <!-- ══ MASTER SVG DIAGRAM ══ -->
-    <div class="flow-diagram" style="padding: 32px 20px 48px;">
+    <div class="flow-diagram" style="padding: 40px 12px 48px;">
       <div class="flow-title">The Personalization Learning Loop &mdash; Complete Cycle</div>
 
-      <svg viewBox="0 0 860 920" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 860px; margin: 0 auto; display: block;">
+      <svg viewBox="0 0 920 960" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 920px; margin: 0 auto; display: block;">
         <defs>
-          <!-- Arrowhead markers -->
-          <marker id="arrow-teal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#5ba8a0"/>
-          </marker>
-          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#9b8ac9"/>
-          </marker>
-          <marker id="arrow-gold" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#c9a85b"/>
-          </marker>
-          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#4a9a6a"/>
-          </marker>
-          <marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#4a4a50"/>
-          </marker>
-          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#6b8fc9"/>
-          </marker>
-
-          <!-- Glow filter -->
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
+          <marker id="arrow-teal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#5ba8a0"/></marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#9b8ac9"/></marker>
+          <marker id="arrow-gold" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#c9a85b"/></marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#4a9a6a"/></marker>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#6b8fc9"/></marker>
+          <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
 
-        <!-- ═══ PHASE 1: PROMPT ASSEMBLY (top) ═══ -->
+        <!-- ═══ FEEDBACK LOOPS (drawn first so they sit behind everything) ═══ -->
 
-        <!-- Phase label -->
-        <text x="430" y="28" fill="#5ba8a0" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 1 — PROMPT ASSEMBLY</text>
+        <!-- Left feedback: Glossary output → Glossary store -->
+        <path d="M 140,850 C 140,890 40,890 40,850 L 40,130 C 40,100 60,80 80,80"
+              fill="none" stroke="#5ba8a0" stroke-width="1.5" stroke-dasharray="8,5" opacity="0.35" marker-end="url(#arrow-teal)"/>
+        <!-- Animated glow dots on left path -->
+        <circle r="3" fill="#5ba8a0" opacity="0.6"><animateMotion dur="4s" repeatCount="indefinite" path="M 140,850 C 140,890 40,890 40,850 L 40,130 C 40,100 60,80 80,80"/></circle>
 
-        <!-- Client Profile Store -->
-        <rect x="30" y="50" width="160" height="80" rx="10" fill="#0f0f14" stroke="rgba(91,168,160,0.4)" stroke-width="1.5"/>
-        <text x="110" y="78" fill="#5ba8a0" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">CLIENT PROFILE</text>
-        <text x="110" y="96" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Tone, aggressiveness,</text>
-        <text x="110" y="110" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">brand voice, constraints</text>
+        <!-- Center feedback: Examples output → Examples store -->
+        <path d="M 460,850 C 460,905 880,905 880,850 L 880,130 C 880,100 860,80 840,80"
+              fill="none" stroke="#9b8ac9" stroke-width="1.5" stroke-dasharray="8,5" opacity="0.35" marker-end="url(#arrow-purple)"/>
+        <circle r="3" fill="#9b8ac9" opacity="0.6"><animateMotion dur="5s" repeatCount="indefinite" path="M 460,850 C 460,905 880,905 880,850 L 880,130 C 880,100 860,80 840,80"/></circle>
 
-        <!-- Glossary Store -->
-        <rect x="220" y="50" width="160" height="80" rx="10" fill="#0f0f14" stroke="rgba(91,168,160,0.4)" stroke-width="1.5"/>
-        <text x="300" y="78" fill="#5ba8a0" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">GLOSSARY</text>
-        <text x="300" y="96" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">450+ terms per language</text>
-        <text x="300" y="110" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">client-specific, enforced</text>
+        <!-- Right feedback: Patterns output → Rules store -->
+        <path d="M 770,850 C 770,920 900,920 900,850 L 900,110 C 900,80 880,70 860,70"
+              fill="none" stroke="#c9a85b" stroke-width="1.5" stroke-dasharray="8,5" opacity="0.35" marker-end="url(#arrow-gold)"/>
+        <circle r="3" fill="#c9a85b" opacity="0.6"><animateMotion dur="6s" repeatCount="indefinite" path="M 770,850 C 770,920 900,920 900,850 L 900,110 C 900,80 880,70 860,70"/></circle>
 
-        <!-- Examples Store -->
-        <rect x="480" y="50" width="160" height="80" rx="10" fill="#0f0f14" stroke="rgba(155,138,201,0.4)" stroke-width="1.5"/>
-        <text x="560" y="78" fill="#9b8ac9" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">APPROVED EXAMPLES</text>
-        <text x="560" y="96" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">800+ per client, embedded</text>
-        <text x="560" y="110" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">similarity-selected top 5</text>
+        <!-- ═══ PHASE 1: PROMPT ASSEMBLY ═══ -->
 
-        <!-- Learned Rules Store -->
-        <rect x="670" y="50" width="160" height="80" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.4)" stroke-width="1.5"/>
-        <text x="750" y="78" fill="#c9a85b" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">LEARNED RULES</text>
-        <text x="750" y="96" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">25+ style &amp; compliance</text>
-        <text x="750" y="110" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">auto-distilled from patterns</text>
+        <text x="460" y="30" fill="#5ba8a0" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 1 — PROMPT ASSEMBLY</text>
+
+        <!-- Client Profile -->
+        <rect x="80" y="50" width="170" height="76" rx="10" fill="#0f0f14" stroke="rgba(91,168,160,0.4)" stroke-width="1.5"/>
+        <text x="165" y="76" fill="#5ba8a0" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">CLIENT PROFILE</text>
+        <text x="165" y="94" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Tone, aggressiveness,</text>
+        <text x="165" y="108" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">brand voice, constraints</text>
+
+        <!-- Glossary -->
+        <rect x="280" y="50" width="170" height="76" rx="10" fill="#0f0f14" stroke="rgba(91,168,160,0.4)" stroke-width="1.5"/>
+        <text x="365" y="76" fill="#5ba8a0" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">GLOSSARY</text>
+        <text x="365" y="94" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">450+ terms per language</text>
+        <text x="365" y="108" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">client-specific, enforced</text>
+
+        <!-- Examples -->
+        <rect x="480" y="50" width="170" height="76" rx="10" fill="#0f0f14" stroke="rgba(155,138,201,0.4)" stroke-width="1.5"/>
+        <text x="565" y="76" fill="#9b8ac9" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">APPROVED EXAMPLES</text>
+        <text x="565" y="94" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">800+ per client, embedded</text>
+        <text x="565" y="108" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">similarity-selected top 5</text>
+
+        <!-- Learned Rules -->
+        <rect x="680" y="50" width="170" height="76" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.4)" stroke-width="1.5"/>
+        <text x="765" y="76" fill="#c9a85b" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter">LEARNED RULES</text>
+        <text x="765" y="94" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">25+ style &amp; compliance</text>
+        <text x="765" y="108" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">auto-distilled from patterns</text>
 
         <!-- Arrows down to prompt builder -->
-        <line x1="110" y1="130" x2="110" y2="160" stroke="#5ba8a0" stroke-width="1.5" marker-end="url(#arrow-teal)" opacity="0.6"/>
-        <line x1="300" y1="130" x2="300" y2="160" stroke="#5ba8a0" stroke-width="1.5" marker-end="url(#arrow-teal)" opacity="0.6"/>
-        <line x1="560" y1="130" x2="560" y2="160" stroke="#9b8ac9" stroke-width="1.5" marker-end="url(#arrow-purple)" opacity="0.6"/>
-        <line x1="750" y1="130" x2="750" y2="160" stroke="#c9a85b" stroke-width="1.5" marker-end="url(#arrow-gold)" opacity="0.6"/>
+        <line x1="165" y1="126" x2="165" y2="158" stroke="#5ba8a0" stroke-width="1.5" marker-end="url(#arrow-teal)" opacity="0.6"/>
+        <line x1="365" y1="126" x2="365" y2="158" stroke="#5ba8a0" stroke-width="1.5" marker-end="url(#arrow-teal)" opacity="0.6"/>
+        <line x1="565" y1="126" x2="565" y2="158" stroke="#9b8ac9" stroke-width="1.5" marker-end="url(#arrow-purple)" opacity="0.6"/>
+        <line x1="765" y1="126" x2="765" y2="158" stroke="#c9a85b" stroke-width="1.5" marker-end="url(#arrow-gold)" opacity="0.6"/>
 
-        <!-- Prompt Builder Box -->
-        <rect x="60" y="168" width="740" height="56" rx="12" fill="rgba(91,168,160,0.08)" stroke="rgba(91,168,160,0.3)" stroke-width="1.5"/>
-        <text x="430" y="192" fill="#5ba8a0" font-size="13" font-weight="600" text-anchor="middle" font-family="Inter">Prompt Assembly Engine</text>
-        <text x="430" y="210" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Builds personalized system prompt: role + tone + glossary + best 5 examples + learned rules + constraints</text>
+        <!-- Prompt Builder -->
+        <rect x="100" y="166" width="720" height="56" rx="12" fill="rgba(91,168,160,0.08)" stroke="rgba(91,168,160,0.3)" stroke-width="1.5"/>
+        <text x="460" y="190" fill="#5ba8a0" font-size="13" font-weight="600" text-anchor="middle" font-family="Inter">Prompt Assembly Engine</text>
+        <text x="460" y="208" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Builds personalized system prompt: role + tone + glossary + best 5 examples + rules + constraints</text>
 
-        <!-- Arrow down to AI Agent -->
-        <line x1="430" y1="224" x2="430" y2="260" stroke="#5ba8a0" stroke-width="2" marker-end="url(#arrow-teal)"/>
+        <!-- Arrow down -->
+        <line x1="460" y1="222" x2="460" y2="268" stroke="#5ba8a0" stroke-width="2" marker-end="url(#arrow-teal)"/>
 
         <!-- ═══ PHASE 2: AI GENERATION ═══ -->
 
-        <text x="430" y="255" fill="#5ba8a0" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 2 — AI GENERATION</text>
+        <text x="460" y="262" fill="#5ba8a0" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 2 — AI GENERATION</text>
 
-        <!-- AI Agent Box -->
-        <rect x="230" y="268" width="400" height="64" rx="12" fill="rgba(91,168,160,0.1)" stroke="#5ba8a0" stroke-width="2"/>
-        <text x="430" y="296" fill="#e8e6e3" font-size="14" font-weight="600" text-anchor="middle" font-family="Inter">AI Agent (Translation / Analysis / Compliance)</text>
-        <text x="430" y="316" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Claude Sonnet / GPT-4o — produces personalized output using assembled prompt</text>
+        <rect x="260" y="278" width="400" height="64" rx="12" fill="rgba(91,168,160,0.1)" stroke="#5ba8a0" stroke-width="2"/>
+        <text x="460" y="306" fill="#e8e6e3" font-size="14" font-weight="600" text-anchor="middle" font-family="Inter">AI Agent (Translation / Analysis / Compliance)</text>
+        <text x="460" y="326" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Claude Sonnet / GPT-4o — produces personalized output using assembled prompt</text>
 
-        <!-- Arrow down to output -->
-        <line x1="430" y1="332" x2="430" y2="362" stroke="#5ba8a0" stroke-width="2" marker-end="url(#arrow-teal)"/>
+        <line x1="460" y1="342" x2="460" y2="376" stroke="#5ba8a0" stroke-width="2" marker-end="url(#arrow-teal)"/>
 
-        <!-- Output box -->
-        <rect x="280" y="368" width="300" height="44" rx="10" fill="#0f0f14" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        <text x="430" y="395" fill="#e8e6e3" font-size="12" font-weight="500" text-anchor="middle" font-family="Inter">AI-generated content delivered to reviewer</text>
+        <rect x="310" y="382" width="300" height="40" rx="10" fill="#0f0f14" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="460" y="407" fill="#e8e6e3" font-size="12" font-weight="500" text-anchor="middle" font-family="Inter">AI-generated content delivered to reviewer</text>
 
-        <!-- Arrow down to human -->
-        <line x1="430" y1="412" x2="430" y2="448" stroke="rgba(201,168,91,0.6)" stroke-width="2" marker-end="url(#arrow-gold)"/>
+        <line x1="460" y1="422" x2="460" y2="466" stroke="rgba(201,168,91,0.6)" stroke-width="2" marker-end="url(#arrow-gold)"/>
 
         <!-- ═══ PHASE 3: HUMAN REVIEW ═══ -->
 
-        <text x="430" y="443" fill="#c9a85b" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 3 — HUMAN REVIEW</text>
+        <text x="460" y="460" fill="#c9a85b" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 3 — HUMAN REVIEW</text>
 
-        <!-- Human Review Box -->
-        <rect x="230" y="456" width="400" height="64" rx="12" fill="rgba(201,168,91,0.08)" stroke="rgba(201,168,91,0.5)" stroke-width="2"/>
-        <text x="430" y="484" fill="#c9a85b" font-size="14" font-weight="600" text-anchor="middle" font-family="Inter">Human Reviewer</text>
-        <text x="430" y="504" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Translator / Compliance Officer / Editor — edits naturally, no special tools needed</text>
+        <rect x="260" y="474" width="400" height="64" rx="12" fill="rgba(201,168,91,0.08)" stroke="rgba(201,168,91,0.5)" stroke-width="2"/>
+        <text x="460" y="502" fill="#c9a85b" font-size="14" font-weight="600" text-anchor="middle" font-family="Inter">Human Reviewer</text>
+        <text x="460" y="522" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Translator / Compliance Officer / Editor — edits naturally</text>
 
-        <!-- Two arrows: Approve path and Correction path -->
         <!-- Approve path (left) -->
-        <line x1="350" y1="520" x2="250" y2="558" stroke="rgba(74,154,106,0.6)" stroke-width="1.5" marker-end="url(#arrow-green)"/>
-        <rect x="150" y="560" width="200" height="40" rx="8" fill="rgba(74,154,106,0.08)" stroke="rgba(74,154,106,0.4)" stroke-width="1"/>
-        <text x="250" y="585" fill="#4a9a6a" font-size="12" font-weight="500" text-anchor="middle" font-family="Inter">Approved — publish content</text>
+        <line x1="370" y1="538" x2="270" y2="576" stroke="rgba(74,154,106,0.6)" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <rect x="160" y="578" width="220" height="40" rx="8" fill="rgba(74,154,106,0.08)" stroke="rgba(74,154,106,0.4)" stroke-width="1"/>
+        <text x="270" y="603" fill="#4a9a6a" font-size="12" font-weight="500" text-anchor="middle" font-family="Inter">Approved — publish content</text>
 
-        <!-- Correction path (right, main flow) -->
-        <line x1="510" y1="520" x2="610" y2="558" stroke="rgba(155,138,201,0.6)" stroke-width="2" marker-end="url(#arrow-purple)"/>
-        <rect x="470" y="560" width="280" height="44" rx="8" fill="rgba(155,138,201,0.08)" stroke="rgba(155,138,201,0.4)" stroke-width="1.5"/>
-        <text x="610" y="578" fill="#9b8ac9" font-size="12" font-weight="500" text-anchor="middle" font-family="Inter">Corrections made — 3 inputs captured:</text>
-        <text x="610" y="594" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">English source + AI output + Human edit</text>
+        <!-- Correction path (right) -->
+        <line x1="550" y1="538" x2="630" y2="576" stroke="rgba(155,138,201,0.6)" stroke-width="2" marker-end="url(#arrow-purple)"/>
+        <rect x="510" y="578" width="270" height="44" rx="8" fill="rgba(155,138,201,0.08)" stroke="rgba(155,138,201,0.4)" stroke-width="1.5"/>
+        <text x="645" y="596" fill="#9b8ac9" font-size="12" font-weight="500" text-anchor="middle" font-family="Inter">Corrections made</text>
+        <text x="645" y="612" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">English source + AI output + Human edit</text>
 
-        <!-- Arrow down to correction analysis -->
-        <line x1="610" y1="604" x2="430" y2="648" stroke="rgba(155,138,201,0.6)" stroke-width="2" marker-end="url(#arrow-purple)"/>
+        <line x1="645" y1="622" x2="460" y2="666" stroke="rgba(155,138,201,0.6)" stroke-width="2" marker-end="url(#arrow-purple)"/>
 
-        <!-- ═══ PHASE 4: CORRECTION ANALYSIS ═══ -->
+        <!-- ═══ PHASE 4: AUTOMATED LEARNING ═══ -->
 
-        <text x="430" y="642" fill="#9b8ac9" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 4 — AUTOMATED LEARNING</text>
+        <text x="460" y="660" fill="#9b8ac9" font-size="10" font-weight="600" letter-spacing="3" text-anchor="middle" font-family="Inter">PHASE 4 — AUTOMATED LEARNING</text>
 
-        <!-- Correction Analysis Agent -->
-        <rect x="200" y="656" width="460" height="72" rx="12" fill="rgba(155,138,201,0.1)" stroke="#9b8ac9" stroke-width="2"/>
-        <text x="430" y="684" fill="#e8e6e3" font-size="14" font-weight="600" text-anchor="middle" font-family="Inter">Correction Analysis Agent</text>
-        <text x="430" y="702" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Diffs the AI output vs human edit — classifies every change with structured output</text>
-        <text x="430" y="718" fill="#4a4a50" font-size="10" text-anchor="middle" font-family="Inter">Claude Haiku (~$0.002/correction) — invisible to the reviewer</text>
+        <rect x="220" y="674" width="480" height="72" rx="12" fill="rgba(155,138,201,0.1)" stroke="#9b8ac9" stroke-width="2"/>
+        <text x="460" y="702" fill="#e8e6e3" font-size="14" font-weight="600" text-anchor="middle" font-family="Inter">Correction Analysis Agent</text>
+        <text x="460" y="720" fill="#8a8a8e" font-size="11" text-anchor="middle" font-family="Inter">Diffs AI output vs human edit — classifies every change with structured output</text>
+        <text x="460" y="736" fill="#4a4a50" font-size="10" text-anchor="middle" font-family="Inter">Claude Haiku (~$0.002/correction) — invisible to the reviewer</text>
 
         <!-- Three output arrows -->
-        <line x1="310" y1="728" x2="150" y2="772" stroke="#5ba8a0" stroke-width="2" marker-end="url(#arrow-teal)"/>
-        <line x1="430" y1="728" x2="430" y2="772" stroke="#9b8ac9" stroke-width="2" marker-end="url(#arrow-purple)"/>
-        <line x1="550" y1="728" x2="710" y2="772" stroke="#c9a85b" stroke-width="2" marker-end="url(#arrow-gold)"/>
+        <line x1="330" y1="746" x2="180" y2="790" stroke="#5ba8a0" stroke-width="2" marker-end="url(#arrow-teal)"/>
+        <line x1="460" y1="746" x2="460" y2="790" stroke="#9b8ac9" stroke-width="2" marker-end="url(#arrow-purple)"/>
+        <line x1="590" y1="746" x2="740" y2="790" stroke="#c9a85b" stroke-width="2" marker-end="url(#arrow-gold)"/>
 
         <!-- Three output boxes -->
-        <!-- Terms -->
-        <rect x="40" y="778" width="220" height="80" rx="10" fill="#0f0f14" stroke="rgba(91,168,160,0.5)" stroke-width="1.5"/>
-        <text x="150" y="802" fill="#5ba8a0" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">GLOSSARY UPDATED</text>
-        <text x="150" y="820" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Term corrections applied</text>
-        <text x="150" y="834" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">immediately — next translation</text>
-        <text x="150" y="848" fill="#5ba8a0" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">uses the corrected term</text>
+        <rect x="70" y="796" width="220" height="80" rx="10" fill="#0f0f14" stroke="rgba(91,168,160,0.5)" stroke-width="1.5"/>
+        <text x="180" y="820" fill="#5ba8a0" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">GLOSSARY UPDATED</text>
+        <text x="180" y="838" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Term corrections applied</text>
+        <text x="180" y="852" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">immediately — next translation</text>
+        <text x="180" y="866" fill="#5ba8a0" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">uses the corrected term</text>
 
-        <!-- Examples -->
-        <rect x="320" y="778" width="220" height="80" rx="10" fill="#0f0f14" stroke="rgba(155,138,201,0.5)" stroke-width="1.5"/>
-        <text x="430" y="802" fill="#9b8ac9" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">EXAMPLES STORED</text>
-        <text x="430" y="820" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Human-approved text saved</text>
-        <text x="430" y="834" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">with embedding vector for</text>
-        <text x="430" y="848" fill="#9b8ac9" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">semantic similarity retrieval</text>
+        <rect x="350" y="796" width="220" height="80" rx="10" fill="#0f0f14" stroke="rgba(155,138,201,0.5)" stroke-width="1.5"/>
+        <text x="460" y="820" fill="#9b8ac9" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">EXAMPLES STORED</text>
+        <text x="460" y="838" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Human-approved text saved</text>
+        <text x="460" y="852" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">with embedding vector for</text>
+        <text x="460" y="866" fill="#9b8ac9" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">semantic similarity retrieval</text>
 
-        <!-- Patterns -->
-        <rect x="600" y="778" width="220" height="80" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.5)" stroke-width="1.5"/>
-        <text x="710" y="802" fill="#c9a85b" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">PATTERNS DETECTED</text>
-        <text x="710" y="820" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Observations accumulated</text>
-        <text x="710" y="834" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">across corrections — after 5+</text>
-        <text x="710" y="848" fill="#c9a85b" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">promoted to permanent rules</text>
+        <rect x="630" y="796" width="220" height="80" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.5)" stroke-width="1.5"/>
+        <text x="740" y="820" fill="#c9a85b" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">PATTERNS DETECTED</text>
+        <text x="740" y="838" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">Observations accumulated</text>
+        <text x="740" y="852" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">across corrections — after 5+</text>
+        <text x="740" y="866" fill="#c9a85b" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">promoted to permanent rules</text>
 
-        <!-- ═══ FEEDBACK ARROWS BACK TO TOP ═══ -->
-
-        <!-- Glossary feedback arrow (left side, curves up) -->
-        <path d="M 40,818 Q 15,818 15,500 Q 15,90 30,90"
-              fill="none" stroke="#5ba8a0" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5" marker-end="url(#arrow-teal)"/>
-
-        <!-- Examples feedback arrow (left of center) -->
-        <path d="M 320,818 Q 462,900 462,870 Q 462,500 462,130 Q 462,90 480,90"
-              fill="none" stroke="#9b8ac9" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5" marker-end="url(#arrow-purple)"/>
-
-        <!-- Rules feedback arrow (right side, curves up) -->
-        <path d="M 820,818 Q 845,818 845,500 Q 845,90 830,90"
-              fill="none" stroke="#c9a85b" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5" marker-end="url(#arrow-gold)"/>
-
-        <!-- Feedback label -->
-        <text x="430" y="908" fill="#4a4a50" font-size="11" font-weight="500" text-anchor="middle" font-family="Inter" letter-spacing="0.5">
-          &#8593; Learnings feed back into the prompt assembly — the next output is better &#8593;
+        <!-- Bottom label -->
+        <text x="460" y="940" fill="#4a4a50" font-size="11" font-weight="500" text-anchor="middle" font-family="Inter" letter-spacing="0.5">
+          Dashed lines show how each learning type feeds back to its data store — closing the loop
         </text>
-
-        <!-- Cycle indicator glow dots -->
-        <circle cx="15" cy="450" r="3" fill="#5ba8a0" opacity="0.4"/>
-        <circle cx="845" cy="450" r="3" fill="#c9a85b" opacity="0.4"/>
-        <circle cx="462" cy="500" r="3" fill="#9b8ac9" opacity="0.4"/>
 
       </svg>
     </div>
@@ -1120,58 +1088,74 @@ tbody td:first-child {
       This prevents one-off reviewer preferences from polluting the client profile.
     </p>
 
-    <div class="flow-diagram" style="padding: 28px 24px 32px;">
+    <div class="flow-diagram" style="padding: 36px 24px 36px;">
       <div class="flow-title">Pattern Promotion Pipeline</div>
 
-      <svg viewBox="0 0 800 160" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 800px; margin: 0 auto; display: block;">
+      <svg viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 820px; margin: 0 auto; display: block;">
+
+        <!-- Connecting line behind all observations -->
+        <line x1="70" y1="58" x2="460" y2="58" stroke="rgba(201,168,91,0.15)" stroke-width="2"/>
+
         <!-- Observation 1 -->
-        <rect x="20" y="20" width="100" height="50" rx="8" fill="#0f0f14" stroke="rgba(201,168,91,0.3)" stroke-width="1"/>
-        <text x="70" y="42" fill="#c9a85b" font-size="9" font-weight="600" text-anchor="middle" font-family="Inter">Observation 1</text>
-        <text x="70" y="56" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">"uses ticker, not el par"</text>
+        <rect x="20" y="28" width="100" height="60" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.25)" stroke-width="1"/>
+        <text x="70" y="50" fill="#c9a85b" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">Observation 1</text>
+        <text x="70" y="66" fill="#8a8a8e" font-size="9" text-anchor="middle" font-family="Inter">"uses ticker"</text>
+        <text x="70" y="78" fill="#4a4a50" font-size="8" text-anchor="middle" font-family="Inter">confidence: medium</text>
 
-        <rect x="130" y="20" width="100" height="50" rx="8" fill="#0f0f14" stroke="rgba(201,168,91,0.3)" stroke-width="1"/>
-        <text x="180" y="42" fill="#c9a85b" font-size="9" font-weight="600" text-anchor="middle" font-family="Inter">Observation 2</text>
-        <text x="180" y="56" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">"uses ticker, not el par"</text>
+        <!-- Observation 2 -->
+        <rect x="130" y="28" width="100" height="60" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.3)" stroke-width="1"/>
+        <text x="180" y="50" fill="#c9a85b" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">Observation 2</text>
+        <text x="180" y="66" fill="#8a8a8e" font-size="9" text-anchor="middle" font-family="Inter">"uses ticker"</text>
+        <text x="180" y="78" fill="#4a4a50" font-size="8" text-anchor="middle" font-family="Inter">confidence: medium</text>
 
-        <rect x="240" y="20" width="100" height="50" rx="8" fill="#0f0f14" stroke="rgba(201,168,91,0.4)" stroke-width="1"/>
-        <text x="290" y="42" fill="#c9a85b" font-size="9" font-weight="600" text-anchor="middle" font-family="Inter">Observation 3</text>
-        <text x="290" y="56" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">"ticker again, confidence: high"</text>
+        <!-- Observation 3 -->
+        <rect x="240" y="28" width="100" height="60" rx="10" fill="#0f0f14" stroke="rgba(201,168,91,0.4)" stroke-width="1"/>
+        <text x="290" y="50" fill="#c9a85b" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter">Observation 3</text>
+        <text x="290" y="66" fill="#8a8a8e" font-size="9" text-anchor="middle" font-family="Inter">"ticker again"</text>
+        <text x="290" y="78" fill="#4a4a50" font-size="8" text-anchor="middle" font-family="Inter">confidence: high</text>
 
-        <!-- Dots indicating more -->
-        <text x="360" y="50" fill="#4a4a50" font-size="18" text-anchor="middle" font-family="Inter">...</text>
+        <!-- Dots -->
+        <text x="365" y="64" fill="#4a4a50" font-size="20" font-weight="300" text-anchor="middle" font-family="Inter">&middot; &middot; &middot;</text>
 
-        <rect x="390" y="20" width="100" height="50" rx="8" fill="#0f0f14" stroke="rgba(201,168,91,0.5)" stroke-width="1.5"/>
-        <text x="440" y="42" fill="#c9a85b" font-size="9" font-weight="600" text-anchor="middle" font-family="Inter">Observation 5+</text>
-        <text x="440" y="56" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">threshold reached</text>
+        <!-- Observation 5+ (brighter, threshold) -->
+        <rect x="400" y="28" width="120" height="60" rx="10" fill="rgba(201,168,91,0.06)" stroke="rgba(201,168,91,0.5)" stroke-width="1.5"/>
+        <text x="460" y="50" fill="#c9a85b" font-size="10" font-weight="700" text-anchor="middle" font-family="Inter">Observation 5+</text>
+        <text x="460" y="66" fill="#c9a85b" font-size="9" text-anchor="middle" font-family="Inter">threshold reached</text>
+        <text x="460" y="78" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">pattern confirmed</text>
 
         <!-- Arrow to promotion -->
-        <line x1="490" y1="45" x2="530" y2="45" stroke="#c9a85b" stroke-width="2" marker-end="url(#arrow-gold)"/>
+        <line x1="520" y1="58" x2="560" y2="58" stroke="#c9a85b" stroke-width="2" marker-end="url(#arrow-gold)"/>
 
         <!-- Promotion gate -->
-        <rect x="538" y="16" width="100" height="58" rx="10" fill="rgba(201,168,91,0.1)" stroke="rgba(201,168,91,0.5)" stroke-width="1.5"/>
-        <text x="588" y="38" fill="#c9a85b" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">PROMOTE</text>
-        <text x="588" y="52" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">5+ observations</text>
-        <text x="588" y="64" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">confidence &gt; 0.7</text>
+        <rect x="568" y="24" width="110" height="68" rx="12" fill="rgba(201,168,91,0.1)" stroke="rgba(201,168,91,0.5)" stroke-width="2"/>
+        <text x="623" y="48" fill="#c9a85b" font-size="11" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1.5">PROMOTE</text>
+        <text x="623" y="64" fill="#8a8a8e" font-size="9" text-anchor="middle" font-family="Inter">5+ observations</text>
+        <text x="623" y="78" fill="#8a8a8e" font-size="9" text-anchor="middle" font-family="Inter">confidence &gt; 0.7</text>
 
         <!-- Arrow to rule -->
-        <line x1="638" y1="45" x2="678" y2="45" stroke="#4a9a6a" stroke-width="2" marker-end="url(#arrow-green)"/>
+        <line x1="678" y1="58" x2="708" y2="58" stroke="#4a9a6a" stroke-width="2" marker-end="url(#arrow-green)"/>
 
-        <!-- Permanent rule -->
-        <rect x="686" y="12" width="100" height="66" rx="10" fill="rgba(74,154,106,0.1)" stroke="rgba(74,154,106,0.5)" stroke-width="2"/>
-        <text x="736" y="36" fill="#4a9a6a" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1">RULE</text>
-        <text x="736" y="52" fill="#e8e6e3" font-size="9" font-weight="500" text-anchor="middle" font-family="Inter">"Always use ticker"</text>
-        <text x="736" y="66" fill="#8a8a8e" font-size="8" text-anchor="middle" font-family="Inter">injected into every prompt</text>
+        <!-- Permanent rule box -->
+        <rect x="716" y="18" width="88" height="80" rx="12" fill="rgba(74,154,106,0.08)" stroke="rgba(74,154,106,0.6)" stroke-width="2"/>
+        <text x="760" y="42" fill="#4a9a6a" font-size="10" font-weight="700" text-anchor="middle" font-family="Inter" letter-spacing="1.5">RULE</text>
+        <line x1="730" y1="50" x2="790" y2="50" stroke="rgba(74,154,106,0.3)" stroke-width="1"/>
+        <text x="760" y="66" fill="#e8e6e3" font-size="10" font-weight="500" text-anchor="middle" font-family="Inter">"Always use</text>
+        <text x="760" y="80" fill="#e8e6e3" font-size="10" font-weight="500" text-anchor="middle" font-family="Inter">ticker format"</text>
+        <text x="760" y="94" fill="#4a9a6a" font-size="8" text-anchor="middle" font-family="Inter">injected every prompt</text>
 
-        <!-- Bottom note -->
-        <text x="400" y="110" fill="#4a4a50" font-size="10" text-anchor="middle" font-family="Inter">
-          Rules auto-deactivate if the correction rate increases after promotion — preventing bad rules from persisting
+        <!-- Self-correcting safety net -->
+        <rect x="180" y="120" width="460" height="60" rx="10" fill="rgba(201,107,107,0.04)" stroke="rgba(201,107,107,0.15)" stroke-width="1"/>
+        <text x="410" y="142" fill="#c96b6b" font-size="10" font-weight="600" text-anchor="middle" font-family="Inter" letter-spacing="0.5">SELF-CORRECTING SAFETY NET</text>
+        <text x="410" y="160" fill="#8a8a8e" font-size="10" text-anchor="middle" font-family="Inter">
+          If correction rate rises after a rule is promoted, the rule is automatically disabled
+        </text>
+        <text x="410" y="174" fill="#4a4a50" font-size="9" text-anchor="middle" font-family="Inter">
+          Prevents one-off reviewer preferences from polluting the client profile
         </text>
 
-        <!-- Self-correcting arrow -->
-        <rect x="260" y="124" width="280" height="28" rx="6" fill="rgba(201,107,107,0.06)" stroke="rgba(201,107,107,0.2)" stroke-width="1"/>
-        <text x="400" y="143" fill="#c96b6b" font-size="9" font-weight="500" text-anchor="middle" font-family="Inter">
-          If correction rate rises after rule is applied &rarr; rule is automatically disabled
-        </text>
+        <!-- Arrow from rule to safety net -->
+        <path d="M 760,98 L 760,116 Q 760,120 756,120 L 644,120"
+              fill="none" stroke="rgba(201,107,107,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
       </svg>
     </div>
   </div>
