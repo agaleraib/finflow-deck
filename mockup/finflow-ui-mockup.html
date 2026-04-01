@@ -1,0 +1,4077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinFlow UI Mockup — Application Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════
+   DESIGN SYSTEM — FinFlow Production UI
+   Aesthetic: Bloomberg meets Linear.app meets Apple
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  /* Backgrounds — blue undertone for depth */
+  --bg-root:        #060608;
+  --bg-app:         #0a0a0f;
+  --bg-sidebar:     #08080c;
+  --bg-surface:     #0f0f14;
+  --bg-raised:      #14141a;
+  --bg-hover:       #1a1a22;
+  --bg-active:      #1e1e28;
+  --bg-overlay:     rgba(6, 6, 8, 0.85);
+
+  /* Borders — barely visible structure */
+  --border:         rgba(255, 255, 255, 0.06);
+  --border-light:   rgba(255, 255, 255, 0.08);
+  --border-focus:   rgba(255, 255, 255, 0.15);
+
+  /* Text hierarchy */
+  --text-primary:   #e8e6e3;
+  --text-secondary: #8a8a8e;
+  --text-muted:     #4a4a50;
+  --text-inverse:   #060608;
+
+  /* Accent — muted teal, not bright */
+  --accent:         #5ba8a0;
+  --accent-muted:   rgba(91, 168, 160, 0.7);
+  --accent-subtle:  rgba(91, 168, 160, 0.12);
+  --accent-glow:    rgba(91, 168, 160, 0.06);
+
+  /* Semantic — desaturated, professional */
+  --success:        #4a9a6a;
+  --success-subtle: rgba(74, 154, 106, 0.12);
+  --danger:         #c96b6b;
+  --danger-subtle:  rgba(201, 107, 107, 0.12);
+  --warning:        #c9a85b;
+  --warning-subtle: rgba(201, 168, 91, 0.12);
+  --info:           #6b8fc9;
+  --info-subtle:    rgba(107, 143, 201, 0.12);
+  --purple:         #9b8ac9;
+  --purple-subtle:  rgba(155, 138, 201, 0.12);
+
+  /* Typography */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans:  'Inter', -apple-system, system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Spacing — 4px grid */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;
+  --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+  --sp-8: 32px; --sp-10: 40px; --sp-12: 48px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* Sidebar */
+  --sidebar-width: 240px;
+}
+
+/* ── Reset ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg-root);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+body { min-height: 100vh; overflow-x: hidden; }
+
+/* ── Screen Navigation ─────────────────────────── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+.screen-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--bg-root);
+  border-bottom: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  backdrop-filter: blur(20px);
+}
+
+.screen-nav-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-right: var(--sp-4);
+  white-space: nowrap;
+}
+
+.screen-btn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.screen-btn:hover { color: var(--text-primary); border-color: var(--border-focus); background: var(--bg-raised); }
+.screen-btn.active { color: var(--accent); border-color: var(--accent-muted); background: var(--accent-subtle); }
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 1: LOGIN
+   ══════════════════════════════════════════════════════ */
+
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding-top: 48px;
+  background: var(--bg-root);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle grid background */
+.login-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+}
+
+/* Ambient glow */
+.login-screen::after {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-card {
+  position: relative;
+  width: 400px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--sp-10);
+  animation: fadeUp 0.6s var(--ease-out);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: var(--sp-10);
+}
+
+.login-brand h1 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  margin-bottom: var(--sp-1);
+}
+
+.login-brand h1 span { color: var(--accent); }
+
+.login-brand p {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.form-group {
+  margin-bottom: var(--sp-5);
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--sp-2);
+  letter-spacing: 0.3px;
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.form-input:focus {
+  border-color: var(--accent-muted);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.form-input::placeholder { color: var(--text-muted); }
+
+.btn-primary {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-6);
+  background: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  margin-top: var(--sp-4);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(91, 168, 160, 0.25);
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: var(--sp-8);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.login-footer a {
+  color: var(--accent-muted);
+  text-decoration: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 2: DASHBOARD
+   ══════════════════════════════════════════════════════ */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: 52px 1fr;
+  min-height: 100vh;
+  padding-top: 48px;
+  background: var(--bg-app);
+}
+
+/* ── Top Bar ───────────────────────────────── */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--sp-6);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-app);
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.topbar-brand h1 {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.3px;
+}
+
+.topbar-brand h1 span { color: var(--accent); }
+
+.topbar-tenant {
+  font-size: 11px;
+  color: var(--text-muted);
+  border-left: 1px solid var(--border);
+  padding-left: var(--sp-3);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.topbar-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.topbar-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.notification-dot {
+  position: relative;
+}
+
+.notification-dot::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 2px solid var(--bg-app);
+}
+
+/* ── Sidebar ───────────────────────────────── */
+.sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: var(--sp-5) 0;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: var(--sp-6);
+}
+
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0 var(--sp-5);
+  margin-bottom: var(--sp-2);
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-5);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  position: relative;
+}
+
+.sidebar-item:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.sidebar-item.active {
+  color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.sidebar-item.active .sidebar-icon { opacity: 1; }
+
+.sidebar-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  padding: 0 5px;
+}
+
+.sidebar-badge.pending {
+  background: var(--info-subtle);
+  color: var(--info);
+}
+
+.sidebar-badge.alert {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+/* ── Main Content Area ─────────────────────── */
+.main-content {
+  overflow-y: auto;
+  padding: var(--sp-6);
+  background: var(--bg-app);
+}
+
+/* ── Page Header ───────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--sp-6);
+}
+
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.3px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: var(--sp-1);
+}
+
+.btn-outline {
+  padding: var(--sp-2) var(--sp-4);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.btn-outline:hover {
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+  background: var(--bg-raised);
+}
+
+.btn-accent {
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border: 1px solid rgba(91, 168, 160, 0.2);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-accent:hover {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+/* ── KPI Cards Row ─────────────────────────── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+  animation: fadeUp 0.5s var(--ease-out);
+}
+
+.kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.kpi-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-1px);
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-3);
+}
+
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -1px;
+}
+
+.kpi-change {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin-top: var(--sp-1);
+}
+
+.kpi-change.up { color: var(--success); }
+.kpi-change.down { color: var(--danger); }
+
+/* ── Instrument Cards ──────────────────────── */
+.instruments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+
+.inst-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.inst-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-muted), transparent);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.inst-card:hover {
+  border-color: var(--border-light);
+  background: var(--bg-raised);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+}
+
+.inst-card:hover::before { opacity: 1; }
+
+.inst-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--sp-4);
+}
+
+.inst-name {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.inst-class {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: var(--sp-1);
+}
+
+.inst-status {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.inst-status.live {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.inst-price {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 500;
+  margin-bottom: var(--sp-1);
+  letter-spacing: -0.5px;
+}
+
+.inst-change {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin-bottom: var(--sp-4);
+}
+
+.inst-change.up { color: var(--success); }
+.inst-change.down { color: var(--danger); }
+
+/* Mini sparkline area (simulated) */
+.inst-sparkline {
+  height: 40px;
+  margin-bottom: var(--sp-4);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+.inst-sparkline svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inst-levels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-bottom: var(--sp-4);
+}
+
+.inst-action {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-4);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  letter-spacing: 0.5px;
+}
+
+.inst-action:hover {
+  border-color: var(--accent-muted);
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+/* ── Recent Activity Table ─────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-4);
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.section-link {
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast);
+}
+
+.section-link:hover { color: var(--accent); }
+
+.activity-table {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.activity-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.activity-table th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.activity-table td {
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.activity-table tr:last-child td { border-bottom: none; }
+
+.activity-table tr:hover td { background: var(--bg-hover); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.status-pill.completed { background: var(--success-subtle); color: var(--success); }
+.status-pill.running { background: var(--accent-subtle); color: var(--accent); }
+.status-pill.pending { background: var(--info-subtle); color: var(--info); }
+.status-pill.failed { background: var(--danger-subtle); color: var(--danger); }
+.status-pill.awaiting { background: var(--warning-subtle); color: var(--warning); }
+
+.status-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill.running .dot { animation: blink 1.5s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.mono { font-family: var(--font-mono); font-size: 12px; }
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 3: PIPELINE MONITOR
+   ══════════════════════════════════════════════════════ */
+
+.pipeline-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 320px;
+  gap: 0;
+  height: calc(100vh - 100px);
+}
+
+/* Pipeline stage sidebar */
+.pipeline-stages {
+  border-right: 1px solid var(--border);
+  padding: var(--sp-5) 0;
+  overflow-y: auto;
+}
+
+.pipeline-stages-header {
+  padding: 0 var(--sp-5);
+  margin-bottom: var(--sp-5);
+}
+
+.pipeline-instrument {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  margin-bottom: var(--sp-1);
+}
+
+.pipeline-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.pipeline-timer-value {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Stage items */
+.stage-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  position: relative;
+  transition: background var(--duration-fast);
+}
+
+.stage-item:hover { background: var(--bg-hover); }
+
+.stage-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.stage-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 2px solid var(--border-light);
+  background: var(--bg-app);
+  position: relative;
+  z-index: 1;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.stage-connector {
+  width: 2px;
+  height: 20px;
+  background: var(--border-light);
+  transition: background var(--duration-normal);
+}
+
+.stage-item:last-child .stage-connector { background: transparent; }
+
+/* Stage states */
+.stage-item.complete .stage-dot {
+  border-color: var(--success);
+  color: var(--success);
+  background: var(--success-subtle);
+}
+.stage-item.complete .stage-connector { background: var(--success); }
+
+.stage-item.running .stage-dot {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-subtle);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+  animation: stagePulse 2s ease-in-out infinite;
+}
+
+@keyframes stagePulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-glow); }
+  50% { box-shadow: 0 0 0 8px rgba(91,168,160,0.05); }
+}
+
+.stage-item.waiting .stage-dot {
+  border-color: var(--info);
+  color: var(--info);
+  background: var(--info-subtle);
+  animation: stagePulse 2.5s ease-in-out infinite;
+}
+
+.stage-item.rejected .stage-dot {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.stage-item .stage-info { flex: 1; min-width: 0; }
+
+.stage-item .stage-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color var(--duration-fast);
+}
+
+.stage-item.running .stage-name { color: var(--accent); }
+.stage-item.complete .stage-name { color: var(--success); }
+.stage-item.waiting .stage-name { color: var(--info); }
+
+.stage-item .stage-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.stage-item .stage-duration {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Pipeline event stream */
+.pipeline-stream {
+  overflow-y: auto;
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.event-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  animation: eventSlide 0.4s var(--ease-out);
+}
+
+@keyframes eventSlide {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.event-icon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.event-stage-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.event-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.event-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Agent streaming block */
+.agent-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: eventSlide 0.4s var(--ease-out);
+}
+
+.agent-block-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.agent-model {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.agent-body {
+  padding: var(--sp-3) var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Deliberation block */
+.delib-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--purple);
+  border-left: 3px solid var(--purple);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: eventSlide 0.4s var(--ease-out);
+}
+
+.delib-block .agent-block-header {
+  border-bottom-color: rgba(155, 138, 201, 0.2);
+}
+
+.delib-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--purple);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.delib-round {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* HITL waiting card */
+.hitl-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--info);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  text-align: center;
+  animation: eventSlide 0.4s var(--ease-out);
+}
+
+.hitl-icon {
+  font-size: 32px;
+  margin-bottom: var(--sp-3);
+  animation: gentleBounce 2s ease-in-out infinite;
+}
+
+@keyframes gentleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.hitl-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--info);
+  margin-bottom: var(--sp-1);
+}
+
+.hitl-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-4);
+}
+
+.hitl-actions {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: center;
+}
+
+.hitl-btn {
+  padding: var(--sp-2) var(--sp-5);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  border: 1px solid transparent;
+}
+
+.hitl-btn.approve {
+  background: var(--success);
+  color: var(--text-inverse);
+}
+
+.hitl-btn.approve:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(74, 154, 106, 0.3);
+}
+
+.hitl-btn.reject {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.hitl-btn.correct {
+  background: transparent;
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+/* Pipeline detail panel */
+.pipeline-detail {
+  border-left: 1px solid var(--border);
+  padding: var(--sp-5);
+  overflow-y: auto;
+  background: var(--bg-sidebar);
+}
+
+.detail-section {
+  margin-bottom: var(--sp-6);
+}
+
+.detail-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-3);
+}
+
+.detail-metric {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--sp-2) 0;
+  font-size: 12px;
+}
+
+.detail-metric-key { color: var(--text-muted); }
+.detail-metric-val { color: var(--text-primary); font-family: var(--font-mono); }
+
+.detail-chart-placeholder {
+  height: 160px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: var(--sp-2);
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 4: REPORT VIEWER
+   ══════════════════════════════════════════════════════ */
+
+.report-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--sp-6);
+}
+
+.report-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.report-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.level-tabs {
+  display: flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.level-tab {
+  padding: var(--sp-2) var(--sp-4);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.level-tab:hover { color: var(--text-secondary); }
+
+.level-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+}
+
+.lang-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.lang-flag {
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity var(--duration-fast);
+}
+
+.lang-flag:hover { opacity: 0.7; }
+.lang-flag.active { opacity: 1; }
+
+.report-toolbar-right {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* Report content */
+.report-hero {
+  margin-bottom: var(--sp-8);
+  animation: fadeUp 0.6s var(--ease-out);
+}
+
+.report-kicker {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-3);
+}
+
+.report-title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: var(--sp-3);
+}
+
+.report-meta {
+  display: flex;
+  gap: var(--sp-5);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.report-meta .mono { font-family: var(--font-mono); }
+
+.report-outlook {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.report-outlook.bullish { background: var(--success-subtle); color: var(--success); }
+.report-outlook.bearish { background: var(--danger-subtle); color: var(--danger); }
+.report-outlook.neutral { background: var(--warning-subtle); color: var(--warning); }
+
+/* Report chart area */
+.report-chart {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  height: 360px;
+  margin-bottom: var(--sp-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.7s var(--ease-out);
+}
+
+.report-chart::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(to top, var(--accent-glow), transparent);
+  opacity: 0.3;
+}
+
+/* Report sections */
+.report-section {
+  margin-bottom: var(--sp-6);
+  animation: fadeUp 0.6s var(--ease-out);
+}
+
+.report-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.3px;
+}
+
+.report-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.report-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+}
+
+.report-data-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.report-data-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-data-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Compliance badge */
+.compliance-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--sp-6);
+  font-size: 12px;
+  animation: fadeUp 0.5s var(--ease-out);
+}
+
+.compliance-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 500;
+}
+
+.compliance-badge.passed { color: var(--success); }
+
+.compliance-jurisdiction {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 5: HITL APPROVAL (Mobile-first)
+   ══════════════════════════════════════════════════════ */
+
+.approval-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--sp-6);
+  padding-top: 64px;
+}
+
+.approval-card {
+  width: 100%;
+  max-width: 480px;
+  animation: fadeUp 0.6s var(--ease-out);
+}
+
+.approval-header {
+  text-align: center;
+  margin-bottom: var(--sp-6);
+}
+
+.approval-checkpoint {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--info);
+  margin-bottom: var(--sp-2);
+}
+
+.approval-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  margin-bottom: var(--sp-2);
+}
+
+.approval-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Approval summary card */
+.approval-summary {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  margin-bottom: var(--sp-5);
+}
+
+.approval-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--sp-2) 0;
+  font-size: 13px;
+}
+
+.approval-summary-key { color: var(--text-muted); }
+.approval-summary-val { color: var(--text-primary); font-family: var(--font-mono); }
+
+/* Compliance flags */
+.approval-flags {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--sp-5);
+  overflow: hidden;
+}
+
+.approval-flags-header {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.flag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.flag-item:last-child { border-bottom: none; }
+
+.flag-icon { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+.flag-item.warning .flag-icon { color: var(--warning); }
+.flag-item.info .flag-icon { color: var(--info); }
+.flag-item.fixed .flag-icon { color: var(--success); }
+
+.flag-text { color: var(--text-secondary); line-height: 1.5; }
+
+/* Big approval buttons */
+.approval-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.approval-btn {
+  width: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  border: 1px solid transparent;
+  text-align: center;
+}
+
+.approval-btn.approve {
+  background: var(--success);
+  color: white;
+}
+
+.approval-btn.approve:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(74, 154, 106, 0.35);
+}
+
+.approval-btn.correct {
+  background: transparent;
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.approval-btn.correct:hover {
+  background: var(--warning-subtle);
+}
+
+.approval-btn.reject {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.approval-btn.reject:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 6: GLOSSARY MANAGER
+   ══════════════════════════════════════════════════════ */
+
+.glossary-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.search-input {
+  flex: 1;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--duration-fast);
+}
+
+.search-input:focus { border-color: var(--accent-muted); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.glossary-table {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.glossary-table table { width: 100%; border-collapse: collapse; }
+
+.glossary-table th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.glossary-table td {
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.glossary-table tr:hover td { background: var(--bg-hover); }
+
+.correction-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.correction-badge.human {
+  background: var(--purple-subtle);
+  color: var(--purple);
+}
+
+.correction-badge.ai {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 7: ONBOARDING WIZARD
+   ══════════════════════════════════════════════════════ */
+
+.onboarding-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--sp-6);
+  padding-top: 64px;
+}
+
+.onboarding-card {
+  width: 100%;
+  max-width: 640px;
+  animation: fadeUp 0.6s var(--ease-out);
+}
+
+/* Progress steps */
+.onboarding-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: var(--sp-8);
+}
+
+.onboarding-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid var(--border-light);
+  background: var(--bg-app);
+  color: var(--text-muted);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.step-dot.complete {
+  border-color: var(--success);
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+.step-dot.current {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.step-line {
+  width: 60px;
+  height: 2px;
+  background: var(--border-light);
+  transition: background var(--duration-normal);
+}
+
+.step-line.complete { background: var(--success); }
+
+.onboarding-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--sp-8);
+}
+
+.onboarding-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: var(--sp-2);
+}
+
+.onboarding-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: var(--sp-6);
+}
+
+/* Brand preview */
+.brand-preview {
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  margin-top: var(--sp-5);
+}
+
+.brand-preview-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-3);
+}
+
+.brand-preview-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+}
+
+.onboarding-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--sp-6);
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 8: ADMIN PANEL
+   ══════════════════════════════════════════════════════ */
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-6);
+}
+
+.admin-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+}
+
+.admin-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: var(--sp-4);
+  color: var(--text-primary);
+}
+
+.client-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.client-row:last-child { border-bottom: none; }
+
+.client-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.client-info { flex: 1; }
+
+.client-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.client-tier {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════════════════════════════
+   ANIMATION DEMOS
+   ══════════════════════════════════════════════════════ */
+
+.animation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-5);
+}
+
+.anim-demo {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.anim-demo-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-4);
+}
+
+/* Pipeline flow animation */
+.flow-nodes {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  justify-content: center;
+  flex: 1;
+  align-content: center;
+}
+
+.flow-node {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-app);
+  animation: nodeActivate 4s ease-in-out infinite;
+}
+
+.flow-node:nth-child(1) { animation-delay: 0s; }
+.flow-node:nth-child(2) { animation-delay: 0.5s; }
+.flow-node:nth-child(3) { animation-delay: 1s; }
+.flow-node:nth-child(4) { animation-delay: 1.5s; }
+.flow-node:nth-child(5) { animation-delay: 2s; }
+
+@keyframes nodeActivate {
+  0%, 30% { border-color: var(--border-light); color: var(--text-muted); background: var(--bg-app); }
+  15% { border-color: var(--accent); color: var(--accent); background: var(--accent-subtle); box-shadow: 0 0 20px var(--accent-glow); }
+}
+
+.flow-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  animation: arrowPulse 4s ease-in-out infinite;
+}
+
+.flow-arrow:nth-child(2) { animation-delay: 0.3s; }
+.flow-arrow:nth-child(4) { animation-delay: 0.8s; }
+.flow-arrow:nth-child(6) { animation-delay: 1.3s; }
+.flow-arrow:nth-child(8) { animation-delay: 1.8s; }
+
+@keyframes arrowPulse {
+  0%, 30% { color: var(--text-muted); }
+  15% { color: var(--accent); }
+}
+
+/* Data streaming animation */
+.stream-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.stream-line {
+  height: 3px;
+  background: var(--bg-raised);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stream-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: streamFlow 2s ease-in-out infinite;
+}
+
+.stream-line:nth-child(1)::after { animation-delay: 0s; animation-duration: 1.8s; }
+.stream-line:nth-child(2)::after { animation-delay: 0.3s; animation-duration: 2.2s; }
+.stream-line:nth-child(3)::after { animation-delay: 0.6s; animation-duration: 1.5s; }
+.stream-line:nth-child(4)::after { animation-delay: 0.9s; animation-duration: 2s; }
+.stream-line:nth-child(5)::after { animation-delay: 0.2s; animation-duration: 1.7s; }
+
+@keyframes streamFlow {
+  0% { left: -50%; }
+  100% { left: 110%; }
+}
+
+/* Number counter animation */
+.counter-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.counter-value {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -2px;
+}
+
+.counter-value .digit {
+  display: inline-block;
+  animation: digitRoll 3s ease-in-out infinite;
+}
+
+.counter-value .digit:nth-child(1) { animation-delay: 0s; }
+.counter-value .digit:nth-child(2) { animation-delay: 0.1s; }
+.counter-value .digit:nth-child(3) { animation-delay: 0.2s; }
+.counter-value .digit:nth-child(4) { animation-delay: 0.3s; }
+
+@keyframes digitRoll {
+  0%, 80%, 100% { transform: translateY(0); opacity: 1; }
+  85% { transform: translateY(-8px); opacity: 0; }
+  90% { transform: translateY(8px); opacity: 0; }
+  95% { transform: translateY(0); opacity: 1; }
+}
+
+/* Approval pulse animation */
+.pulse-circle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--info);
+  position: relative;
+}
+
+.pulse-dot::before, .pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--info);
+  animation: ripple 2s ease-out infinite;
+}
+
+.pulse-dot::after { animation-delay: 0.5s; }
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+/* ── Utility ─────────────────────────────── */
+.text-mono { font-family: var(--font-mono); }
+.text-accent { color: var(--accent); }
+.text-muted { color: var(--text-muted); }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+.text-warning { color: var(--warning); }
+.mt-4 { margin-top: var(--sp-4); }
+.mb-4 { margin-bottom: var(--sp-4); }
+.gap-2 { gap: var(--sp-2); }
+.flex { display: flex; }
+.items-center { align-items: center; }
+
+/* ══════════════════════════════════════════════════════
+   DATA SOURCES + COMMAND CENTER
+   ══════════════════════════════════════════════════════ */
+
+/* Source cards */
+.sources-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+
+.source-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.source-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-1px);
+}
+
+.source-card.active { border-color: rgba(91, 168, 160, 0.25); }
+
+.source-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--sp-4);
+}
+
+.source-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.source-type {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.source-tier {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.source-tier.essential { background: var(--success-subtle); color: var(--success); }
+.source-tier.professional { background: var(--info-subtle); color: var(--info); }
+.source-tier.institutional { background: var(--warning-subtle); color: var(--warning); }
+
+.source-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.source-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.source-stat-key { color: var(--text-muted); }
+.source-stat-val { color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; }
+
+.source-pulse {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.source-pulse .pulse-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+.source-pulse .pulse-indicator.offline {
+  background: var(--text-muted);
+  animation: none;
+}
+
+.source-pulse.connected { color: var(--success); }
+.source-pulse.offline { color: var(--text-muted); }
+
+.source-toggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.source-toggle.on { background: var(--accent-subtle); border-color: var(--accent-muted); }
+
+.source-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all var(--duration-fast);
+}
+
+.source-toggle.on::after {
+  left: 18px;
+  background: var(--accent);
+}
+
+/* Scan activity visualization */
+.scan-activity {
+  height: 32px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin-bottom: var(--sp-3);
+}
+
+.scan-bar {
+  flex: 1;
+  background: var(--accent-subtle);
+  border-radius: 2px 2px 0 0;
+  min-height: 3px;
+  transition: height var(--duration-normal) var(--ease-out);
+  animation: scanPulse 3s ease-in-out infinite;
+}
+
+.scan-bar:nth-child(odd) { animation-delay: 0.2s; }
+.scan-bar:nth-child(3n) { animation-delay: 0.5s; }
+
+@keyframes scanPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Command Center — event feed */
+.command-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0;
+  height: calc(100vh - 100px);
+}
+
+.event-feed {
+  overflow-y: auto;
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.event-feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.event-feed-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--success);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+/* Market event card */
+.market-event {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: eventSlide 0.4s var(--ease-out);
+  transition: border-color var(--duration-fast);
+}
+
+.market-event:hover { border-color: var(--border-light); }
+
+.market-event.high-impact { border-left: 3px solid var(--danger); }
+.market-event.medium-impact { border-left: 3px solid var(--warning); }
+.market-event.low-impact { border-left: 3px solid var(--info); }
+
+.event-top {
+  padding: var(--sp-4);
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.event-impact {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.event-impact.high { background: var(--danger-subtle); color: var(--danger); }
+.event-impact.medium { background: var(--warning-subtle); color: var(--warning); }
+
+.event-body { flex: 1; }
+
+.event-headline {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-1);
+  line-height: 1.4;
+}
+
+.event-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--sp-3);
+}
+
+.event-source-time {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.event-source-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+
+/* Suggested reports from event */
+.event-suggestions {
+  border-top: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-raised);
+}
+
+.suggestions-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-2);
+}
+
+.suggestion-chips {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.suggestion-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.suggestion-chip:hover {
+  border-color: var(--accent-muted);
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.suggestion-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.suggestion-chip .chip-pair {
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.suggestion-chip .chip-direction {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.chip-direction.bearish { color: var(--danger); }
+.chip-direction.bullish { color: var(--success); }
+
+.suggestion-chip .chip-action {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: all var(--duration-fast);
+}
+
+.suggestion-chip.selected .chip-action {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-inverse);
+}
+
+.run-selected-btn {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  letter-spacing: 0.3px;
+}
+
+.run-selected-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(91, 168, 160, 0.25);
+}
+
+/* Command Center — right sidebar: active pipelines + queue */
+.command-sidebar {
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--bg-sidebar);
+}
+
+.command-sidebar-section {
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.command-sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.queue-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.active-pipeline-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  transition: all var(--duration-fast);
+}
+
+.active-pipeline-item:hover {
+  border-color: var(--border-light);
+  background: var(--bg-raised);
+}
+
+.active-pipeline-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.active-pipeline-pair {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+.active-pipeline-stage {
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.pipeline-mini-progress {
+  height: 3px;
+  background: var(--bg-raised);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pipeline-mini-progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.5s var(--ease-out);
+}
+
+.queued-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.queued-item:last-child { border-bottom: none; }
+
+.queued-pair {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.queued-trigger {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.queued-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Scanning status bar */
+.scanning-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.scanning-bar .scan-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.scanning-sources {
+  display: flex;
+  gap: var(--sp-2);
+  flex: 1;
+}
+
+.scan-source-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.scan-source-pill .mini-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: blink 2s ease-in-out infinite;
+}
+
+.scan-source-pill:nth-child(2) .mini-dot { animation-delay: 0.3s; }
+.scan-source-pill:nth-child(3) .mini-dot { animation-delay: 0.7s; }
+.scan-source-pill:nth-child(4) .mini-dot { animation-delay: 1.1s; }
+
+.scan-events-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN NAVIGATION (Mockup only)
+     ══════════════════════════════════════════════ -->
+<nav class="screen-nav">
+  <span class="screen-nav-label">Screens</span>
+  <button class="screen-btn active" onclick="showScreen('login')">Login</button>
+  <button class="screen-btn" onclick="showScreen('sources')">Data Sources</button>
+  <button class="screen-btn" onclick="showScreen('command')">Command Center</button>
+  <button class="screen-btn" onclick="showScreen('pipeline')">Pipeline Monitor</button>
+  <button class="screen-btn" onclick="showScreen('report')">Report Viewer</button>
+  <button class="screen-btn" onclick="showScreen('approval')">HITL Approval</button>
+  <button class="screen-btn" onclick="showScreen('glossary')">Glossary</button>
+  <button class="screen-btn" onclick="showScreen('onboarding')">Onboarding</button>
+  <button class="screen-btn" onclick="showScreen('admin')">Admin</button>
+  <button class="screen-btn" onclick="showScreen('animations')">Animations</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1: LOGIN
+     ══════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <h1>Fin<span>Flow</span></h1>
+        <p>by WordwideFX</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="analyst@tier1fx.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" placeholder="Enter password">
+      </div>
+      <button class="btn-primary">Sign In</button>
+      <div class="login-footer">
+        <a href="#">Forgot password?</a> &nbsp;&middot;&nbsp; <a href="#">Request access</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2: DATA SOURCES
+     ══════════════════════════════════════════════ -->
+<div id="screen-sources" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">
+        <h1>Fin<span>Flow</span></h1>
+        <span class="topbar-tenant">Tier1FX</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-time">27 Mar 2026 &middot; 09:14 CET</span>
+        <div class="notification-dot"><div class="topbar-avatar">AG</div></div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Intelligence</div>
+        <div class="sidebar-item active">
+          <span class="sidebar-icon">&#9678;</span> Data Sources
+        </div>
+        <div class="sidebar-item">
+          <span class="sidebar-icon">&#9632;</span> Command Center
+          <span class="sidebar-badge pending">4</span>
+        </div>
+        <div class="sidebar-item">
+          <span class="sidebar-icon">&#9654;</span> Active Pipelines
+          <span class="sidebar-badge pending">2</span>
+        </div>
+        <div class="sidebar-item">
+          <span class="sidebar-icon">&#9783;</span> Reports
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Configuration</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#8960;</span> Instruments</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9776;</span> Glossary</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9881;</span> Languages</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9878;</span> Compliance</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Review</div>
+        <div class="sidebar-item">
+          <span class="sidebar-icon">&#10003;</span> Approvals
+          <span class="sidebar-badge alert">3</span>
+        </div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9998;</span> Corrections</div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Data Sources</div>
+          <div class="page-subtitle">24/7 market intelligence — configure which sources FinFlow monitors</div>
+        </div>
+        <button class="btn-accent">+ Connect Source</button>
+      </div>
+
+      <!-- Scanning KPIs -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Active Sources</div>
+          <div class="kpi-value text-accent">6</div>
+          <div class="kpi-change">of 9 configured</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Events Today</div>
+          <div class="kpi-value">47</div>
+          <div class="kpi-change up">12 high-impact detected</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Scan Frequency</div>
+          <div class="kpi-value text-mono">5<span style="font-size:16px;color:var(--text-muted)">min</span></div>
+          <div class="kpi-change">Breaking: real-time</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Last Scan</div>
+          <div class="kpi-value text-mono" style="font-size:22px">09:12:34</div>
+          <div class="kpi-change up">All sources healthy</div>
+        </div>
+      </div>
+
+      <!-- Essential Tier -->
+      <div class="section-header">
+        <span class="section-title">Essential Tier — Included</span>
+        <span class="section-link" style="color:var(--success)">All active</span>
+      </div>
+      <div class="sources-grid">
+        <div class="source-card active">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Finnhub</div>
+              <div class="source-type">News + Market Data</div>
+            </div>
+            <span class="source-tier essential">Essential</span>
+          </div>
+          <div class="scan-activity">
+            <div class="scan-bar" style="height:45%"></div>
+            <div class="scan-bar" style="height:30%"></div>
+            <div class="scan-bar" style="height:60%"></div>
+            <div class="scan-bar" style="height:80%"></div>
+            <div class="scan-bar" style="height:55%"></div>
+            <div class="scan-bar" style="height:40%"></div>
+            <div class="scan-bar" style="height:90%"></div>
+            <div class="scan-bar" style="height:70%"></div>
+            <div class="scan-bar" style="height:35%"></div>
+            <div class="scan-bar" style="height:65%"></div>
+          </div>
+          <div class="source-stats">
+            <div class="source-stat">
+              <span class="source-stat-key">Articles/day</span>
+              <span class="source-stat-val">~120</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Scan interval</span>
+              <span class="source-stat-val">5 min</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Last event</span>
+              <span class="source-stat-val">2 min ago</span>
+            </div>
+          </div>
+          <div class="source-pulse connected">
+            <span class="pulse-indicator"></span> Connected — scanning
+          </div>
+        </div>
+
+        <div class="source-card active">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Economic Calendar</div>
+              <div class="source-type">Central Bank + Macro</div>
+            </div>
+            <span class="source-tier essential">Essential</span>
+          </div>
+          <div class="scan-activity">
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:100%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:60%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+            <div class="scan-bar" style="height:20%"></div>
+          </div>
+          <div class="source-stats">
+            <div class="source-stat">
+              <span class="source-stat-key">Events tracked</span>
+              <span class="source-stat-val">ECB, Fed, BoE, BoJ</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Next event</span>
+              <span class="source-stat-val" style="color:var(--warning)">ECB Thu 13:45</span>
+            </div>
+          </div>
+          <div class="source-pulse connected">
+            <span class="pulse-indicator"></span> Connected — monitoring
+          </div>
+        </div>
+
+        <div class="source-card active">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Yahoo Finance</div>
+              <div class="source-type">OHLCV + Prices</div>
+            </div>
+            <span class="source-tier essential">Essential</span>
+          </div>
+          <div class="scan-activity">
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+            <div class="scan-bar" style="height:50%"></div>
+          </div>
+          <div class="source-stats">
+            <div class="source-stat">
+              <span class="source-stat-key">Instruments</span>
+              <span class="source-stat-val">15 tracked</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Data freshness</span>
+              <span class="source-stat-val">15 min delay</span>
+            </div>
+          </div>
+          <div class="source-pulse connected">
+            <span class="pulse-indicator"></span> Connected
+          </div>
+        </div>
+      </div>
+
+      <!-- Professional Tier -->
+      <div class="section-header">
+        <span class="section-title">Professional Tier — Client API Keys</span>
+        <span class="section-link">Manage keys &rarr;</span>
+      </div>
+      <div class="sources-grid">
+        <div class="source-card active">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Polygon.io</div>
+              <div class="source-type">Real-time + WebSocket</div>
+            </div>
+            <span class="source-tier professional">Professional</span>
+          </div>
+          <div class="scan-activity">
+            <div class="scan-bar" style="height:70%"></div>
+            <div class="scan-bar" style="height:85%"></div>
+            <div class="scan-bar" style="height:60%"></div>
+            <div class="scan-bar" style="height:95%"></div>
+            <div class="scan-bar" style="height:75%"></div>
+            <div class="scan-bar" style="height:80%"></div>
+            <div class="scan-bar" style="height:65%"></div>
+            <div class="scan-bar" style="height:90%"></div>
+            <div class="scan-bar" style="height:70%"></div>
+            <div class="scan-bar" style="height:85%"></div>
+          </div>
+          <div class="source-stats">
+            <div class="source-stat">
+              <span class="source-stat-key">Data type</span>
+              <span class="source-stat-val">Real-time ticks</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Latency</span>
+              <span class="source-stat-val" style="color:var(--success)">&lt;50ms</span>
+            </div>
+          </div>
+          <div class="source-pulse connected">
+            <span class="pulse-indicator"></span> WebSocket active
+          </div>
+        </div>
+
+        <div class="source-card">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Benzinga</div>
+              <div class="source-type">Financial News</div>
+            </div>
+            <span class="source-tier professional">Professional</span>
+          </div>
+          <div class="source-stats" style="margin-top: var(--sp-4);">
+            <div class="source-stat">
+              <span class="source-stat-key">Status</span>
+              <span class="source-stat-val" style="color:var(--text-muted)">No API key</span>
+            </div>
+          </div>
+          <div class="source-pulse offline">
+            <span class="pulse-indicator offline"></span> Not configured
+          </div>
+        </div>
+
+        <div class="source-card">
+          <div class="source-header">
+            <div>
+              <div class="source-name">TradingView</div>
+              <div class="source-type">Webhooks + Alerts</div>
+            </div>
+            <span class="source-tier professional">Professional</span>
+          </div>
+          <div class="source-stats" style="margin-top: var(--sp-4);">
+            <div class="source-stat">
+              <span class="source-stat-key">Status</span>
+              <span class="source-stat-val" style="color:var(--text-muted)">No webhook URL</span>
+            </div>
+          </div>
+          <div class="source-pulse offline">
+            <span class="pulse-indicator offline"></span> Not configured
+          </div>
+        </div>
+      </div>
+
+      <!-- Institutional Tier -->
+      <div class="section-header">
+        <span class="section-title">Institutional Tier — Client License Required</span>
+      </div>
+      <div class="sources-grid">
+        <div class="source-card">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Bloomberg API</div>
+              <div class="source-type">Terminal + B-PIPE</div>
+            </div>
+            <span class="source-tier institutional">Institutional</span>
+          </div>
+          <div class="source-stats" style="margin-top: var(--sp-4);">
+            <div class="source-stat">
+              <span class="source-stat-key">Requires</span>
+              <span class="source-stat-val">Bloomberg license</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Data</span>
+              <span class="source-stat-val">Full market depth</span>
+            </div>
+          </div>
+          <div class="source-pulse offline">
+            <span class="pulse-indicator offline"></span> License required
+          </div>
+        </div>
+
+        <div class="source-card">
+          <div class="source-header">
+            <div>
+              <div class="source-name">Reuters / Refinitiv</div>
+              <div class="source-type">Eikon API</div>
+            </div>
+            <span class="source-tier institutional">Institutional</span>
+          </div>
+          <div class="source-stats" style="margin-top: var(--sp-4);">
+            <div class="source-stat">
+              <span class="source-stat-key">Requires</span>
+              <span class="source-stat-val">Refinitiv license</span>
+            </div>
+            <div class="source-stat">
+              <span class="source-stat-key">Data</span>
+              <span class="source-stat-val">News + analytics</span>
+            </div>
+          </div>
+          <div class="source-pulse offline">
+            <span class="pulse-indicator offline"></span> License required
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2b: COMMAND CENTER (Event Feed + Suggestions)
+     ══════════════════════════════════════════════ -->
+<div id="screen-command" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">
+        <h1>Fin<span>Flow</span></h1>
+        <span class="topbar-tenant">Tier1FX</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-time">27 Mar 2026 &middot; 09:14 CET</span>
+        <div class="notification-dot"><div class="topbar-avatar">AG</div></div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Intelligence</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9678;</span> Data Sources</div>
+        <div class="sidebar-item active">
+          <span class="sidebar-icon">&#9632;</span> Command Center
+          <span class="sidebar-badge pending">4</span>
+        </div>
+        <div class="sidebar-item">
+          <span class="sidebar-icon">&#9654;</span> Active Pipelines
+          <span class="sidebar-badge pending">2</span>
+        </div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9783;</span> Reports</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Configuration</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#8960;</span> Instruments</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9776;</span> Glossary</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Review</div>
+        <div class="sidebar-item">
+          <span class="sidebar-icon">&#10003;</span> Approvals
+          <span class="sidebar-badge alert">3</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content" style="padding:0;">
+      <!-- Scanning status bar -->
+      <div class="scanning-bar">
+        <span class="scan-label">Scanning</span>
+        <div class="scanning-sources">
+          <span class="scan-source-pill"><span class="mini-dot"></span> Finnhub</span>
+          <span class="scan-source-pill"><span class="mini-dot"></span> Calendar</span>
+          <span class="scan-source-pill"><span class="mini-dot"></span> Polygon</span>
+          <span class="scan-source-pill"><span class="mini-dot"></span> Yahoo</span>
+        </div>
+        <span class="scan-events-count">47 events today &middot; 12 high-impact</span>
+      </div>
+
+      <div class="command-layout">
+        <!-- Event Feed (main area) -->
+        <div class="event-feed">
+          <div class="event-feed-header">
+            <div class="event-feed-title">Market Events</div>
+            <div class="live-indicator">
+              <span class="live-dot"></span> Live
+            </div>
+          </div>
+
+          <!-- High-impact event with suggestions -->
+          <div class="market-event high-impact">
+            <div class="event-top">
+              <span class="event-impact high">High Impact</span>
+              <div class="event-body">
+                <div class="event-headline">ECB Signals Dovish Pivot — Rate Decision Thursday Expected to Hold at 2.0%</div>
+                <div class="event-summary">
+                  ECB sources indicate the central bank will maintain rates but revise forward guidance to signal cuts in Q2. HICP revised to 2.6% creates policy tension. Markets pricing 85% probability of June cut.
+                </div>
+                <div class="event-source-time">
+                  <span class="event-source-tag">Reuters</span>
+                  <span class="event-source-tag">Finnhub</span>
+                  <span>3 min ago &middot; 09:11 CET</span>
+                </div>
+              </div>
+            </div>
+            <div class="event-suggestions">
+              <div class="suggestions-label">Suggested Reports — Select to Run</div>
+              <div class="suggestion-chips">
+                <div class="suggestion-chip selected">
+                  <span class="chip-pair">EUR/USD</span>
+                  <span class="chip-direction bearish">&#9660; Bearish</span>
+                  <span class="chip-action">&#10003;</span>
+                </div>
+                <div class="suggestion-chip selected">
+                  <span class="chip-pair">EUR/GBP</span>
+                  <span class="chip-direction bearish">&#9660; Bearish</span>
+                  <span class="chip-action">&#10003;</span>
+                </div>
+                <div class="suggestion-chip">
+                  <span class="chip-pair">Gold</span>
+                  <span class="chip-direction bullish">&#9650; Bullish</span>
+                  <span class="chip-action">+</span>
+                </div>
+              </div>
+              <button class="run-selected-btn">Run 2 Selected Reports &rarr;</button>
+            </div>
+          </div>
+
+          <!-- Medium-impact event -->
+          <div class="market-event medium-impact">
+            <div class="event-top">
+              <span class="event-impact medium">Medium</span>
+              <div class="event-body">
+                <div class="event-headline">US Crude Inventories Draw -4.2M bbl vs -1.5M Expected</div>
+                <div class="event-summary">
+                  EIA weekly petroleum report shows larger-than-expected drawdown. WTI rallies to $78.50. OPEC+ meeting next week adds uncertainty to supply outlook.
+                </div>
+                <div class="event-source-time">
+                  <span class="event-source-tag">Finnhub</span>
+                  <span>18 min ago &middot; 08:56 CET</span>
+                </div>
+              </div>
+            </div>
+            <div class="event-suggestions">
+              <div class="suggestions-label">Suggested Reports</div>
+              <div class="suggestion-chips">
+                <div class="suggestion-chip">
+                  <span class="chip-pair">Crude Oil</span>
+                  <span class="chip-direction bullish">&#9650; Bullish</span>
+                  <span class="chip-action">+</span>
+                </div>
+                <div class="suggestion-chip">
+                  <span class="chip-pair">USD/CAD</span>
+                  <span class="chip-direction bearish">&#9660; Bearish</span>
+                  <span class="chip-action">+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Already-processed event -->
+          <div class="market-event medium-impact" style="opacity:0.6">
+            <div class="event-top">
+              <span class="event-impact medium">Medium</span>
+              <div class="event-body">
+                <div class="event-headline">China PMI Misses — Manufacturing at 49.8 vs 50.2 Expected</div>
+                <div class="event-summary">
+                  China's manufacturing sector contracts for the first time in 4 months. AUD and commodity currencies under pressure.
+                </div>
+                <div class="event-source-time">
+                  <span class="event-source-tag">Calendar</span>
+                  <span>1h ago &middot; 08:14 CET</span>
+                  <span class="status-pill completed" style="font-size:10px;margin-left:var(--sp-2)"><span class="dot"></span> Reports Running</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Older event -->
+          <div class="market-event low-impact" style="opacity:0.5">
+            <div class="event-top">
+              <div class="event-body">
+                <div class="event-headline" style="color:var(--text-secondary)">German Bund Yields Edge Higher on Fiscal Expansion Plans</div>
+                <div class="event-source-time">
+                  <span class="event-source-tag">Finnhub</span>
+                  <span>2h ago</span>
+                  <span class="status-pill completed" style="font-size:10px;margin-left:var(--sp-2)"><span class="dot"></span> Published</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right sidebar: Active Pipelines + Queue -->
+        <div class="command-sidebar">
+          <div class="command-sidebar-section">
+            <div class="command-sidebar-label">
+              Active Pipelines
+              <span class="queue-count">2</span>
+            </div>
+
+            <div class="active-pipeline-item">
+              <div class="active-pipeline-top">
+                <span class="active-pipeline-pair">AUD/USD</span>
+                <span class="active-pipeline-stage">Quality Arbitration</span>
+              </div>
+              <div class="pipeline-mini-progress">
+                <div class="pipeline-mini-progress-bar" style="width:55%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:var(--sp-1)">
+                <span style="font-size:10px;color:var(--text-muted)">China PMI event</span>
+                <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">6m 12s</span>
+              </div>
+            </div>
+
+            <div class="active-pipeline-item">
+              <div class="active-pipeline-top">
+                <span class="active-pipeline-pair">EUR/USD</span>
+                <span class="active-pipeline-stage" style="color:var(--info)">HITL: Compliance</span>
+              </div>
+              <div class="pipeline-mini-progress">
+                <div class="pipeline-mini-progress-bar" style="width:75%;background:var(--info)"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:var(--sp-1)">
+                <span style="font-size:10px;color:var(--text-muted)">Bund yields event</span>
+                <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">14m 03s</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="command-sidebar-section">
+            <div class="command-sidebar-label">
+              Queue
+              <span class="queue-count">3</span>
+            </div>
+
+            <div class="queued-item">
+              <span class="queued-pair">NZD/USD</span>
+              <span class="queued-trigger">China PMI</span>
+              <span class="queued-time">queued</span>
+            </div>
+            <div class="queued-item">
+              <span class="queued-pair">USD/JPY</span>
+              <span class="queued-trigger">BoJ minutes</span>
+              <span class="queued-time">queued</span>
+            </div>
+            <div class="queued-item">
+              <span class="queued-pair">Gold</span>
+              <span class="queued-trigger">ECB signal</span>
+              <span class="queued-time">pending</span>
+            </div>
+          </div>
+
+          <div class="command-sidebar-section">
+            <div class="command-sidebar-label">Today's Stats</div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Events detected</span>
+              <span class="detail-metric-val">47</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Reports suggested</span>
+              <span class="detail-metric-val">18</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Reports approved</span>
+              <span class="detail-metric-val text-success">12</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Reports published</span>
+              <span class="detail-metric-val text-accent">9</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Dismissed</span>
+              <span class="detail-metric-val">6</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Est. cost today</span>
+              <span class="detail-metric-val">$14.40</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 3: PIPELINE MONITOR
+     ══════════════════════════════════════════════ -->
+<div id="screen-pipeline" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">
+        <h1>Fin<span>Flow</span></h1>
+        <span class="topbar-tenant">Tier1FX</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-time">27 Mar 2026 &middot; 09:14 CET</span>
+        <div class="topbar-avatar">AG</div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Overview</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">&#9654;</span> Pipeline</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9783;</span> Reports</div>
+      </div>
+    </div>
+
+    <div class="main-content" style="padding:0;">
+      <div class="pipeline-layout">
+        <!-- Pipeline Stages -->
+        <div class="pipeline-stages">
+          <div class="pipeline-stages-header">
+            <div class="pipeline-instrument">EUR/USD Analysis</div>
+            <div class="pipeline-meta">
+              <span>Run #847</span>
+              <span class="pipeline-timer-value">4m 31s</span>
+            </div>
+          </div>
+
+          <div class="stage-item complete">
+            <div class="stage-dot-col"><div class="stage-dot">&#10003;</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">News Scraping</div>
+              <div class="stage-desc">12 articles fetched</div>
+              <div class="stage-duration">0:08</div>
+            </div>
+          </div>
+          <div class="stage-item complete">
+            <div class="stage-dot-col"><div class="stage-dot">&#10003;</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Data Ingestion</div>
+              <div class="stage-desc">OHLCV + 8 indicators</div>
+              <div class="stage-duration">0:12</div>
+            </div>
+          </div>
+          <div class="stage-item complete">
+            <div class="stage-dot-col"><div class="stage-dot">&#10003;</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Technical Analysis</div>
+              <div class="stage-desc">Bullish bias, 78% confidence</div>
+              <div class="stage-duration">0:45</div>
+            </div>
+          </div>
+          <div class="stage-item complete">
+            <div class="stage-dot-col"><div class="stage-dot">&#10003;</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Fundamental Analysis</div>
+              <div class="stage-desc">Bearish bias, ECB risk</div>
+              <div class="stage-duration">0:52</div>
+            </div>
+          </div>
+          <div class="stage-item running">
+            <div class="stage-dot-col"><div class="stage-dot">&#9654;</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Quality Arbitration</div>
+              <div class="stage-desc">Deliberation round 2/3</div>
+              <div class="stage-duration">1:24</div>
+            </div>
+          </div>
+          <div class="stage-item">
+            <div class="stage-dot-col"><div class="stage-dot">6</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Analyst Review</div>
+              <div class="stage-desc">HITL checkpoint</div>
+            </div>
+          </div>
+          <div class="stage-item">
+            <div class="stage-dot-col"><div class="stage-dot">7</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Compliance</div>
+              <div class="stage-desc">MiFID II review</div>
+            </div>
+          </div>
+          <div class="stage-item">
+            <div class="stage-dot-col"><div class="stage-dot">8</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Translation</div>
+              <div class="stage-desc">ES, ZH</div>
+            </div>
+          </div>
+          <div class="stage-item">
+            <div class="stage-dot-col"><div class="stage-dot">9</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Report Generation</div>
+              <div class="stage-desc">3 audience levels</div>
+            </div>
+          </div>
+          <div class="stage-item">
+            <div class="stage-dot-col"><div class="stage-dot">10</div><div class="stage-connector"></div></div>
+            <div class="stage-info">
+              <div class="stage-name">Publish</div>
+              <div class="stage-desc">Authorization required</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Stream -->
+        <div class="pipeline-stream">
+          <div class="event-card">
+            <div class="event-header">
+              <span class="event-icon">&#128240;</span>
+              <span class="event-stage-label">News Scraping</span>
+              <span class="event-time">09:10:08</span>
+            </div>
+            <div class="event-message">Fetched 12 articles from Finnhub. 3 classified as high-impact, 5 medium, 4 noise filtered.</div>
+          </div>
+
+          <div class="event-card">
+            <div class="event-header">
+              <span class="event-icon">&#128200;</span>
+              <span class="event-stage-label">Data Ingestion</span>
+              <span class="event-time">09:10:20</span>
+            </div>
+            <div class="event-message">Market data loaded. RSI(14): 62.3 | MACD: expanding | Price above 200-SMA (1.0820)</div>
+          </div>
+
+          <div class="agent-block">
+            <div class="agent-block-header">
+              <span class="agent-name">Technical Analysis Agent</span>
+              <span class="agent-model">claude-sonnet &middot; 1,847 tokens</span>
+            </div>
+            <div class="agent-body">EUR/USD breaking above 1.0920 resistance with expanding MACD histogram. Bullish setup confirmed by RSI at 62.3 — momentum without overbought conditions. Historical success at this level: 78%. Setting target at 1.0960 with stop at 1.0850.</div>
+          </div>
+
+          <div class="agent-block" style="border-left-color: var(--warning);">
+            <div class="agent-block-header">
+              <span class="agent-name" style="color: var(--warning);">Fundamental Analysis Agent</span>
+              <span class="agent-model">claude-sonnet &middot; 2,103 tokens</span>
+            </div>
+            <div class="agent-body">Disagree with bullish assessment. ECB rate decision Thursday carries significant dovish pivot risk. PMI at 50.5 signals stagnation. HICP revised up to 2.6% creates policy dilemma. Macro headwinds likely to override the technical breakout in the near term.</div>
+          </div>
+
+          <div class="delib-block">
+            <div class="agent-block-header">
+              <span class="delib-label">Deliberation Round 1</span>
+              <span class="delib-round">Quality Agent &rarr; TA Agent</span>
+            </div>
+            <div class="agent-body" style="color: var(--purple);">FA analysis shows bearish macro headwinds from ECB and weakening PMI. How does your bullish breakout pattern hold against 3 prior ECB events at similar levels?</div>
+          </div>
+
+          <div class="agent-block">
+            <div class="agent-block-header">
+              <span class="agent-name">TA Agent Response</span>
+              <span class="agent-model">round 1 &middot; 943 tokens</span>
+            </div>
+            <div class="agent-body">The breakout pattern at 1.0920 has held through 3 prior ECB events (Jun 2025, Sep 2025, Dec 2025). However, acknowledging the macro risk. Adjusting: target to 1.0960 with tighter stop at 1.0880. Recommending dual-scenario framing.</div>
+          </div>
+
+          <div class="delib-block">
+            <div class="agent-block-header">
+              <span class="delib-label">Deliberation Round 2</span>
+              <span class="delib-round">Quality Agent &rarr; FA Agent</span>
+            </div>
+            <div class="agent-body" style="color: var(--purple);">TA identifies the breakout held through 3 prior ECB events with 78% historical success. Does current macro data invalidate this pattern, or can we frame as cautiously bullish with ECB risk caveat?</div>
+          </div>
+
+          <div class="hitl-block" style="border-color: var(--accent);">
+            <div class="hitl-icon">&#9881;</div>
+            <div class="hitl-title" style="color: var(--accent);">Quality Arbitration in Progress</div>
+            <div class="hitl-subtitle">Waiting for FA Agent response to deliberation round 2...</div>
+            <div style="margin-top: var(--sp-3);">
+              <span class="status-pill running" style="font-size: 12px;"><span class="dot"></span> Streaming</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="pipeline-detail">
+          <div class="detail-section">
+            <div class="detail-label">Run Info</div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Run ID</span>
+              <span class="detail-metric-val">#847</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Trigger</span>
+              <span class="detail-metric-val">Scheduled</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Instrument</span>
+              <span class="detail-metric-val">EURUSD</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Jurisdiction</span>
+              <span class="detail-metric-val">MiFID II</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Languages</span>
+              <span class="detail-metric-val">EN, ES, ZH</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">Agent Consensus</div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">TA Outlook</span>
+              <span class="detail-metric-val text-success">Bullish</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">FA Outlook</span>
+              <span class="detail-metric-val text-danger">Bearish</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Divergence</span>
+              <span class="detail-metric-val text-warning">Significant</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Delib. Rounds</span>
+              <span class="detail-metric-val">2 / 3</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">Cost Tracking</div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Input tokens</span>
+              <span class="detail-metric-val">12,847</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Output tokens</span>
+              <span class="detail-metric-val">4,893</span>
+            </div>
+            <div class="detail-metric">
+              <span class="detail-metric-key">Est. cost</span>
+              <span class="detail-metric-val">$0.84</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">Price Chart</div>
+            <div class="detail-chart-placeholder">
+              TradingView Lightweight Charts
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 4: REPORT VIEWER
+     ══════════════════════════════════════════════ -->
+<div id="screen-report" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">
+        <h1>Fin<span>Flow</span></h1>
+        <span class="topbar-tenant">Tier1FX</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-time">27 Mar 2026</span>
+        <div class="topbar-avatar">AG</div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Overview</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9632;</span> Dashboard</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9654;</span> Pipeline</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">&#9783;</span> Reports</div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="report-layout">
+        <div class="report-toolbar">
+          <div class="report-toolbar-left">
+            <div class="level-tabs">
+              <button class="level-tab">Beginner</button>
+              <button class="level-tab active">Intermediate</button>
+              <button class="level-tab">Professional</button>
+            </div>
+            <div class="lang-selector">
+              <span class="lang-flag active">EN</span>
+              <span class="lang-flag">ES</span>
+              <span class="lang-flag">ZH</span>
+            </div>
+          </div>
+          <div class="report-toolbar-right">
+            <button class="btn-outline">PDF</button>
+            <button class="btn-outline">Share</button>
+          </div>
+        </div>
+
+        <div class="compliance-bar">
+          <span class="compliance-badge passed">&#10003; Compliance Approved</span>
+          <span style="font-size:12px;color:var(--text-muted)">3 modifications applied, audit trail recorded</span>
+          <span class="compliance-jurisdiction">MiFID II &middot; EU</span>
+        </div>
+
+        <div class="report-hero">
+          <div class="report-kicker">EUR/USD Analysis &middot; March 27, 2026</div>
+          <div class="report-title">Cautiously Bullish with ECB Risk Caveat</div>
+          <div class="report-meta">
+            <span class="report-outlook bullish">&#9650; Bullish Bias</span>
+            <span>Confidence: <span class="mono">72%</span></span>
+            <span>Run <span class="mono">#847</span></span>
+          </div>
+        </div>
+
+        <div class="report-chart">
+          <div style="position:relative;z-index:1">
+            <div style="font-size:14px;color:var(--text-secondary);margin-bottom:4px">EUR/USD Daily</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Interactive TradingView Lightweight Chart</div>
+          </div>
+        </div>
+
+        <div class="report-section">
+          <div class="report-section-title">Technical Overview</div>
+          <div class="report-text">
+            EUR/USD maintains bullish structure above the 200-SMA (1.0820). RSI at 62 shows momentum without overbought conditions. Price is testing key resistance at 1.0920 — the March high and 78.6% Fibonacci retracement level. MACD histogram is expanding, confirming directional momentum.
+          </div>
+        </div>
+
+        <div class="report-data-grid">
+          <div class="report-data-item">
+            <div class="report-data-label">RSI (14)</div>
+            <div class="report-data-value">62.3</div>
+          </div>
+          <div class="report-data-item">
+            <div class="report-data-label">MACD</div>
+            <div class="report-data-value text-success">Expanding</div>
+          </div>
+          <div class="report-data-item">
+            <div class="report-data-label">200-SMA</div>
+            <div class="report-data-value">1.0820</div>
+          </div>
+          <div class="report-data-item">
+            <div class="report-data-label">ATR (14)</div>
+            <div class="report-data-value">0.0068</div>
+          </div>
+        </div>
+
+        <div class="report-section" style="margin-top:var(--sp-6)">
+          <div class="report-section-title">Fundamental Context</div>
+          <div class="report-text">
+            The ECB rate decision on Thursday introduces significant uncertainty. Markets are pricing a dovish pivot with the terminal rate implied at 2.25%. PMI at 50.5 signals economic stagnation, while HICP revised upward to 2.6% creates a policy dilemma. The dual-scenario framing reflects this tension between technical momentum and macro headwinds.
+          </div>
+        </div>
+
+        <div class="report-section">
+          <div class="report-section-title">Scenarios</div>
+          <div class="report-data-grid">
+            <div class="report-data-item" style="border-left: 3px solid var(--success);">
+              <div class="report-data-label">Bullish Case (55%)</div>
+              <div class="report-data-value text-success" style="font-size:14px">Target: 1.0960</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Breakout holds through ECB, targets 78.6% Fib</div>
+            </div>
+            <div class="report-data-item" style="border-left: 3px solid var(--danger);">
+              <div class="report-data-label">Bearish Case (45%)</div>
+              <div class="report-data-value text-danger" style="font-size:14px">Target: 1.0780</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Dovish ECB triggers pullback to 50-SMA</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:var(--sp-8);padding:var(--sp-4);background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);font-size:11px;color:var(--text-muted);line-height:1.7">
+          <strong style="color:var(--text-secondary)">Disclaimer:</strong> This analysis is provided for informational purposes only and does not constitute investment advice. Past performance is not indicative of future results. Trading forex carries a high level of risk. MiFID II Art. 44 compliant.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 5: HITL APPROVAL
+     ══════════════════════════════════════════════ -->
+<div id="screen-approval" class="screen">
+  <div class="approval-screen">
+    <div class="approval-card">
+      <div class="approval-header">
+        <div class="approval-checkpoint">Compliance Review</div>
+        <div class="approval-title">EUR/USD Analysis</div>
+        <div class="approval-subtitle">MiFID II compliance review completed. 3 modifications applied.</div>
+      </div>
+
+      <div class="approval-summary">
+        <div class="approval-summary-row">
+          <span class="approval-summary-key">Instrument</span>
+          <span class="approval-summary-val">EUR/USD</span>
+        </div>
+        <div class="approval-summary-row">
+          <span class="approval-summary-key">Outlook</span>
+          <span class="approval-summary-val text-success">Cautiously Bullish</span>
+        </div>
+        <div class="approval-summary-row">
+          <span class="approval-summary-key">Confidence</span>
+          <span class="approval-summary-val">72%</span>
+        </div>
+        <div class="approval-summary-row">
+          <span class="approval-summary-key">Jurisdiction</span>
+          <span class="approval-summary-val">MiFID II (EU)</span>
+        </div>
+        <div class="approval-summary-row">
+          <span class="approval-summary-key">Languages</span>
+          <span class="approval-summary-val">EN, ES, ZH</span>
+        </div>
+      </div>
+
+      <div class="approval-flags">
+        <div class="approval-flags-header">Compliance Modifications</div>
+        <div class="flag-item fixed">
+          <span class="flag-icon">&#10003;</span>
+          <span class="flag-text"><strong>Fixed:</strong> "will reach 1.0960" rewritten to "may reach 1.0960" — removed definitive language per MiFID II Art. 44</span>
+        </div>
+        <div class="flag-item fixed">
+          <span class="flag-icon">&#10003;</span>
+          <span class="flag-text"><strong>Fixed:</strong> Added past performance disclaimer to Technical Overview section</span>
+        </div>
+        <div class="flag-item fixed">
+          <span class="flag-icon">&#10003;</span>
+          <span class="flag-text"><strong>Fixed:</strong> Added risk warning for leveraged trading products</span>
+        </div>
+        <div class="flag-item info">
+          <span class="flag-icon">&#9432;</span>
+          <span class="flag-text"><strong>Note:</strong> Dual-scenario framing meets balanced presentation requirements</span>
+        </div>
+      </div>
+
+      <div class="approval-actions">
+        <button class="approval-btn approve">Approve &amp; Continue</button>
+        <button class="approval-btn correct">Request Corrections</button>
+        <button class="approval-btn reject">Reject</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 6: GLOSSARY MANAGER
+     ══════════════════════════════════════════════ -->
+<div id="screen-glossary" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand"><h1>Fin<span>Flow</span></h1><span class="topbar-tenant">Tier1FX</span></div>
+      <div class="topbar-right"><span class="topbar-time">27 Mar 2026</span><div class="topbar-avatar">AG</div></div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Configuration</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#8960;</span> Instruments</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">&#9776;</span> Glossary</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9881;</span> Languages</div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Glossary Manager</div>
+          <div class="page-subtitle">Client-specific terminology &middot; OANDA profile</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-outline">Import CSV</button>
+          <button class="btn-accent">+ Add Term</button>
+        </div>
+      </div>
+
+      <div class="glossary-toolbar">
+        <input class="search-input" placeholder="Search terms...">
+        <div class="level-tabs">
+          <button class="level-tab active">All</button>
+          <button class="level-tab">Spanish</button>
+          <button class="level-tab">Chinese</button>
+          <button class="level-tab">Arabic</button>
+        </div>
+      </div>
+
+      <div class="glossary-table">
+        <table>
+          <thead>
+            <tr>
+              <th>English Term</th>
+              <th>Spanish</th>
+              <th>Source</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500;font-family:var(--font-mono)">margin call</td>
+              <td style="font-family:var(--font-mono)">llamada de margen</td>
+              <td><span class="correction-badge human">Human corrected</span></td>
+              <td class="mono text-muted">2026-03-25</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500;font-family:var(--font-mono)">spread</td>
+              <td style="font-family:var(--font-mono)">diferencial</td>
+              <td><span class="correction-badge ai">AI generated</span></td>
+              <td class="mono text-muted">2026-03-20</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500;font-family:var(--font-mono)">pip</td>
+              <td style="font-family:var(--font-mono)">pip</td>
+              <td><span class="correction-badge human">Human corrected</span></td>
+              <td class="mono text-muted">2026-03-18</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500;font-family:var(--font-mono)">leverage</td>
+              <td style="font-family:var(--font-mono)">apalancamiento</td>
+              <td><span class="correction-badge ai">AI generated</span></td>
+              <td class="mono text-muted">2026-03-15</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500;font-family:var(--font-mono)">stop loss</td>
+              <td style="font-family:var(--font-mono)">stop loss</td>
+              <td><span class="correction-badge human">Human corrected</span></td>
+              <td class="mono text-muted">2026-03-12</td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500;font-family:var(--font-mono)">moving average</td>
+              <td style="font-family:var(--font-mono)">media m&oacute;vil</td>
+              <td><span class="correction-badge ai">AI generated</span></td>
+              <td class="mono text-muted">2026-03-10</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 7: ONBOARDING WIZARD
+     ══════════════════════════════════════════════ -->
+<div id="screen-onboarding" class="screen">
+  <div class="onboarding-screen">
+    <div class="onboarding-card">
+      <div class="onboarding-progress">
+        <div class="onboarding-step">
+          <div class="step-dot complete">&#10003;</div>
+          <div class="step-line complete"></div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-dot complete">&#10003;</div>
+          <div class="step-line complete"></div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-dot current">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-dot">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-dot">5</div>
+        </div>
+      </div>
+
+      <div class="onboarding-content">
+        <div class="onboarding-title">Configure Instruments</div>
+        <div class="onboarding-desc">Select the instruments you want FinFlow to analyze and generate reports for.</div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+          <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--accent-subtle);border:1px solid rgba(91,168,160,0.2);border-radius:var(--radius-md)">
+            <div style="width:20px;height:20px;border-radius:4px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--bg-app)">&#10003;</div>
+            <div>
+              <div style="font-weight:500;font-size:13px">EUR/USD</div>
+              <div style="font-size:11px;color:var(--text-muted)">Forex &middot; MiFID II</div>
+            </div>
+            <span class="mono" style="margin-left:auto;font-size:11px;color:var(--text-muted)">1.0847</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--accent-subtle);border:1px solid rgba(91,168,160,0.2);border-radius:var(--radius-md)">
+            <div style="width:20px;height:20px;border-radius:4px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--bg-app)">&#10003;</div>
+            <div>
+              <div style="font-weight:500;font-size:13px">Gold (XAU/USD)</div>
+              <div style="font-size:11px;color:var(--text-muted)">Commodity &middot; MiFID II</div>
+            </div>
+            <span class="mono" style="margin-left:auto;font-size:11px;color:var(--text-muted)">2,178.40</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--bg-app);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;opacity:0.6">
+            <div style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border-light);"></div>
+            <div>
+              <div style="font-weight:500;font-size:13px">Crude Oil (WTI)</div>
+              <div style="font-size:11px;color:var(--text-muted)">Commodity</div>
+            </div>
+            <span class="mono" style="margin-left:auto;font-size:11px;color:var(--text-muted)">78.24</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--bg-app);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;opacity:0.6">
+            <div style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border-light);"></div>
+            <div>
+              <div style="font-weight:500;font-size:13px">GBP/USD</div>
+              <div style="font-size:11px;color:var(--text-muted)">Forex</div>
+            </div>
+            <span class="mono" style="margin-left:auto;font-size:11px;color:var(--text-muted)">1.2634</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--bg-app);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;opacity:0.6">
+            <div style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border-light);"></div>
+            <div>
+              <div style="font-weight:500;font-size:13px">BTC/USD</div>
+              <div style="font-size:11px;color:var(--text-muted)">Crypto</div>
+            </div>
+            <span class="mono" style="margin-left:auto;font-size:11px;color:var(--text-muted)">87,450</span>
+          </div>
+        </div>
+
+        <div class="brand-preview">
+          <div class="brand-preview-label">Plan Limit: 5 instruments (Automated tier)</div>
+          <div style="display:flex;align-items:center;gap:var(--sp-3);margin-top:var(--sp-2)">
+            <div style="flex:1;height:4px;background:var(--bg-raised);border-radius:2px;overflow:hidden">
+              <div style="width:40%;height:100%;background:var(--accent);border-radius:2px"></div>
+            </div>
+            <span class="mono" style="font-size:11px;color:var(--text-muted)">2 / 5</span>
+          </div>
+        </div>
+
+        <div class="onboarding-nav">
+          <button class="btn-outline">&larr; Back</button>
+          <button class="btn-primary" style="width:auto;padding:var(--sp-2) var(--sp-6)">Continue &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 8: ADMIN PANEL
+     ══════════════════════════════════════════════ -->
+<div id="screen-admin" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand"><h1>Fin<span>Flow</span></h1><span class="topbar-tenant" style="color:var(--accent)">Admin</span></div>
+      <div class="topbar-right"><span class="topbar-time">27 Mar 2026</span><div class="topbar-avatar">AG</div></div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Admin</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">&#9632;</span> Overview</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9783;</span> Clients</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#9654;</span> Pipelines</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#128200;</span> Analytics</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#128176;</span> Billing</div>
+        <div class="sidebar-item"><span class="sidebar-icon">&#128274;</span> Audit Log</div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Admin Overview</div>
+          <div class="page-subtitle">Platform-wide metrics and client management</div>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Active Clients</div>
+          <div class="kpi-value">8</div>
+          <div class="kpi-change up">+2 this month</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Reports This Week</div>
+          <div class="kpi-value">247</div>
+          <div class="kpi-change up">+18% vs last week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Total LLM Cost</div>
+          <div class="kpi-value text-mono">$412</div>
+          <div class="kpi-change">$1.67 avg/report</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Automation</div>
+          <div class="kpi-value text-accent">64%</div>
+          <div class="kpi-change up">+12% vs last month</div>
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <div class="admin-card-title">Active Clients</div>
+          <div class="client-row">
+            <div class="client-avatar">T1</div>
+            <div class="client-info">
+              <div class="client-name">Tier1FX</div>
+              <div class="client-tier">Enterprise &middot; 15 instruments</div>
+            </div>
+            <span class="status-pill completed"><span class="dot"></span> Active</span>
+          </div>
+          <div class="client-row">
+            <div class="client-avatar">OA</div>
+            <div class="client-info">
+              <div class="client-name">OANDA</div>
+              <div class="client-tier">Hybrid &middot; 20 instruments</div>
+            </div>
+            <span class="status-pill completed"><span class="dot"></span> Active</span>
+          </div>
+          <div class="client-row">
+            <div class="client-avatar">AL</div>
+            <div class="client-info">
+              <div class="client-name">Alpari</div>
+              <div class="client-tier">Hybrid &middot; 10 instruments</div>
+            </div>
+            <span class="status-pill running"><span class="dot"></span> Onboarding</span>
+          </div>
+          <div class="client-row">
+            <div class="client-avatar">TM</div>
+            <div class="client-info">
+              <div class="client-name">ThinkMarkets</div>
+              <div class="client-tier">Automated &middot; 5 instruments</div>
+            </div>
+            <span class="status-pill pending"><span class="dot"></span> Pilot</span>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">Pipeline Health</div>
+          <div class="detail-metric">
+            <span class="detail-metric-key">Success Rate (7d)</span>
+            <span class="detail-metric-val text-success">98.2%</span>
+          </div>
+          <div class="detail-metric">
+            <span class="detail-metric-key">Avg Duration</span>
+            <span class="detail-metric-val">16m 42s</span>
+          </div>
+          <div class="detail-metric">
+            <span class="detail-metric-key">Failed Runs (7d)</span>
+            <span class="detail-metric-val text-danger">3</span>
+          </div>
+          <div class="detail-metric">
+            <span class="detail-metric-key">HITL Avg Response</span>
+            <span class="detail-metric-val">4m 18s</span>
+          </div>
+          <div class="detail-metric">
+            <span class="detail-metric-key">Active Runs Now</span>
+            <span class="detail-metric-val text-accent">5</span>
+          </div>
+          <div class="detail-metric">
+            <span class="detail-metric-key">Queue Depth</span>
+            <span class="detail-metric-val">12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 9: ANIMATION DEMOS
+     ══════════════════════════════════════════════ -->
+<div id="screen-animations" class="screen">
+  <div style="padding:64px var(--sp-6) var(--sp-6);">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Animation Concepts</div>
+        <div class="page-subtitle">These CSS animations represent what Framer Motion + GSAP will deliver in the real app</div>
+      </div>
+    </div>
+
+    <div class="animation-grid">
+      <div class="anim-demo">
+        <div class="anim-demo-title">Pipeline Flow &mdash; Framer Motion</div>
+        <div class="flow-nodes">
+          <div class="flow-node">News</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node">TA</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node">FA</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node">QA</div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-node">Pub</div>
+        </div>
+      </div>
+
+      <div class="anim-demo">
+        <div class="anim-demo-title">Data Streaming &mdash; GSAP Timeline</div>
+        <div class="stream-lines">
+          <div class="stream-line"></div>
+          <div class="stream-line"></div>
+          <div class="stream-line"></div>
+          <div class="stream-line"></div>
+          <div class="stream-line"></div>
+        </div>
+      </div>
+
+      <div class="anim-demo">
+        <div class="anim-demo-title">Token Counter &mdash; Magic UI Number Ticker</div>
+        <div class="counter-display">
+          <div class="counter-value">
+            <span class="digit">1</span><span class="digit">2</span>,<span class="digit">8</span><span class="digit">4</span><span class="digit">7</span>
+            <span style="font-size:14px;color:var(--text-muted);margin-left:4px">tokens</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="anim-demo">
+        <div class="anim-demo-title">HITL Awaiting &mdash; Approval Pulse</div>
+        <div class="pulse-circle">
+          <div class="pulse-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:var(--sp-8);background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-6);">
+      <div class="section-title" style="margin-bottom:var(--sp-4)">Recommended Animation Stack</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:var(--sp-2)">Framer Motion</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">
+            Page transitions, card animations, AnimatePresence for mount/unmount, layout animations, gesture handlers. ~35KB.
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--warning);margin-bottom:var(--sp-2)">GSAP</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">
+            Complex timelines for pipeline visualization, scroll-driven sequences, data streaming effects. ~28KB.
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:var(--sp-2)">Accent Libraries</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">
+            Aceternity UI spotlight cards, Magic UI number tickers, View Transitions API for route changes. Cherry-picked only.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     NAVIGATION SCRIPT
+     ══════════════════════════════════════════════ -->
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
