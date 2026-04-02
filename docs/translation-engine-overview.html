@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinFlow — Translation Quality Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-root: #060608;
+  --bg-surface: #0f0f14;
+  --bg-raised: #14141a;
+  --bg-card: #0c0c11;
+  --border: rgba(255,255,255,0.06);
+  --border-light: rgba(255,255,255,0.10);
+  --text-primary: #e8e6e3;
+  --text-secondary: #8a8a8e;
+  --text-muted: #4a4a50;
+  --accent: #5ba8a0;
+  --accent-muted: rgba(91,168,160,0.7);
+  --accent-subtle: rgba(91,168,160,0.12);
+  --accent-glow: rgba(91,168,160,0.06);
+  --success: #4a9a6a;
+  --success-subtle: rgba(74,154,106,0.12);
+  --danger: #c96b6b;
+  --danger-subtle: rgba(201,107,107,0.12);
+  --warning: #c9a85b;
+  --warning-subtle: rgba(201,168,91,0.12);
+  --info: #6b8fc9;
+  --purple: #9b8ac9;
+  --purple-subtle: rgba(155,138,201,0.12);
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg-root);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.7;
+  scroll-behavior: smooth;
+}
+
+body { min-height: 100vh; }
+
+/* ── Layout ── */
+.container {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* ── Fade-in Animation ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fadeUp 0.7s ease forwards;
+}
+
+.fade-in:nth-child(1) { animation-delay: 0.05s; }
+.fade-in:nth-child(2) { animation-delay: 0.12s; }
+.fade-in:nth-child(3) { animation-delay: 0.19s; }
+.fade-in:nth-child(4) { animation-delay: 0.26s; }
+
+/* ── Hero ── */
+.hero {
+  padding: 100px 0 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 400;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.hero h1 span { color: var(--accent); }
+
+.hero-sub {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 660px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+
+.hero-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* ── Sections ── */
+.section {
+  padding: 80px 0;
+  border-top: 1px solid var(--border);
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.section h2 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 40px;
+}
+
+.section p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  max-width: 720px;
+}
+
+.section p strong { color: var(--text-primary); }
+
+/* ── Cards ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin: 32px 0;
+}
+
+.card-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  transition: all 0.25s ease;
+}
+
+.card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+}
+
+.card-number {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0;
+  max-width: none;
+}
+
+.card .metric-list {
+  list-style: none;
+  margin-top: 12px;
+}
+
+.card .metric-list li {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+}
+
+.card .metric-list li:last-child { border-bottom: none; }
+
+.card .metric-list li span.threshold {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Pipeline Diagram ── */
+.pipeline-diagram {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 32px;
+  margin: 40px 0;
+  overflow-x: auto;
+}
+
+.pipeline-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.pipeline-svg {
+  width: 100%;
+  display: block;
+}
+
+/* ── Scorecard ── */
+.scorecard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 40px 0;
+}
+
+.scorecard-header {
+  background: var(--bg-raised);
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scorecard-header h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scorecard-header .scorecard-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.scorecard-body {
+  padding: 28px;
+}
+
+.scorecard-category {
+  margin-bottom: 28px;
+}
+
+.scorecard-category:last-child { margin-bottom: 0; }
+
+.scorecard-category-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 1fr 200px 70px;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.metric-row:last-child { border-bottom: none; }
+
+.metric-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.metric-bar-track {
+  height: 6px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.metric-bar-fill.pass { background: var(--accent); }
+.metric-bar-fill.fail { background: var(--danger); }
+
+.metric-bar-threshold {
+  position: absolute;
+  top: -3px;
+  height: 12px;
+  width: 1px;
+  background: var(--text-muted);
+}
+
+.metric-score {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+}
+
+.metric-score.pass { color: var(--accent); }
+.metric-score.fail { color: var(--danger); }
+
+.scorecard-aggregate {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scorecard-aggregate .aggregate-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scorecard-aggregate .aggregate-score {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.scorecard-verdict {
+  margin-top: 16px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.scorecard-verdict.revision {
+  background: var(--danger-subtle);
+  border: 1px solid rgba(201,107,107,0.2);
+  color: var(--danger);
+}
+
+.scorecard-verdict.passed {
+  background: var(--success-subtle);
+  border: 1px solid rgba(74,154,106,0.2);
+  color: var(--success);
+}
+
+/* ── Callout ── */
+.callout {
+  background: var(--accent-subtle);
+  border: 1px solid rgba(91,168,160,0.2);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin: 40px 0;
+}
+
+.callout p {
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.7;
+  margin-bottom: 0;
+  max-width: none;
+}
+
+.callout p strong { color: var(--text-primary); }
+
+/* ── VS Grid ── */
+.vs-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 24px;
+  align-items: start;
+  margin: 32px 0;
+}
+
+.vs-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.vs-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.vs-card.before h4 { color: var(--text-muted); }
+.vs-card.after h4 { color: var(--accent); }
+
+.vs-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding-top: 28px;
+}
+
+.vs-item {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  display: flex;
+  align-items: start;
+  gap: 8px;
+}
+
+.vs-item::before {
+  content: '\00B7';
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Variant Table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 13px;
+}
+
+thead th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+tbody tr:hover td {
+  background: var(--accent-glow);
+}
+
+tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ── Learning Loop ── */
+.loop-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin: 32px 0;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.loop-step {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.loop-step .step-number {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.loop-step h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.loop-step p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0;
+  max-width: none;
+}
+
+/* ── Reduction Chart ── */
+.reduction-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  height: 200px;
+  padding: 20px 0;
+  margin: 32px 0;
+}
+
+.reduction-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.reduction-bar .bar {
+  width: 100%;
+  max-width: 64px;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  transition: height 0.8s ease;
+}
+
+.reduction-bar .bar-value {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.reduction-bar .bar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+/* ── Footer ── */
+.footer {
+  padding: 60px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer p {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: none;
+}
+
+.footer a {
+  color: var(--accent-muted);
+  text-decoration: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 50px; }
+  .hero h1 { font-size: 32px; }
+  .section { padding: 50px 0; }
+  .card-grid, .card-grid-4 { grid-template-columns: 1fr; }
+  .vs-grid { grid-template-columns: 1fr; }
+  .vs-divider { padding: 0; }
+  .container { padding: 0 20px; }
+  .loop-steps { grid-template-columns: 1fr 1fr; }
+  .metric-row { grid-template-columns: 1fr 120px 60px; }
+  .scorecard-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .reduction-chart { gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .loop-steps { grid-template-columns: 1fr; }
+  .metric-row { grid-template-columns: 1fr 60px; }
+  .metric-bar-track { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<div class="container">
+  <div class="hero">
+    <div class="hero-label">FinFlow Translation Engine</div>
+    <h1>Objective <span>Quality</span> for Financial Translation</h1>
+    <p class="hero-sub">
+      13 measurable quality metrics. Four specialist correction layers.
+      One standard: every translation either passes or it does not.
+      No opinions. No inconsistency. No guesswork.
+    </p>
+    <div class="hero-meta">WordwideFX &mdash; April 2026 &mdash; Confidential</div>
+  </div>
+</div>
+
+<!-- ═══════════════ THE PROBLEM ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <h2>Financial translation quality<br>is an opinion &mdash; until now</h2>
+
+    <p>
+      Ask two expert financial translators to translate the same market analysis, and you will receive
+      two different documents. Both may be competent. Neither may be wrong. But they will differ in terminology
+      choices, tone, sentence structure, and regional conventions.
+    </p>
+    <p>
+      For institutions that publish across multiple languages, this creates a compounding problem:
+      <strong>inconsistent brand voice, variable terminology, uneven compliance adherence, and no way
+      to measure whether any given translation meets the organization's standard.</strong>
+    </p>
+    <p>
+      Traditional quality assurance relies on human reviewers whose assessments vary by reviewer,
+      by day, and by workload. There is no shared definition of "good enough" and no scalable mechanism
+      to enforce it.
+    </p>
+
+    <div class="vs-grid">
+      <div class="vs-card before">
+        <h4>Traditional approach</h4>
+        <div class="vs-item">Quality depends on the individual translator</div>
+        <div class="vs-item">Reviewer standards vary person to person</div>
+        <div class="vs-item">Brand terminology drifts over time</div>
+        <div class="vs-item">Regional variants mixed inconsistently</div>
+        <div class="vs-item">No audit trail for quality decisions</div>
+        <div class="vs-item">Scaling means accepting lower consistency</div>
+      </div>
+      <div class="vs-divider">vs</div>
+      <div class="vs-card after">
+        <h4>FinFlow Translation Engine</h4>
+        <div class="vs-item">Every translation scored against 13 objective metrics</div>
+        <div class="vs-item">Pass/fail thresholds configured per client</div>
+        <div class="vs-item">Terminology enforced from a client-specific glossary</div>
+        <div class="vs-item">Regional variant tracked and validated per document</div>
+        <div class="vs-item">Full audit trail for every quality decision</div>
+        <div class="vs-item">Quality improves as volume increases</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ THE SOLUTION ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">The Solution</div>
+    <h2>13 metrics. Objective scoring. <br><span style="color:var(--accent)">Pass or fail.</span></h2>
+
+    <p>
+      The FinFlow Translation Engine decomposes translation quality into <strong>13 discrete, measurable metrics</strong>,
+      each scored from 0 to 100. Every metric has a minimum threshold, and every threshold is configurable
+      per client, per language. A document passes when every metric meets its threshold and the aggregate
+      score clears the overall bar.
+    </p>
+    <p>
+      This transforms translation quality from a subjective judgment call into a verifiable, repeatable process.
+      The same document, scored against the same profile, produces the same result every time &mdash; regardless
+      of who submitted it or when.
+    </p>
+
+    <div class="callout">
+      <p>
+        The question is no longer "Is this a good translation?" It becomes:
+        <strong>"Does this translation meet OANDA's quality standard for Spanish (Spain) institutional content?"</strong>
+        And the answer is a number.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FOUR DIMENSIONS ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">Quality Dimensions</div>
+    <h2>Four pillars of translation quality</h2>
+
+    <p>
+      Each metric falls into one of four categories. Together, they capture the full surface area
+      of what makes a financial translation correct, consistent, and client-appropriate.
+    </p>
+
+    <div class="card-grid" style="margin-top:40px;">
+
+      <!-- Terminology Accuracy -->
+      <div class="card fade-in">
+        <span class="card-number">01</span>
+        <h4>Terminology Accuracy</h4>
+        <p>
+          Are the right financial terms used? Consistently? Every time?
+          The engine validates each term against the client's approved glossary,
+          flags inconsistencies within a document, and catches terms left untranslated
+          without justification.
+        </p>
+        <ul class="metric-list">
+          <li>Glossary Compliance <span class="threshold">min. 95</span></li>
+          <li>Term Consistency <span class="threshold">min. 90</span></li>
+          <li>Untranslated Terms <span class="threshold">min. 95</span></li>
+        </ul>
+      </div>
+
+      <!-- Style & Voice -->
+      <div class="card fade-in">
+        <span class="card-number">02</span>
+        <h4>Style &amp; Voice</h4>
+        <p>
+          Does the translation sound like your brand? The engine measures
+          formality register, sentence structure, passive/active voice balance,
+          and adherence to explicit brand guidelines &mdash; matching the voice your
+          clients already know.
+        </p>
+        <ul class="metric-list">
+          <li>Formality Level <span class="threshold">min. 85</span></li>
+          <li>Sentence Structure <span class="threshold">min. 80</span></li>
+          <li>Passive Voice Balance <span class="threshold">min. 80</span></li>
+          <li>Brand Voice Adherence <span class="threshold">min. 95</span></li>
+        </ul>
+      </div>
+
+      <!-- Structural Fidelity -->
+      <div class="card fade-in">
+        <span class="card-number">03</span>
+        <h4>Structural Fidelity</h4>
+        <p>
+          Numbers, formatting, and document structure must survive translation intact.
+          A misplaced decimal in a price target or a dropped heading in a compliance
+          document is not a style issue &mdash; it is a material error. Numerical
+          accuracy requires a perfect score.
+        </p>
+        <ul class="metric-list">
+          <li>Formatting Preservation <span class="threshold">min. 90</span></li>
+          <li>Numerical Accuracy <span class="threshold">min. 100</span></li>
+          <li>Paragraph Alignment <span class="threshold">min. 85</span></li>
+        </ul>
+      </div>
+
+      <!-- Linguistic Quality -->
+      <div class="card fade-in">
+        <span class="card-number">04</span>
+        <h4>Linguistic Quality</h4>
+        <p>
+          Beyond correctness: does it read naturally? Does it preserve the full meaning
+          of the original? Is the regional variant consistent &mdash; not mixing European
+          and Latin American conventions in the same document?
+        </p>
+        <ul class="metric-list">
+          <li>Fluency <span class="threshold">min. 85</span></li>
+          <li>Meaning Preservation <span class="threshold">min. 90</span></li>
+          <li>Regional Variant Correctness <span class="threshold">min. 90</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MULTI-AGENT PIPELINE ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">Quality Pipeline</div>
+    <h2>The multi-layer correction architecture</h2>
+
+    <p>
+      When a translation does not meet its quality thresholds, the system does not simply retry.
+      Retrying with the same approach produces the same result. Instead, the FinFlow engine routes
+      failed metrics to <strong>domain-specific correction specialists</strong> &mdash; each one
+      focused exclusively on its area of expertise.
+    </p>
+    <p>
+      Corrections compound sequentially: each specialist builds on the output of the one before it,
+      and each is explicitly instructed to preserve corrections outside its domain. A Quality Arbiter
+      orchestrates the sequence, detects conflicts, and decides when to escalate to human review.
+    </p>
+
+    <div class="pipeline-diagram">
+      <div class="pipeline-title">Translation Quality Pipeline</div>
+      <svg class="pipeline-svg" viewBox="0 0 820 680" xmlns="http://www.w3.org/2000/svg">
+        <!-- Definitions -->
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <linearGradient id="connectorGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5ba8a0" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#5ba8a0" stop-opacity="0.1"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Step 1: Translation Agent -->
+        <rect x="280" y="20" width="260" height="52" rx="10" fill="#14141a" stroke="rgba(91,168,160,0.5)" stroke-width="1"/>
+        <text x="410" y="42" text-anchor="middle" fill="#5ba8a0" font-family="Inter, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5">TRANSLATION AGENT</text>
+        <text x="410" y="58" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="10">Initial translation with full client profile</text>
+
+        <!-- Arrow 1 -->
+        <line x1="410" y1="72" x2="410" y2="108" stroke="#5ba8a0" stroke-opacity="0.3" stroke-width="1"/>
+        <polygon points="405,105 410,114 415,105" fill="#5ba8a0" fill-opacity="0.4"/>
+
+        <!-- Step 2: Scoring Agent -->
+        <rect x="280" y="114" width="260" height="52" rx="10" fill="#14141a" stroke="rgba(155,138,201,0.5)" stroke-width="1"/>
+        <text x="410" y="136" text-anchor="middle" fill="#9b8ac9" font-family="Inter, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5">SCORING ENGINE</text>
+        <text x="410" y="152" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="10">Evaluates all 13 quality metrics</text>
+
+        <!-- Arrow 2 -->
+        <line x1="410" y1="166" x2="410" y2="202" stroke="#9b8ac9" stroke-opacity="0.3" stroke-width="1"/>
+        <polygon points="405,199 410,208 415,199" fill="#9b8ac9" fill-opacity="0.4"/>
+
+        <!-- Gate -->
+        <rect x="330" y="208" width="160" height="44" rx="8" fill="#0c0c11" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+        <text x="410" y="234" text-anchor="middle" fill="#e8e6e3" font-family="Inter, sans-serif" font-size="12" font-weight="600">All metrics pass?</text>
+
+        <!-- YES branch (right) -->
+        <line x1="490" y1="230" x2="600" y2="230" stroke="rgba(74,154,106,0.4)" stroke-width="1"/>
+        <polygon points="597,225 606,230 597,235" fill="#4a9a6a" fill-opacity="0.5"/>
+        <rect x="610" y="210" width="160" height="40" rx="8" fill="rgba(74,154,106,0.08)" stroke="rgba(74,154,106,0.4)" stroke-width="1"/>
+        <text x="690" y="234" text-anchor="middle" fill="#4a9a6a" font-family="Inter, sans-serif" font-size="11" font-weight="600">APPROVED</text>
+        <text x="545" y="222" text-anchor="middle" fill="#4a9a6a" font-family="Inter, sans-serif" font-size="10" font-weight="500">YES</text>
+
+        <!-- NO branch (down) -->
+        <line x1="410" y1="252" x2="410" y2="294" stroke="rgba(201,107,107,0.4)" stroke-width="1"/>
+        <polygon points="405,291 410,300 415,291" fill="#c96b6b" fill-opacity="0.5"/>
+        <text x="424" y="280" fill="#c96b6b" font-family="Inter, sans-serif" font-size="10" font-weight="500">NO</text>
+
+        <!-- Step 3: Quality Arbiter -->
+        <rect x="280" y="300" width="260" height="52" rx="10" fill="#14141a" stroke="rgba(201,168,91,0.5)" stroke-width="1"/>
+        <text x="410" y="322" text-anchor="middle" fill="#c9a85b" font-family="Inter, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5">QUALITY ARBITER</text>
+        <text x="410" y="338" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="10">Routes failures to specialist agents</text>
+
+        <!-- Arrow to specialists -->
+        <line x1="410" y1="352" x2="410" y2="388" stroke="#c9a85b" stroke-opacity="0.3" stroke-width="1"/>
+
+        <!-- Branching lines to 4 specialists -->
+        <line x1="410" y1="388" x2="110" y2="388" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="410" y1="388" x2="710" y2="388" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+        <line x1="110" y1="388" x2="110" y2="408" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="310" y1="388" x2="310" y2="408" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="510" y1="388" x2="510" y2="408" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="710" y1="388" x2="710" y2="408" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+        <!-- Specialist 1: Terminology -->
+        <rect x="35" y="408" width="150" height="68" rx="8" fill="rgba(91,168,160,0.06)" stroke="rgba(91,168,160,0.3)" stroke-width="1"/>
+        <text x="110" y="430" text-anchor="middle" fill="#5ba8a0" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="1">TERMINOLOGY</text>
+        <text x="110" y="446" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Glossary compliance</text>
+        <text x="110" y="458" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Term consistency</text>
+        <text x="110" y="470" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Untranslated terms</text>
+
+        <!-- Specialist 2: Style -->
+        <rect x="235" y="408" width="150" height="68" rx="8" fill="rgba(155,138,201,0.06)" stroke="rgba(155,138,201,0.3)" stroke-width="1"/>
+        <text x="310" y="430" text-anchor="middle" fill="#9b8ac9" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="1">STYLE &amp; VOICE</text>
+        <text x="310" y="446" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Formality &amp; tone</text>
+        <text x="310" y="458" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Sentence structure</text>
+        <text x="310" y="470" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Brand adherence</text>
+
+        <!-- Specialist 3: Structural -->
+        <rect x="435" y="408" width="150" height="68" rx="8" fill="rgba(201,168,91,0.06)" stroke="rgba(201,168,91,0.3)" stroke-width="1"/>
+        <text x="510" y="430" text-anchor="middle" fill="#c9a85b" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="1">STRUCTURAL</text>
+        <text x="510" y="446" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Formatting integrity</text>
+        <text x="510" y="458" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Numerical accuracy</text>
+        <text x="510" y="470" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Paragraph alignment</text>
+
+        <!-- Specialist 4: Linguistic -->
+        <rect x="635" y="408" width="150" height="68" rx="8" fill="rgba(107,143,201,0.06)" stroke="rgba(107,143,201,0.3)" stroke-width="1"/>
+        <text x="710" y="430" text-anchor="middle" fill="#6b8fc9" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="1">LINGUISTIC</text>
+        <text x="710" y="446" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Fluency &amp; flow</text>
+        <text x="710" y="458" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Meaning preservation</text>
+        <text x="710" y="470" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9">Regional correctness</text>
+
+        <!-- Converge lines back -->
+        <line x1="110" y1="476" x2="110" y2="508" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="310" y1="476" x2="310" y2="508" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="510" y1="476" x2="510" y2="508" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="710" y1="476" x2="710" y2="508" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="110" y1="508" x2="710" y2="508" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="410" y1="508" x2="410" y2="536" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+        <polygon points="405,533 410,542 415,533" fill="#9b8ac9" fill-opacity="0.4"/>
+
+        <!-- Re-score -->
+        <rect x="280" y="542" width="260" height="44" rx="10" fill="#14141a" stroke="rgba(155,138,201,0.5)" stroke-width="1"/>
+        <text x="410" y="568" text-anchor="middle" fill="#9b8ac9" font-family="Inter, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5">RE-SCORE</text>
+
+        <!-- Arrow from re-score -->
+        <line x1="410" y1="586" x2="410" y2="618" stroke="#9b8ac9" stroke-opacity="0.3" stroke-width="1"/>
+        <polygon points="405,615 410,624 415,615" fill="#9b8ac9" fill-opacity="0.4"/>
+
+        <!-- Final gate -->
+        <rect x="310" y="624" width="200" height="40" rx="8" fill="#0c0c11" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+        <text x="410" y="648" text-anchor="middle" fill="#e8e6e3" font-family="Inter, sans-serif" font-size="11" font-weight="500">Pass / Retry / Escalate</text>
+
+        <!-- Label: only invoked if needed -->
+        <text x="410" y="12" text-anchor="middle" fill="#4a4a50" font-family="Inter, sans-serif" font-size="9" font-style="italic">Only failed categories trigger their specialist. Passing categories are untouched.</text>
+      </svg>
+    </div>
+
+    <div class="callout">
+      <p>
+        Maximum two correction rounds per document. If thresholds still are not met, the system
+        escalates to human review with a <strong>complete audit trail</strong> &mdash; every correction
+        attempted, every score change, every specialist's reasoning. The reviewer sees exactly what
+        was tried and where the system reached its limit.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CLIENT PROFILES ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">Personalization</div>
+    <h2>Your brand. Your rules. <br>Your definition of quality.</h2>
+
+    <p>
+      Every client receives a unique quality profile, extracted from their own historical translations.
+      This is not a generic configuration &mdash; it is a detailed model of how <strong>your organization</strong>
+      communicates in each language, built from the documents your teams have already approved.
+    </p>
+
+    <div class="card-grid" style="margin-top:40px;">
+      <div class="card">
+        <h4>Terminology</h4>
+        <p>
+          A glossary of every financial term your organization uses, mapped to its approved translation
+          in each target language. Extracted automatically from your reference documents and enforced
+          on every new translation.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Tone &amp; Voice</h4>
+        <p>
+          Formality register, sentence length preferences, passive/active balance, and explicit brand rules.
+          If your organization writes "OANDA" (never "Oanda"), the system knows and enforces it.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Regional Variant</h4>
+        <p>
+          Not "Spanish" &mdash; your Spanish. European, Argentine, Colombian, or Mexican conventions
+          in vocabulary, grammar, and spelling. Detected from your existing translations and applied
+          consistently to every new document.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Quality Thresholds</h4>
+        <p>
+          Each metric's minimum acceptable score, configured per language. Your numerical accuracy
+          may require a perfect 100. Your formality tolerance may allow more flexibility. The profile
+          reflects your standards, not a generic default.
+        </p>
+      </div>
+    </div>
+
+    <h3>How profiles are built</h3>
+    <p>
+      Onboarding a new client requires no manual configuration. Provide pairs of original documents
+      alongside their approved translations, and the engine analyzes the differences to extract
+      every dimension of the profile automatically &mdash; glossary, tone, regional variant, brand rules,
+      and quality baselines.
+    </p>
+    <p>
+      The system then validates itself by scoring the client's own approved translations against the
+      extracted profile. If the client's own work scores above 90, the profile is reliable. If not,
+      the extraction is refined.
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════ REGIONAL VARIANTS ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">Regional Intelligence</div>
+    <h2>Not just the language.<br>The <em>variant</em>.</h2>
+
+    <p>
+      Financial institutions operate across markets with distinct linguistic conventions.
+      A compliance document for Madrid and a market report for Buenos Aires require different Spanish &mdash;
+      not just different vocabulary, but different grammar, spelling conventions, and reader expectations.
+      The FinFlow engine tracks and enforces these distinctions at the metric level.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Variant</th>
+          <th>Vocabulary Example</th>
+          <th>Grammar Marker</th>
+          <th>Usage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Spanish (Spain)</td>
+          <td>"ordenador" / "vosotros"</td>
+          <td>Vosotros conjugation, leismo</td>
+          <td>European institutional clients</td>
+        </tr>
+        <tr>
+          <td>Spanish (Argentina)</td>
+          <td>"computadora" / "vos"</td>
+          <td>Voseo, distinct verb forms</td>
+          <td>Southern Cone markets</td>
+        </tr>
+        <tr>
+          <td>Spanish (Mexico)</td>
+          <td>"computadora" / "ustedes"</td>
+          <td>Ustedes standard, distinct idioms</td>
+          <td>North American Spanish markets</td>
+        </tr>
+        <tr>
+          <td>Spanish (Colombia)</td>
+          <td>"computador" / "ustedes"</td>
+          <td>Ustedeo, regional vocabulary</td>
+          <td>Andean market coverage</td>
+        </tr>
+        <tr>
+          <td>English (British)</td>
+          <td>"authorised" / "colour"</td>
+          <td>-ise spellings, collective noun agreement</td>
+          <td>UK/EU regulatory filings</td>
+        </tr>
+        <tr>
+          <td>English (American)</td>
+          <td>"authorized" / "color"</td>
+          <td>-ize spellings, serial comma</td>
+          <td>US market publications</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      The Regional Variant Correctness metric detects variant markers in every translation and
+      flags inconsistencies &mdash; a single "vosotros" in a Latin American document, or a British
+      spelling in an American report. These are not style preferences. In regulated financial
+      communications, they are errors.
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════ SCORECARD EXAMPLE ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">In Practice</div>
+    <h2>A real scorecard</h2>
+
+    <p>
+      Below is a quality scorecard for a EUR/USD Daily Analysis translated from English to Spanish
+      for an institutional client. Twelve of thirteen metrics pass. One &mdash; passive voice balance &mdash;
+      falls below threshold, triggering an automatic correction cycle.
+    </p>
+
+    <div class="scorecard">
+      <div class="scorecard-header">
+        <h4>EUR/USD Daily Analysis &mdash; EN to ES (Spain)</h4>
+        <span class="scorecard-meta">OANDA &middot; Institutional</span>
+      </div>
+      <div class="scorecard-body">
+
+        <!-- Category 1 -->
+        <div class="scorecard-category">
+          <div class="scorecard-category-label">Terminology Accuracy</div>
+          <div class="metric-row">
+            <span class="metric-name">Glossary Compliance</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:97%"></div>
+              <div class="metric-bar-threshold" style="left:95%"></div>
+            </div>
+            <span class="metric-score pass">97 / 95</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Term Consistency</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:92%"></div>
+              <div class="metric-bar-threshold" style="left:90%"></div>
+            </div>
+            <span class="metric-score pass">92 / 90</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Untranslated Terms</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:98%"></div>
+              <div class="metric-bar-threshold" style="left:95%"></div>
+            </div>
+            <span class="metric-score pass">98 / 95</span>
+          </div>
+        </div>
+
+        <!-- Category 2 -->
+        <div class="scorecard-category">
+          <div class="scorecard-category-label">Style &amp; Voice</div>
+          <div class="metric-row">
+            <span class="metric-name">Formality Level</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:88%"></div>
+              <div class="metric-bar-threshold" style="left:85%"></div>
+            </div>
+            <span class="metric-score pass">88 / 85</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Sentence Structure</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:82%"></div>
+              <div class="metric-bar-threshold" style="left:80%"></div>
+            </div>
+            <span class="metric-score pass">82 / 80</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Passive Voice Balance</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill fail" style="width:78%"></div>
+              <div class="metric-bar-threshold" style="left:80%"></div>
+            </div>
+            <span class="metric-score fail">78 / 80</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Brand Voice Adherence</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:100%"></div>
+              <div class="metric-bar-threshold" style="left:95%"></div>
+            </div>
+            <span class="metric-score pass">100 / 95</span>
+          </div>
+        </div>
+
+        <!-- Category 3 -->
+        <div class="scorecard-category">
+          <div class="scorecard-category-label">Structural Fidelity</div>
+          <div class="metric-row">
+            <span class="metric-name">Formatting Preservation</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:95%"></div>
+              <div class="metric-bar-threshold" style="left:90%"></div>
+            </div>
+            <span class="metric-score pass">95 / 90</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Numerical Accuracy</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:100%"></div>
+              <div class="metric-bar-threshold" style="left:100%"></div>
+            </div>
+            <span class="metric-score pass">100 / 100</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Paragraph Alignment</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:90%"></div>
+              <div class="metric-bar-threshold" style="left:85%"></div>
+            </div>
+            <span class="metric-score pass">90 / 85</span>
+          </div>
+        </div>
+
+        <!-- Category 4 -->
+        <div class="scorecard-category">
+          <div class="scorecard-category-label">Linguistic Quality</div>
+          <div class="metric-row">
+            <span class="metric-name">Fluency</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:91%"></div>
+              <div class="metric-bar-threshold" style="left:85%"></div>
+            </div>
+            <span class="metric-score pass">91 / 85</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Meaning Preservation</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:93%"></div>
+              <div class="metric-bar-threshold" style="left:90%"></div>
+            </div>
+            <span class="metric-score pass">93 / 90</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Regional Variant Correctness</span>
+            <div class="metric-bar-track">
+              <div class="metric-bar-fill pass" style="width:95%"></div>
+              <div class="metric-bar-threshold" style="left:90%"></div>
+            </div>
+            <span class="metric-score pass">95 / 90</span>
+          </div>
+        </div>
+
+        <!-- Aggregate -->
+        <div class="scorecard-aggregate">
+          <span class="aggregate-label">Aggregate Score</span>
+          <span class="aggregate-score">92.2 / 88</span>
+        </div>
+
+        <!-- Verdict -->
+        <div class="scorecard-verdict revision">
+          1 metric below threshold: Passive Voice Balance (78 &lt; 80). Routed to Style &amp; Voice Specialist for correction.
+        </div>
+
+      </div>
+    </div>
+
+    <p>
+      In this case, the aggregate score of 92.2 exceeds the 88-point threshold &mdash; but the system
+      does not round up or average away individual failures. The passive voice metric missed its
+      threshold by 2 points, so the Style &amp; Voice Specialist is invoked to rebalance passive
+      constructions while preserving all other passing metrics. After correction, the document is
+      re-scored. If it passes, it ships. If not, a human reviewer receives the full history.
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════ LEARNING LOOP ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">Continuous Improvement</div>
+    <h2>The system learns from every correction</h2>
+
+    <p>
+      Every human edit &mdash; whether from a reviewer, a client, or a compliance officer &mdash;
+      feeds back into the client profile. The engine analyzes what changed, why it changed,
+      and updates the glossary, tone model, and quality baselines accordingly.
+    </p>
+    <p>
+      This creates a compounding advantage: <strong>the more documents you translate, the fewer
+      corrections you need.</strong> Early engagements may require human review on most documents.
+      Within months, the system converges on client preferences and review rates drop to a fraction
+      of their initial level.
+    </p>
+
+    <div class="loop-steps">
+      <div class="loop-step">
+        <span class="step-number">01</span>
+        <h4>Translate</h4>
+        <p>Engine produces a translation using the client's full quality profile</p>
+      </div>
+      <div class="loop-step">
+        <span class="step-number">02</span>
+        <h4>Score &amp; Correct</h4>
+        <p>13 metrics evaluated. Failed metrics routed to specialist agents</p>
+      </div>
+      <div class="loop-step">
+        <span class="step-number">03</span>
+        <h4>Human Review</h4>
+        <p>Reviewer edits are captured as structured corrections with full context</p>
+      </div>
+      <div class="loop-step">
+        <span class="step-number">04</span>
+        <h4>Profile Update</h4>
+        <p>Corrections feed back into the glossary, tone model, and thresholds</p>
+      </div>
+    </div>
+
+    <h3>Projected review reduction</h3>
+    <p>
+      Based on correction convergence patterns, the proportion of documents requiring human intervention
+      decreases substantially over the first year of engagement. The exact trajectory depends on document
+      volume and consistency of the client's own editorial standards.
+    </p>
+
+    <div class="reduction-chart">
+      <div class="reduction-bar">
+        <div class="bar" style="height:100%; background: var(--accent);">
+          <span class="bar-value">100%</span>
+        </div>
+        <span class="bar-label">Month 1</span>
+      </div>
+      <div class="reduction-bar">
+        <div class="bar" style="height:70%; background: var(--accent);">
+          <span class="bar-value">70%</span>
+        </div>
+        <span class="bar-label">Month 3</span>
+      </div>
+      <div class="reduction-bar">
+        <div class="bar" style="height:45%; background: var(--accent);">
+          <span class="bar-value">45%</span>
+        </div>
+        <span class="bar-label">Month 6</span>
+      </div>
+      <div class="reduction-bar">
+        <div class="bar" style="height:25%; background: var(--accent);">
+          <span class="bar-value">25%</span>
+        </div>
+        <span class="bar-label">Month 9</span>
+      </div>
+      <div class="reduction-bar">
+        <div class="bar" style="height:10%; background: var(--accent);">
+          <span class="bar-value">10%</span>
+        </div>
+        <span class="bar-label">Month 12</span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>
+        This is not a static system with a fixed accuracy ceiling. Every correction makes the next
+        translation better. Every document processed deepens the client profile. <strong>The quality
+        gap between FinFlow and any alternative widens with every engagement.</strong>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ WHY IT MATTERS ═══════════════ -->
+<div class="section">
+  <div class="container">
+    <div class="section-label">For Decision-Makers</div>
+    <h2>What this means for your organization</h2>
+
+    <div class="card-grid" style="margin-top:32px;">
+      <div class="card">
+        <h4>Measurable Quality</h4>
+        <p>
+          Every translation comes with a detailed scorecard. You know exactly how it performed
+          across terminology, voice, structure, and linguistic quality &mdash; before it reaches your audience.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Consistent Brand Voice</h4>
+        <p>
+          Your glossary, your tone, your regional conventions &mdash; enforced automatically on every document,
+          every language, every time. No drift. No exceptions.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Reduced Review Burden</h4>
+        <p>
+          The system handles the majority of quality issues before a human ever sees the document.
+          Your reviewers focus on the exceptions, not the routine.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Complete Audit Trail</h4>
+        <p>
+          Every quality decision is documented &mdash; which metrics were evaluated, which corrections
+          were applied, and why. Full traceability for compliance and governance requirements.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<div class="footer">
+  <div class="container">
+    <p>
+      WordwideFX &mdash; FinFlow Translation Quality Engine &mdash; April 2026
+      <br>
+      <a href="mailto:info@wordwidefx.com">info@wordwidefx.com</a>
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

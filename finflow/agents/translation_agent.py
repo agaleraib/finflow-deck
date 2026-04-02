@@ -2,7 +2,13 @@
 Translation Agent — translates financial reports using client-specific glossaries.
 This is WordwideFX's core differentiator: 15 years of financial translation expertise
 encoded in glossaries and tone profiles.
+
+Supports two modes:
+1. Legacy: translate(report_text, language, client) — loads glossary from JSON files
+2. Profile-aware: translate_with_profile(source, language, profile) — uses full ClientProfile
 """
+
+from __future__ import annotations
 
 import json
 import os
@@ -51,6 +57,48 @@ RESPONSE FORMAT:
 Respond with ONLY the translated text. Do not add commentary, explanations, or notes.
 Preserve all original formatting (headers, bullet points, etc.)."""
 
+PROFILE_SYSTEM_PROMPT_TEMPLATE = """You are a senior financial translator at WordwideFX with 15 years of experience translating forex, CFD, and commodity market analysis for institutional broker clients.
+
+TARGET LANGUAGE: {language_name} ({language_code})
+REGIONAL VARIANT: {regional_variant}
+
+CLIENT: {client_name}
+
+TONE PROFILE:
+- Formality: {formality_level}/5 — {tone_description}
+- Target avg sentence length: {avg_sentence_length} words
+- Target passive voice usage: {passive_voice_pct}%
+- Person preference: {person_preference}
+- Hedging frequency: {hedging_frequency}
+
+BRAND RULES:
+{brand_rules}
+
+COMPLIANCE PATTERNS:
+{compliance_patterns}
+
+FORBIDDEN TERMS:
+{forbidden_terms}
+
+CRITICAL INSTRUCTIONS:
+1. You MUST use the provided glossary for ALL financial terms. These are client-approved translations that must not be changed.
+2. Maintain the analytical structure and formatting (headers, bullet points, numbers).
+3. Do NOT translate proper nouns (OANDA, EUR/USD, RSI, MACD, etc.) unless the glossary provides a specific translation.
+4. Match the tone profile EXACTLY — formality level {formality_level}/5.
+5. Preserve all numerical values, percentages, and price levels exactly.
+6. Translate disclaimer text accurately — compliance depends on it.
+7. Use the {regional_variant} regional variant consistently — vocabulary, grammar, spelling must all match.
+8. NEVER use forbidden terms. Find approved alternatives.
+9. Target sentence length: ~{avg_sentence_length} words average.
+10. Passive voice should be approximately {passive_voice_pct}% of sentences.
+
+GLOSSARY (you MUST use these exact translations):
+{glossary_json}
+
+RESPONSE FORMAT:
+Respond with ONLY the translated text. Do not add commentary, explanations, or notes.
+Preserve all original formatting (headers, bullet points, etc.)."""
+
 
 @dataclass
 class TranslationResult:
@@ -67,7 +115,7 @@ class TranslationResult:
 class TranslationAgent(Agent):
     """Translation agent with glossary engine and compliance tracking."""
 
-    def __init__(self, model: str = "claude-sonnet-4-6"):
+    def __init__(self, model: str = "claude-opus-4-6"):
         # System prompt is set dynamically per translation request
         super().__init__(
             name="Translation Agent",
@@ -165,6 +213,97 @@ class TranslationAgent(Agent):
             on_event("translation", "complete",
                      f"Translation complete. Glossary compliance: {result.glossary_compliance_pct:.1f}% "
                      f"({result.glossary_terms_used}/{result.glossary_terms_total} terms)")
+
+        return result
+
+    def translate_with_profile(
+        self,
+        source_text: str,
+        target_language: str,
+        profile: "ClientProfile",
+        on_chunk: Callable[[str], None] | None = None,
+        on_event: Callable | None = None,
+    ) -> TranslationResult:
+        """
+        Translate using a full ClientProfile with tone, regional variant, brand rules.
+
+        This is the profile-aware mode — used by the Translation Engine.
+        """
+        from ..profiles.models import ClientProfile
+
+        result = TranslationResult(language=target_language)
+        lang_profile = profile.get_language(target_language)
+
+        if on_event:
+            on_event("translation", "loading_profile",
+                     f"Loading profile for {profile.client_name} ({target_language})...")
+
+        # Build enriched system prompt
+        brand_rules = "\n".join(f"  - {r}" for r in lang_profile.brand_rules) if lang_profile.brand_rules else "  None specified"
+        compliance = "\n".join(f"  - {p}" for p in lang_profile.compliance_patterns) if lang_profile.compliance_patterns else "  None specified"
+        forbidden = "\n".join(f"  - {t}" for t in lang_profile.forbidden_terms) if lang_profile.forbidden_terms else "  None"
+        tone = lang_profile.tone
+
+        self.system_prompt = PROFILE_SYSTEM_PROMPT_TEMPLATE.format(
+            language_name=LANG_NAMES.get(target_language, target_language),
+            language_code=target_language,
+            regional_variant=lang_profile.regional_variant or target_language,
+            client_name=profile.client_name,
+            formality_level=tone.formality_level,
+            tone_description=tone.description,
+            avg_sentence_length=tone.avg_sentence_length,
+            passive_voice_pct=tone.passive_voice_target_pct,
+            person_preference=tone.person_preference,
+            hedging_frequency=tone.hedging_frequency,
+            brand_rules=brand_rules,
+            compliance_patterns=compliance,
+            forbidden_terms=forbidden,
+            glossary_json=json.dumps(lang_profile.glossary, ensure_ascii=False, indent=2),
+        )
+
+        if on_event:
+            on_event("translation", "translating",
+                     f"Translating to {LANG_NAMES.get(target_language, target_language)} "
+                     f"({len(lang_profile.glossary)} glossary terms, "
+                     f"variant: {lang_profile.regional_variant or 'default'})...")
+
+        prompt = (
+            f"Translate the following financial analysis report into "
+            f"{LANG_NAMES.get(target_language, target_language)} "
+            f"({lang_profile.regional_variant or target_language} variant).\n\n"
+            f"---\n{source_text}\n---"
+        )
+
+        translated_text = ""
+        with self.client.messages.stream(
+            model=self.model,
+            max_tokens=self.max_tokens,
+            system=self.system_prompt,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                translated_text += text
+                if on_chunk:
+                    on_chunk(text)
+
+        result.translated_text = translated_text
+
+        # Glossary compliance check
+        if on_event:
+            on_event("translation", "checking_glossary", "Verifying glossary compliance...")
+
+        compliance_result = self._check_glossary_compliance(
+            source_text, translated_text, lang_profile.glossary, target_language
+        )
+        result.glossary_terms_used = compliance_result["used"]
+        result.glossary_terms_total = compliance_result["total"]
+        result.glossary_compliance_pct = compliance_result["pct"]
+        result.terms_matched = compliance_result["matched"]
+        result.terms_missed = compliance_result["missed"]
+
+        if on_event:
+            on_event("translation", "complete",
+                     f"Translation complete. Glossary compliance: {result.glossary_compliance_pct:.1f}%")
 
         return result
 
