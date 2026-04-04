@@ -21,6 +21,7 @@ export interface TranslationResult {
   glossaryCompliancePct: number;
   termsMatched: Array<{ en: string; translated: string }>;
   termsMissed: Array<{ en: string; expected: string }>;
+  usage?: { inputTokens: number; outputTokens: number };
 }
 
 // --- Language Names ---
@@ -134,9 +135,28 @@ export async function translateWithProfile(
     timestamp: new Date().toISOString(),
   });
 
+  // Filter glossary to only terms that appear in the source text (case-insensitive).
+  // This prevents flooding the prompt with 184 terms when only ~40 are relevant,
+  // which improves glossary compliance scores significantly.
+  const sourceLower = sourceText.toLowerCase();
+  const fullGlossary = langProfile.glossary;
+  const totalTerms = Object.keys(fullGlossary).length;
+  const filteredGlossary: Record<string, string> = {};
+  for (const [en, translated] of Object.entries(fullGlossary)) {
+    if (en.startsWith("_") || sourceLower.includes(en.toLowerCase())) {
+      filteredGlossary[en] = translated;
+    }
+  }
+  const relevantTerms = Object.keys(filteredGlossary).filter((k) => !k.startsWith("_")).length;
+
+  const filteredLangProfile: LanguageProfile = {
+    ...langProfile,
+    glossary: filteredGlossary,
+  };
+
   const config: AgentConfig = {
     name: "TranslationAgent",
-    systemPrompt: buildSystemPrompt(langProfile, targetLanguage, profile.clientName),
+    systemPrompt: buildSystemPrompt(filteredLangProfile, targetLanguage, profile.clientName),
     model: "opus",
     maxTokens: 8192,
   };
@@ -150,12 +170,13 @@ ${sourceText}
   onEvent?.({
     stage: "translation",
     status: "translating",
-    message: `Translating to ${langName(targetLanguage)} (${Object.keys(langProfile.glossary).length} glossary terms, variant: ${langProfile.regionalVariant || "default"})...`,
+    message: `Translating to ${langName(targetLanguage)} (${relevantTerms}/${totalTerms} glossary terms relevant to source, variant: ${langProfile.regionalVariant || "default"})...`,
     timestamp: new Date().toISOString(),
   });
 
   const response = await runAgent(config, prompt, onChunk);
   result.translatedText = response.content;
+  result.usage = response.usage;
 
   // Glossary compliance check
   onEvent?.({

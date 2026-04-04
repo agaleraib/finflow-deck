@@ -5,9 +5,9 @@
  * Ported from finflow/agents/linguistic_specialist.py.
  */
 
-import { callAgent } from "../../lib/anthropic.js";
+import { callAgentWithUsage } from "../../lib/anthropic.js";
 import type { LanguageProfile } from "../../profiles/types.js";
-import type { FailedMetricData } from "./shared.js";
+import type { FailedMetricData, SpecialistResult } from "./shared.js";
 import { buildEvidenceText, parseSpecialistResponse } from "./shared.js";
 
 const SYSTEM_PROMPT = `You are a linguistic quality specialist for financial translations. You are effectively a native-speaker editor performing the final polish.
@@ -50,7 +50,7 @@ export async function correctLinguistic(
   langProfile: LanguageProfile,
   language: string,
   failedMetrics: Record<string, FailedMetricData>,
-): Promise<[string, string]> {
+): Promise<SpecialistResult> {
   const variant = langProfile.regionalVariant || language;
   const evidenceText = buildEvidenceText(failedMetrics);
   const variantGuidance = VARIANT_GUIDES[variant]
@@ -88,6 +88,7 @@ Instructions:
 
 After the translation, add a line "---REASONING---" followed by a brief list of what you changed and why.`;
 
-  const raw = await callAgent("opus", SYSTEM_PROMPT, prompt, 8192);
-  return parseSpecialistResponse(raw);
+  const result = await callAgentWithUsage("opus", SYSTEM_PROMPT, prompt, 8192);
+  const [correctedText, reasoning] = parseSpecialistResponse(result.text);
+  return { correctedText, reasoning, usage: result.usage };
 }

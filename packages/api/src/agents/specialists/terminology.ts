@@ -6,9 +6,9 @@
  * Narrow mandate: correct terminology only, preserve everything else.
  */
 
-import { callAgent } from "../../lib/anthropic.js";
+import { callAgentWithUsage } from "../../lib/anthropic.js";
 import type { LanguageProfile } from "../../profiles/types.js";
-import type { FailedMetricData } from "./shared.js";
+import type { FailedMetricData, SpecialistResult } from "./shared.js";
 import { buildEvidenceText, parseSpecialistResponse } from "./shared.js";
 
 const SYSTEM_PROMPT = `You are a terminology correction specialist for financial translations.
@@ -32,7 +32,7 @@ export async function correctTerminology(
   translation: string,
   langProfile: LanguageProfile,
   failedMetrics: Record<string, FailedMetricData>,
-): Promise<[string, string]> {
+): Promise<SpecialistResult> {
   // Build glossary context — only terms relevant to the source
   const sourceLower = sourceText.toLowerCase();
   const relevantGlossary: Record<string, string> = {};
@@ -77,6 +77,7 @@ Instructions:
 
 After the translation, add a line "---REASONING---" followed by a brief list of what you changed and why.`;
 
-  const raw = await callAgent("opus", SYSTEM_PROMPT, prompt, 8192);
-  return parseSpecialistResponse(raw);
+  const result = await callAgentWithUsage("opus", SYSTEM_PROMPT, prompt, 8192);
+  const [correctedText, reasoning] = parseSpecialistResponse(result.text);
+  return { correctedText, reasoning, usage: result.usage };
 }

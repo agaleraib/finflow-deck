@@ -23,6 +23,8 @@ interface GlossaryFile {
   regionalVariant: string;
   glossary: Record<string, string>;
   scoring: Record<string, unknown>;
+  /** Optional per-language tone overrides (e.g. passiveVoiceTargetPct for Spanish) */
+  toneOverrides?: Record<string, unknown>;
 }
 
 export async function mergeProfile(
@@ -32,6 +34,14 @@ export async function mergeProfile(
   const brand: BrandFile = await Bun.file(brandPath).json();
   const glossary: GlossaryFile = await Bun.file(glossaryPath).json();
 
+  // Merge tone: start with brand baseline, apply per-language overrides
+  const mergedTone = { ...brand.tone };
+  if (glossary.toneOverrides) {
+    for (const [key, value] of Object.entries(glossary.toneOverrides)) {
+      mergedTone[key] = value;
+    }
+  }
+
   const profile = ClientProfileSchema.parse({
     clientId: brand.clientId,
     clientName: brand.clientName,
@@ -40,7 +50,7 @@ export async function mergeProfile(
       [glossary.language]: {
         regionalVariant: glossary.regionalVariant,
         glossary: glossary.glossary,
-        tone: brand.tone,
+        tone: mergedTone,
         brandRules: brand.brandRules,
         forbiddenTerms: brand.forbiddenTerms,
         compliancePatterns: brand.compliancePatterns,

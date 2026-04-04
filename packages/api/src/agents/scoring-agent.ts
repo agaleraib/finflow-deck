@@ -22,6 +22,11 @@ import {
 } from "../scoring/deterministic.js";
 import { scoreLlmMetrics } from "../scoring/llm-judge.js";
 
+export interface ScoringResult {
+  scorecard: Scorecard;
+  usage?: { inputTokens: number; outputTokens: number };
+}
+
 /**
  * Score a translation against all 13 metrics.
  */
@@ -31,6 +36,19 @@ export async function scoreTranslation(
   profile: ClientProfile,
   language: string,
 ): Promise<Scorecard> {
+  const result = await scoreTranslationWithUsage(sourceText, translatedText, profile, language);
+  return result.scorecard;
+}
+
+/**
+ * Score a translation and return token usage alongside the scorecard.
+ */
+export async function scoreTranslationWithUsage(
+  sourceText: string,
+  translatedText: string,
+  profile: ClientProfile,
+  language: string,
+): Promise<ScoringResult> {
   const langProfile = getLanguageProfile(profile, language);
   const scoring = langProfile.scoring;
   const card = createScorecard(scoring.aggregateThreshold);
@@ -76,7 +94,7 @@ export async function scoreTranslation(
   );
 
   // LLM-judged metrics (style + linguistic + brand voice)
-  const llmScores = await scoreLlmMetrics(
+  const llmResult = await scoreLlmMetrics(
     sourceText,
     translatedText,
     langProfile,
@@ -84,14 +102,14 @@ export async function scoreTranslation(
     scoring,
   );
 
-  for (const [name, score] of Object.entries(llmScores)) {
+  for (const [name, score] of Object.entries(llmResult.metrics)) {
     card.metrics[name] = score;
   }
 
   // Compute aggregate
   computeAggregate(card, scoring);
 
-  return card;
+  return { scorecard: card, usage: llmResult.usage };
 }
 
 function computeAggregate(

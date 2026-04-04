@@ -5,9 +5,9 @@
  * Ported from finflow/agents/structural_specialist.py.
  */
 
-import { callAgent } from "../../lib/anthropic.js";
+import { callAgentWithUsage } from "../../lib/anthropic.js";
 import type { LanguageProfile } from "../../profiles/types.js";
-import type { FailedMetricData } from "./shared.js";
+import type { FailedMetricData, SpecialistResult } from "./shared.js";
 import { buildEvidenceText, parseSpecialistResponse } from "./shared.js";
 
 const SYSTEM_PROMPT = `You are a structural correction specialist for financial translations.
@@ -31,7 +31,7 @@ export async function correctStructure(
   translation: string,
   _langProfile: LanguageProfile,
   failedMetrics: Record<string, FailedMetricData>,
-): Promise<[string, string]> {
+): Promise<SpecialistResult> {
   const evidenceText = buildEvidenceText(failedMetrics);
 
   const prompt = `Fix the structural issues in this financial translation.
@@ -59,6 +59,7 @@ Instructions:
 
 After the translation, add a line "---REASONING---" followed by a brief list of what you changed and why.`;
 
-  const raw = await callAgent("opus", SYSTEM_PROMPT, prompt, 8192);
-  return parseSpecialistResponse(raw);
+  const result = await callAgentWithUsage("opus", SYSTEM_PROMPT, prompt, 8192);
+  const [correctedText, reasoning] = parseSpecialistResponse(result.text);
+  return { correctedText, reasoning, usage: result.usage };
 }

@@ -12,7 +12,7 @@
 import type { ClientProfile } from "../profiles/types.js";
 import { ALL_METRICS } from "../profiles/types.js";
 import type { ProfileStore } from "../lib/types.js";
-import { runTranslationEngine } from "../pipeline/translation-engine.js";
+import { runTranslationEngine, type AuditEntry } from "../pipeline/translation-engine.js";
 import { scoreTranslation } from "../agents/scoring-agent.js";
 import { readDocument } from "./docx-reader.js";
 import { analyzeComparison } from "./comparison-agent.js";
@@ -43,6 +43,7 @@ export async function runComparison(
   let aiTranslation = "";
   let aiScorecardResult;
   let aiMs = 0;
+  let aiAuditTrail: AuditEntry[] = [];
 
   if (!skipAiTranslation) {
     onProgress?.(`  Running AI pipeline for ${pair.reportId}...`);
@@ -56,6 +57,7 @@ export async function runComparison(
     aiMs = Date.now() - aiStart;
     aiTranslation = engineResult.translatedText;
     aiScorecardResult = engineResult.scorecard;
+    aiAuditTrail = engineResult.auditTrail;
     onProgress?.(
       `  AI pipeline done: ${engineResult.scorecard.aggregateScore.toFixed(1)}/${engineResult.scorecard.aggregateThreshold} ` +
         `(${engineResult.passed ? "PASS" : "FAIL"}, ${engineResult.revisionCount} rounds)`,
@@ -136,6 +138,7 @@ export async function runComparison(
     aiScorecard,
     metricDeltas,
     qualitativeAnalysis,
+    aiAuditTrail,
     timing: {
       aiPipelineMs: aiMs,
       humanScoringMs: humanMs,

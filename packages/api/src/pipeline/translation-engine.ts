@@ -11,7 +11,7 @@ import { createHash } from "crypto";
 import type { EventHandler, ProfileStore, TranslationStore } from "../lib/types.js";
 import type { ClientProfile } from "../profiles/types.js";
 import { getLanguageProfile, METRIC_CATEGORIES } from "../profiles/types.js";
-import { scoreTranslation } from "../agents/scoring-agent.js";
+import { scoreTranslationWithUsage } from "../agents/scoring-agent.js";
 import { planCorrections, type CorrectionPlan } from "../agents/quality-arbiter.js";
 import { translateWithProfile } from "../agents/translation-agent.js";
 import { correctTerminology } from "../agents/specialists/terminology.js";
@@ -20,15 +20,17 @@ import { correctStructure } from "../agents/specialists/structural.js";
 import { correctLinguistic } from "../agents/specialists/linguistic.js";
 import type { Scorecard } from "../scoring/scorecard.js";
 import { scorecardToDict, scorecardSummary } from "../scoring/scorecard.js";
-import type { FailedMetricData } from "../agents/specialists/shared.js";
+import type { FailedMetricData, SpecialistResult } from "../agents/specialists/shared.js";
 import { emitEvent } from "./events.js";
 
 // --- Types ---
 
-interface AuditEntry {
+export interface AuditEntry {
   stage: string;
   agent: string;
   timestamp: string;
+  durationMs?: number;
+  tokens?: { input: number; output: number };
   inputHash?: string;
   outputHash?: string;
   reasoning?: string;
@@ -91,6 +93,7 @@ export async function runTranslationEngine(
 
   // 2. Initial translation
   emitEvent(onEvent, "translation", "starting", "Translating document...");
+  const translationStart = Date.now();
   const translationResult = await translateWithProfile(
     sourceText,
     language,
@@ -98,12 +101,17 @@ export async function runTranslationEngine(
     onChunk,
     onEvent,
   );
+  const translationMs = Date.now() - translationStart;
   let currentText = translationResult.translatedText;
 
   audit.push({
     stage: "translation",
     agent: "TranslationAgent (Opus)",
     timestamp: now(),
+    durationMs: translationMs,
+    tokens: translationResult.usage
+      ? { input: translationResult.usage.inputTokens, output: translationResult.usage.outputTokens }
+      : undefined,
     inputHash: hash(sourceText),
     outputHash: hash(currentText),
     reasoning: `Initial translation. Glossary compliance: ${translationResult.glossaryCompliancePct.toFixed(1)}%`,
@@ -116,17 +124,24 @@ export async function runTranslationEngine(
     "starting",
     "Scoring translation against 13 metrics...",
   );
-  let scorecard = await scoreTranslation(
+  const scoringStart = Date.now();
+  let scoringResult = await scoreTranslationWithUsage(
     sourceText,
     currentText,
     profile as ClientProfile,
     language,
   );
+  const scoringMs = Date.now() - scoringStart;
+  let scorecard = scoringResult.scorecard;
 
   audit.push({
     stage: "scoring",
     agent: "ScoringAgent (Opus)",
     timestamp: now(),
+    durationMs: scoringMs,
+    tokens: scoringResult.usage
+      ? { input: scoringResult.usage.inputTokens, output: scoringResult.usage.outputTokens }
+      : undefined,
     scores: scorecardToDict(scorecard),
     reasoning: `Aggregate: ${scorecard.aggregateScore.toFixed(1)}/${scorecard.aggregateThreshold}. Failed: ${JSON.stringify(scorecard.failedMetrics)}`,
   });
@@ -174,16 +189,19 @@ export async function runTranslationEngine(
       "routing",
       "Quality Arbiter analyzing scorecard...",
     );
+    const arbiterStart = Date.now();
     const plan = await planCorrections(
       scorecard,
       roundNum,
       previousScorecard,
     );
+    const arbiterMs = Date.now() - arbiterStart;
 
     audit.push({
       stage: "arbiter",
       agent: "QualityArbiter (Haiku)",
       timestamp: now(),
+      durationMs: arbiterMs,
       plan: planToDict(plan),
       reasoning: plan.rationale,
     });
@@ -242,7 +260,8 @@ export async function runTranslationEngine(
 
       if (Object.keys(failedForCategory).length === 0) continue;
 
-      const [correctedText, reasoning] = await runSpecialist(
+      const specialistStart = Date.now();
+      const specialistResult = await runSpecialist(
         specialistName,
         sourceText,
         currentText,
@@ -250,17 +269,22 @@ export async function runTranslationEngine(
         language,
         failedForCategory,
       );
+      const specialistMs = Date.now() - specialistStart;
 
       audit.push({
         stage: specialistName,
         agent: `${specialistName.charAt(0).toUpperCase() + specialistName.slice(1)}Specialist (Opus)`,
         timestamp: now(),
+        durationMs: specialistMs,
+        tokens: specialistResult.usage
+          ? { input: specialistResult.usage.inputTokens, output: specialistResult.usage.outputTokens }
+          : undefined,
         inputHash: hash(currentText),
-        outputHash: hash(correctedText),
-        reasoning: reasoning.slice(0, 500),
+        outputHash: hash(specialistResult.correctedText),
+        reasoning: specialistResult.reasoning.slice(0, 500),
       });
 
-      currentText = correctedText;
+      currentText = specialistResult.correctedText;
       emitEvent(
         onEvent,
         "specialist",
@@ -277,17 +301,24 @@ export async function runTranslationEngine(
       `Re-scoring after round ${roundNum}...`,
     );
     previousScorecard = scorecard;
-    scorecard = await scoreTranslation(
+    const reScoringStart = Date.now();
+    scoringResult = await scoreTranslationWithUsage(
       sourceText,
       currentText,
       profile as ClientProfile,
       language,
     );
+    const reScoringMs = Date.now() - reScoringStart;
+    scorecard = scoringResult.scorecard;
 
     audit.push({
       stage: "scoring",
       agent: "ScoringAgent (Opus)",
       timestamp: now(),
+      durationMs: reScoringMs,
+      tokens: scoringResult.usage
+        ? { input: scoringResult.usage.inputTokens, output: scoringResult.usage.outputTokens }
+        : undefined,
       scores: scorecardToDict(scorecard),
       reasoning: `Round ${roundNum} re-score. Aggregate: ${scorecard.aggregateScore.toFixed(1)}. Failed: ${JSON.stringify(scorecard.failedMetrics)}`,
     });
@@ -354,7 +385,7 @@ async function runSpecialist(
   langProfile: ReturnType<typeof getLanguageProfile>,
   language: string,
   failedMetrics: Record<string, FailedMetricData>,
-): Promise<[string, string]> {
+): Promise<SpecialistResult> {
   switch (name) {
     case "terminology":
       return correctTerminology(sourceText, translation, langProfile, failedMetrics);
@@ -371,7 +402,7 @@ async function runSpecialist(
         failedMetrics,
       );
     default:
-      return [translation, `Unknown specialist: ${name}`];
+      return { correctedText: translation, reasoning: `Unknown specialist: ${name}` };
   }
 }
 

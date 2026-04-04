@@ -229,7 +229,7 @@ export function scoreFormattingPreservation(
     }
   }
 
-  const score = Math.round((preserved / Math.max(total, 1)) * 100);
+  const score = total === 0 ? 100 : Math.round((preserved / total) * 100);
   const threshold =
     scoring.metricThresholds["formatting_preservation"] ?? 90;
 
@@ -239,7 +239,10 @@ export function scoreFormattingPreservation(
     score,
     threshold,
     passed: score >= threshold,
-    details: `${preserved}/${total} formatting elements preserved`,
+    details:
+      total === 0
+        ? "No formatting elements in source — nothing to preserve"
+        : `${preserved}/${total} formatting elements preserved`,
     evidence: issues,
   };
 }

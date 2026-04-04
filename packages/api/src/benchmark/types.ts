@@ -3,6 +3,7 @@
  */
 
 import type { Scorecard } from "../scoring/scorecard.js";
+import type { AuditEntry } from "../pipeline/translation-engine.js";
 
 // --- Config ---
 
@@ -58,6 +59,7 @@ export interface ComparisonResult {
   aiScorecard: Scorecard;
   metricDeltas: Record<string, MetricDelta>;
   qualitativeAnalysis: QualitativeAnalysis;
+  aiAuditTrail: AuditEntry[];
   timing: {
     aiPipelineMs: number;
     humanScoringMs: number;

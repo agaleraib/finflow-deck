@@ -177,6 +177,11 @@ METRICS TO EVALUATE:
 Use the submit_scores tool to provide your evaluation.`;
 }
 
+export interface LlmJudgeResult {
+  metrics: Record<string, MetricScore>;
+  usage?: { inputTokens: number; outputTokens: number };
+}
+
 /**
  * Score all 7 LLM-judged metrics in a single call using tool_use.
  */
@@ -186,7 +191,7 @@ export async function scoreLlmMetrics(
   lang: LanguageProfile,
   language: string,
   scoring: ScoringConfig,
-): Promise<Record<string, MetricScore>> {
+): Promise<LlmJudgeResult> {
   const config: AgentConfig = {
     name: "ScoringJudge",
     systemPrompt:
@@ -200,8 +205,9 @@ export async function scoreLlmMetrics(
   const prompt = buildJudgePrompt(source, translation, lang, language);
 
   let scores: JudgeOutput;
+  let llmUsage: { inputTokens: number; outputTokens: number } | undefined;
   try {
-    const { result } = await runAgentStructured(
+    const { result, usage } = await runAgentStructured(
       config,
       prompt,
       "submit_scores",
@@ -210,6 +216,7 @@ export async function scoreLlmMetrics(
       (input) => input as unknown as JudgeOutput,
     );
     scores = result;
+    llmUsage = usage;
   } catch {
     // Fallback: return default scores if tool_use fails
     scores = defaultScores();
@@ -270,7 +277,7 @@ export async function scoreLlmMetrics(
     };
   }
 
-  return results;
+  return { metrics: results, usage: llmUsage };
 }
 
 function defaultScores(): JudgeOutput {

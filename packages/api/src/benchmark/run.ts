@@ -25,6 +25,7 @@ import { mergeProfile } from "./profile-merge.js";
 import { discoverDocumentPairs, readDocument } from "./docx-reader.js";
 import { runComparison } from "./runner.js";
 import { aggregateResults, formatAggregateReport } from "./aggregation.js";
+import { formatDocumentReport } from "./report.js";
 import type { BenchmarkConfig, ComparisonResult } from "./types.js";
 
 // --- Arg Parsing ---
@@ -250,6 +251,15 @@ async function main() {
       writeFileSync(
         join(comparisonsDir, `${pair.reportId}-${config.language}.json`),
         JSON.stringify(compactResult, null, 2),
+      );
+
+      // Write per-document Markdown report
+      const reportsDir = join(config.outputDir, "reports");
+      if (!existsSync(reportsDir)) mkdirSync(reportsDir, { recursive: true });
+      const markdownReport = formatDocumentReport(result);
+      writeFileSync(
+        join(reportsDir, `${pair.reportId}-${config.language}.md`),
+        markdownReport,
       );
 
       // Write translated texts as separate files for review

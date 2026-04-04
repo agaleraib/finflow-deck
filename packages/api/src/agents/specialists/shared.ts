@@ -9,6 +9,12 @@ export interface FailedMetricData {
   evidence: string[];
 }
 
+export interface SpecialistResult {
+  correctedText: string;
+  reasoning: string;
+  usage?: { inputTokens: number; outputTokens: number };
+}
+
 /**
  * Build human-readable evidence text from failed metrics.
  */

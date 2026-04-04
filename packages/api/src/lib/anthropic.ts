@@ -108,6 +108,11 @@ export async function runAgentStructured<T>(
   };
 }
 
+export interface CallAgentResult {
+  text: string;
+  usage: { inputTokens: number; outputTokens: number };
+}
+
 /**
  * Simple non-streaming call for agents that return plain text.
  */
@@ -118,6 +123,20 @@ export async function callAgent(
   maxTokens: number = 4096,
   temperature: number = 0,
 ): Promise<string> {
+  const result = await callAgentWithUsage(model, systemPrompt, userMessage, maxTokens, temperature);
+  return result.text;
+}
+
+/**
+ * Simple non-streaming call that also returns token usage.
+ */
+export async function callAgentWithUsage(
+  model: ModelTier,
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number = 4096,
+  temperature: number = 0,
+): Promise<CallAgentResult> {
   const client = getClient();
 
   const response = await client.messages.create({
@@ -129,5 +148,11 @@ export async function callAgent(
   });
 
   const textBlock = response.content.find((b) => b.type === "text");
-  return textBlock?.type === "text" ? textBlock.text : "";
+  return {
+    text: textBlock?.type === "text" ? textBlock.text : "",
+    usage: {
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
 }
