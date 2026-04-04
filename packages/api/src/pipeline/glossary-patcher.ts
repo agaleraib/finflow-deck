@@ -320,8 +320,17 @@ export async function grammarMicroFix(
     return { text, fixedSentences: 0, usage: { inputTokens: 0, outputTokens: 0 } };
   }
 
-  // Find sentences that were modified
-  const sentences = text.split(/(?<=[.!?])\s+/);
+  // Split text preserving separators (including paragraph breaks)
+  const parts = text.split(/((?<=[.!?])\s+)/);
+  // parts = [sentence, separator, sentence, separator, ...]
+  const sentences: string[] = [];
+  const separators: string[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) sentences.push(parts[i] ?? "");
+    else separators.push(parts[i] ?? " ");
+  }
+
+  // Find sentences that were modified by replacements
   const modifiedIndices: number[] = [];
   for (const r of replacements) {
     for (let i = 0; i < sentences.length; i++) {
@@ -374,8 +383,15 @@ export async function grammarMicroFix(
     }
   }
 
+  // Rejoin with original separators (preserving paragraph breaks)
+  let rejoined = "";
+  for (let i = 0; i < sentences.length; i++) {
+    rejoined += sentences[i];
+    if (i < separators.length) rejoined += separators[i];
+  }
+
   return {
-    text: sentences.join(" "),
+    text: rejoined,
     fixedSentences: fixedCount,
     usage: {
       inputTokens: result.usage?.inputTokens ?? 0,
@@ -391,6 +407,7 @@ export interface PatcherOptions {
   locatorModel?: ModelTier;
   grammarModel?: ModelTier;
   confidenceThreshold?: number;
+  skipGrammarFix?: boolean;
 }
 
 export async function enforceGlossary(
@@ -405,6 +422,7 @@ export async function enforceGlossary(
     locatorModel = "haiku",
     grammarModel = "haiku",
     confidenceThreshold = 0.8,
+    skipGrammarFix = false,
   } = options;
 
   let totalIn = 0;
@@ -492,8 +510,8 @@ export async function enforceGlossary(
     }
   }
 
-  // Layer 4: Grammar micro-fix on modified sentences
-  if (allReplacements.length > 0) {
+  // Layer 4: Grammar micro-fix on modified sentences (skip if post-correction-loop)
+  if (allReplacements.length > 0 && !skipGrammarFix) {
     const grammar = await grammarMicroFix(
       currentText,
       allReplacements.map((r) => ({ find: r.find, replace: r.replace })),
