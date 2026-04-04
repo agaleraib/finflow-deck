@@ -15,6 +15,8 @@ export interface BenchmarkConfig {
   skipAiTranslation?: boolean;
   extractProfile?: boolean;
   profileJson?: string;
+  brandJson?: string;
+  glossaryJson?: string;
 }
 
 // --- Document Discovery ---

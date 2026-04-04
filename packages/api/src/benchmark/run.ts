@@ -7,9 +7,10 @@
  *     --client-id ironfx \
  *     --language es \
  *     --output-dir ./benchmark-results \
- *     [--extract-profile]              \
- *     [--profile-json ./profile.json]  \
- *     [--skip-ai]                      \
+ *     [--extract-profile]                        \
+ *     [--profile-json ./profile.json]            \
+ *     [--brand-json ./brand.json --glossary-json ./glossary-es.json] \
+ *     [--skip-ai]                                \
  *     [--report-ids AM050115,AM050415]
  */
 
@@ -20,6 +21,7 @@ import { InMemoryProfileStore } from "../lib/store.js";
 import type { ClientProfile } from "../profiles/types.js";
 import { ClientProfileSchema } from "../profiles/types.js";
 import { extractProfile } from "../agents/profile-extraction-agent.js";
+import { mergeProfile } from "./profile-merge.js";
 import { discoverDocumentPairs, readDocument } from "./docx-reader.js";
 import { runComparison } from "./runner.js";
 import { aggregateResults, formatAggregateReport } from "./aggregation.js";
@@ -60,11 +62,13 @@ function parseArgs(): BenchmarkConfig {
     console.error("  --client-id     Client identifier (e.g. ironfx)");
     console.error("  --language      Target language code (e.g. es, de)");
     console.error("\nOptional:");
-    console.error("  --output-dir    Output directory (default: ./benchmark-results)");
-    console.error("  --profile-json  Path to client profile JSON file");
-    console.error("  --report-ids    Comma-separated report IDs to filter");
-    console.error("  --extract-profile  Extract profile from first 10 pairs");
-    console.error("  --skip-ai       Skip AI translation, only score human");
+    console.error("  --output-dir      Output directory (default: ./benchmark-results)");
+    console.error("  --profile-json    Path to full client profile JSON file");
+    console.error("  --brand-json      Path to brand profile (shared across languages)");
+    console.error("  --glossary-json   Path to language glossary file (use with --brand-json)");
+    console.error("  --report-ids      Comma-separated report IDs to filter");
+    console.error("  --extract-profile Extract profile from test data");
+    console.error("  --skip-ai         Skip AI translation, only score human");
     process.exit(1);
   }
 
@@ -74,6 +78,8 @@ function parseArgs(): BenchmarkConfig {
     language,
     outputDir,
     profileJson: config["profile-json"],
+    brandJson: config["brand-json"],
+    glossaryJson: config["glossary-json"],
     reportIds: config["report-ids"]?.split(","),
     extractProfile: flags.has("extract-profile"),
     skipAiTranslation: flags.has("skip-ai"),
@@ -86,7 +92,16 @@ async function loadProfile(
   config: BenchmarkConfig,
   profileStore: InMemoryProfileStore,
 ): Promise<ClientProfile> {
-  // Option 1: Load from JSON file
+  // Option 1: Merge brand + glossary files
+  if (config.brandJson && config.glossaryJson) {
+    console.log(`Loading brand from ${config.brandJson}`);
+    console.log(`Loading glossary from ${config.glossaryJson}`);
+    const profile = await mergeProfile(config.brandJson, config.glossaryJson);
+    profileStore.seed([profile]);
+    return profile;
+  }
+
+  // Option 2: Load from full profile JSON file
   if (config.profileJson) {
     console.log(`Loading profile from ${config.profileJson}...`);
     const raw = await Bun.file(config.profileJson).json();
@@ -99,18 +114,25 @@ async function loadProfile(
   if (config.extractProfile) {
     console.log("Extracting profile from test data...");
     const pairs = await discoverDocumentPairs(config.dataDir, config.language);
-    const samplePairs = pairs.slice(0, 10);
-
+    // Read ALL source docs for phase 1 (brand/tone), first 10 pairs for phase 2 (glossary)
     console.log(
-      `  Reading ${samplePairs.length} document pairs for extraction...`,
+      `  Reading ${pairs.length} source documents + up to 10 translation pairs...`,
     );
     const samples = [];
-    for (const pair of samplePairs) {
+    for (const [i, pair] of pairs.entries()) {
       const source = await readDocument(pair.sourceFile);
-      const translation = await readDocument(pair.humanFile);
+      // Only include translation for first 10 pairs (glossary extraction)
+      const translation =
+        i < 10 ? await readDocument(pair.humanFile) : undefined;
       samples.push({ source, translation });
     }
 
+    console.log(
+      `  Phase 1: ${samples.length} source docs for tone/brand extraction`,
+    );
+    console.log(
+      `  Phase 2: ${samples.filter((s) => s.translation).length} pairs for glossary extraction`,
+    );
     console.log("  Running extraction agent...");
     const result = await extractProfile({
       clientId: config.clientId,
