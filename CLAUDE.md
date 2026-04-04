@@ -17,10 +17,11 @@ bun run typecheck                 # tsc --noEmit (strict, no any)
 - `POST /translate` — run translation pipeline (body: `{ sourceText, clientId, language }`)
 - `POST /translate/stream` — SSE for real-time pipeline events
 - `GET/POST/DELETE /profiles` — client profile CRUD
+- `POST /profiles/extract` — extract profile from text samples (body: `{ clientId, clientName, targetLanguage, samples[], autoSave? }`)
 - `GET /health` — health check
 
 ## Conventions
-- Multi-agent architecture: Translation, Scoring, Quality Arbiter, 4 Specialists (terminology, style, structural, linguistic)
+- Multi-agent architecture: Translation, Scoring, Quality Arbiter, Profile Extraction, 4 Specialists (terminology, style, structural, linguistic)
 - 13-metric quality scoring: 6 deterministic (code) + 7 LLM-as-judge (tool_use)
 - HITL escalation when correction rounds exhausted
 - Client profiles define: tone, glossary, compliance rules, brand voice, scoring thresholds
