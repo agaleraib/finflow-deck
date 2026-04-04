@@ -1,12 +1,15 @@
 /**
- * Translation Agent — translates financial reports using client-specific glossaries.
+ * Translation Agent — two-phase approach:
+ *   Phase 1: Translate naturally for maximum fluency (minimal constraints)
+ *   Phase 2: Apply glossary enforcement (focused pass, glossary only)
  *
- * Ported from finflow/agents/translation_agent.py.
- * This is WordwideFX's core differentiator: 15 years of financial translation
- * expertise encoded in glossaries and tone profiles.
+ * This split prevents the "prompt overload" problem where stuffing glossary +
+ * brand rules + tone into one prompt degrades fluency without achieving
+ * good glossary compliance. Benchmark showed unconstrained Opus matches
+ * ChatGPT 5.4 fluency (92 vs 93), while constrained drops to 78.
  */
 
-import { runAgent } from "../lib/anthropic.js";
+import { runAgent, callAgentWithUsage } from "../lib/anthropic.js";
 import type { AgentConfig, EventHandler } from "../lib/types.js";
 import type { ClientProfile, LanguageProfile } from "../profiles/types.js";
 import { getLanguageProfile } from "../profiles/types.js";
@@ -44,71 +47,54 @@ function langName(code: string): string {
   return LANG_NAMES[code] ?? code;
 }
 
-// --- System Prompt ---
+// --- Phase 1: Natural Translation (fluency first) ---
 
-function buildSystemPrompt(
+function buildNaturalPrompt(
   lang: LanguageProfile,
   language: string,
   clientName: string,
 ): string {
-  const brandRules =
-    lang.brandRules.length > 0
-      ? lang.brandRules.map((r) => `  - ${r}`).join("\n")
-      : "  None specified";
-  const compliance =
-    lang.compliancePatterns.length > 0
-      ? lang.compliancePatterns.map((p) => `  - ${p}`).join("\n")
-      : "  None specified";
-  const forbidden =
-    lang.forbiddenTerms.length > 0
-      ? lang.forbiddenTerms.map((t) => `  - ${t}`).join("\n")
-      : "  None";
   const tone = lang.tone;
 
-  return `You are a senior financial translator at WordwideFX with 15 years of experience translating forex, CFD, and commodity market analysis for institutional broker clients.
-
-TARGET LANGUAGE: ${langName(language)} (${language})
-REGIONAL VARIANT: ${lang.regionalVariant || language}
+  return `You are a senior financial translator specializing in forex, CFD, and commodity market analysis. Translate into natural, fluent ${langName(language)} (${lang.regionalVariant || language} variant).
 
 CLIENT: ${clientName}
 
-TONE PROFILE:
+STYLE GUIDANCE:
 - Formality: ${tone.formalityLevel}/5 — ${tone.description}
-- Target avg sentence length: ${tone.avgSentenceLength} words
-- Target passive voice usage: ${tone.passiveVoiceTargetPct}%
 - Person preference: ${tone.personPreference}
 - Hedging frequency: ${tone.hedgingFrequency}
 
-BRAND RULES:
-${brandRules}
+RULES:
+1. Produce natural, idiomatic ${langName(language)}. Fluency is the top priority.
+2. Preserve all numerical values, percentages, and price levels exactly.
+3. Maintain the document structure (paragraphs, headers, bullet points).
+4. Do NOT translate proper nouns, currency pairs (EUR/USD), or technical indicator abbreviations (RSI, MACD) unless you know the standard ${langName(language)} equivalent.
+5. Use the ${lang.regionalVariant || language} regional variant consistently.
 
-COMPLIANCE PATTERNS:
-${compliance}
-
-FORBIDDEN TERMS:
-${forbidden}
-
-CRITICAL INSTRUCTIONS:
-1. You MUST use the provided glossary for ALL financial terms. These are client-approved translations that must not be changed.
-2. Maintain the analytical structure and formatting (headers, bullet points, numbers).
-3. Do NOT translate proper nouns (OANDA, EUR/USD, RSI, MACD, etc.) unless the glossary provides a specific translation.
-4. Match the tone profile EXACTLY — formality level ${tone.formalityLevel}/5.
-5. Preserve all numerical values, percentages, and price levels exactly.
-6. Translate disclaimer text accurately — compliance depends on it.
-7. Use the ${lang.regionalVariant || language} regional variant consistently — vocabulary, grammar, spelling must all match.
-8. NEVER use forbidden terms. Find approved alternatives.
-9. Target sentence length: ~${tone.avgSentenceLength} words average.
-10. Passive voice should be approximately ${tone.passiveVoiceTargetPct}% of sentences.
-
-GLOSSARY (you MUST use these exact translations):
-${JSON.stringify(lang.glossary, null, 2)}
-
-RESPONSE FORMAT:
-Respond with ONLY the translated text. Do not add commentary, explanations, or notes.
-Preserve all original formatting (headers, bullet points, etc.).`;
+Respond with ONLY the translated text. No commentary.`;
 }
 
-// --- Translation ---
+// --- Phase 2: Glossary Enforcement ---
+
+function buildGlossaryPrompt(
+  glossaryEntries: string,
+  missedCount: number,
+  language: string,
+): string {
+  return `You are a terminology specialist. The translation below has ${missedCount} glossary terms that need to be corrected.
+
+YOUR ONLY JOB: Replace incorrect term translations with the glossary-mandated versions listed below. Do NOT change anything else — no rewriting, no restructuring, no "improving" the text. Only swap the specific terms.
+
+GLOSSARY CORRECTIONS NEEDED:
+${glossaryEntries}
+
+TARGET LANGUAGE: ${langName(language)}
+
+Output the COMPLETE translation with only the glossary terms corrected. Preserve everything else exactly as-is.`;
+}
+
+// --- Main ---
 
 export async function translateWithProfile(
   sourceText: string,
@@ -128,79 +114,111 @@ export async function translateWithProfile(
     termsMissed: [],
   };
 
+  // Filter glossary to source-relevant terms
+  const sourceLower = sourceText.toLowerCase();
+  const fullGlossary = langProfile.glossary;
+  const relevantGlossary: Record<string, string> = {};
+  for (const [en, translated] of Object.entries(fullGlossary)) {
+    if (en.startsWith("_")) continue;
+    if (sourceLower.includes(en.toLowerCase())) {
+      relevantGlossary[en] = translated;
+    }
+  }
+  const relevantCount = Object.keys(relevantGlossary).length;
+  const totalCount = Object.keys(fullGlossary).filter((k) => !k.startsWith("_")).length;
+
   onEvent?.({
     stage: "translation",
     status: "loading_profile",
-    message: `Loading profile for ${profile.clientName} (${targetLanguage})...`,
+    message: `Loading profile for ${profile.clientName} (${targetLanguage}). ${relevantCount}/${totalCount} glossary terms relevant to source.`,
     timestamp: new Date().toISOString(),
   });
 
-  // Filter glossary to only terms that appear in the source text (case-insensitive).
-  // This prevents flooding the prompt with 184 terms when only ~40 are relevant,
-  // which improves glossary compliance scores significantly.
-  const sourceLower = sourceText.toLowerCase();
-  const fullGlossary = langProfile.glossary;
-  const totalTerms = Object.keys(fullGlossary).length;
-  const filteredGlossary: Record<string, string> = {};
-  for (const [en, translated] of Object.entries(fullGlossary)) {
-    if (en.startsWith("_") || sourceLower.includes(en.toLowerCase())) {
-      filteredGlossary[en] = translated;
-    }
-  }
-  const relevantTerms = Object.keys(filteredGlossary).filter((k) => !k.startsWith("_")).length;
+  // --- Phase 1: Natural translation ---
+  onEvent?.({
+    stage: "translation",
+    status: "phase1_translating",
+    message: `Phase 1: Natural translation to ${langName(targetLanguage)} (fluency first)...`,
+    timestamp: new Date().toISOString(),
+  });
 
-  const filteredLangProfile: LanguageProfile = {
-    ...langProfile,
-    glossary: filteredGlossary,
-  };
-
-  const config: AgentConfig = {
+  const phase1Config: AgentConfig = {
     name: "TranslationAgent",
-    systemPrompt: buildSystemPrompt(filteredLangProfile, targetLanguage, profile.clientName),
+    systemPrompt: buildNaturalPrompt(langProfile, targetLanguage, profile.clientName),
     model: "opus",
     maxTokens: 8192,
   };
 
-  const prompt = `Translate the following financial analysis report into ${langName(targetLanguage)} (${langProfile.regionalVariant || targetLanguage} variant).
+  const phase1Prompt = `Translate the following financial analysis report into ${langName(targetLanguage)} (${langProfile.regionalVariant || targetLanguage} variant).
 
 ---
 ${sourceText}
 ---`;
 
-  onEvent?.({
-    stage: "translation",
-    status: "translating",
-    message: `Translating to ${langName(targetLanguage)} (${relevantTerms}/${totalTerms} glossary terms relevant to source, variant: ${langProfile.regionalVariant || "default"})...`,
-    timestamp: new Date().toISOString(),
-  });
+  const phase1Response = await runAgent(phase1Config, phase1Prompt, onChunk);
+  let currentText = phase1Response.content;
+  let totalInputTokens = phase1Response.usage?.inputTokens ?? 0;
+  let totalOutputTokens = phase1Response.usage?.outputTokens ?? 0;
 
-  const response = await runAgent(config, prompt, onChunk);
-  result.translatedText = response.content;
-  result.usage = response.usage;
-
-  // Glossary compliance check
-  onEvent?.({
-    stage: "translation",
-    status: "checking_glossary",
-    message: "Verifying glossary compliance...",
-    timestamp: new Date().toISOString(),
-  });
-
-  const compliance = checkGlossaryCompliance(
+  // Check glossary compliance after phase 1
+  const phase1Compliance = checkGlossaryCompliance(
     sourceText,
-    result.translatedText,
-    langProfile.glossary,
+    currentText,
+    fullGlossary,
   );
-  result.glossaryTermsUsed = compliance.used;
-  result.glossaryTermsTotal = compliance.total;
-  result.glossaryCompliancePct = compliance.pct;
-  result.termsMatched = compliance.matched;
-  result.termsMissed = compliance.missed;
+
+  onEvent?.({
+    stage: "translation",
+    status: "phase1_complete",
+    message: `Phase 1 done. Glossary: ${phase1Compliance.pct.toFixed(0)}% (${phase1Compliance.used}/${phase1Compliance.total}). Missed: ${phase1Compliance.missed.length} terms.`,
+    timestamp: new Date().toISOString(),
+  });
+
+  // --- Phase 2: Glossary enforcement (only if there are missed terms) ---
+  if (phase1Compliance.missed.length > 0) {
+    onEvent?.({
+      stage: "translation",
+      status: "phase2_glossary",
+      message: `Phase 2: Applying ${phase1Compliance.missed.length} glossary corrections...`,
+      timestamp: new Date().toISOString(),
+    });
+
+    const glossaryEntries = phase1Compliance.missed
+      .map((m) => `  "${m.en}" → must be translated as "${m.expected}"`)
+      .join("\n");
+
+    const phase2Response = await callAgentWithUsage(
+      "sonnet",
+      buildGlossaryPrompt(glossaryEntries, phase1Compliance.missed.length, targetLanguage),
+      `Apply the glossary corrections to this translation. Output the complete corrected text:\n\n---\n${currentText}\n---`,
+      8192,
+      0,
+    );
+
+    currentText = phase2Response.text;
+    totalInputTokens += phase2Response.usage?.inputTokens ?? 0;
+    totalOutputTokens += phase2Response.usage?.outputTokens ?? 0;
+  }
+
+  result.translatedText = currentText;
+  result.usage = { inputTokens: totalInputTokens, outputTokens: totalOutputTokens };
+
+  // Final compliance check
+  const finalCompliance = checkGlossaryCompliance(
+    sourceText,
+    currentText,
+    fullGlossary,
+  );
+  result.glossaryTermsUsed = finalCompliance.used;
+  result.glossaryTermsTotal = finalCompliance.total;
+  result.glossaryCompliancePct = finalCompliance.pct;
+  result.termsMatched = finalCompliance.matched;
+  result.termsMissed = finalCompliance.missed;
 
   onEvent?.({
     stage: "translation",
     status: "complete",
-    message: `Translation complete. Glossary compliance: ${result.glossaryCompliancePct.toFixed(1)}%`,
+    message: `Translation complete. Final glossary: ${result.glossaryCompliancePct.toFixed(1)}% (${result.glossaryTermsUsed}/${result.glossaryTermsTotal}).`,
     timestamp: new Date().toISOString(),
   });
 
