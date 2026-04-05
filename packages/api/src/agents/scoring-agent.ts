@@ -35,8 +35,9 @@ export async function scoreTranslation(
   translatedText: string,
   profile: ClientProfile,
   language: string,
+  modelTier?: import("../lib/types.js").ModelTier,
 ): Promise<Scorecard> {
-  const result = await scoreTranslationWithUsage(sourceText, translatedText, profile, language);
+  const result = await scoreTranslationWithUsage(sourceText, translatedText, profile, language, modelTier);
   return result.scorecard;
 }
 
@@ -48,6 +49,7 @@ export async function scoreTranslationWithUsage(
   translatedText: string,
   profile: ClientProfile,
   language: string,
+  modelTier?: import("../lib/types.js").ModelTier,
 ): Promise<ScoringResult> {
   const langProfile = getLanguageProfile(profile, language);
   const scoring = langProfile.scoring;
@@ -100,6 +102,7 @@ export async function scoreTranslationWithUsage(
     langProfile,
     language,
     scoring,
+    modelTier,
   );
 
   for (const [name, score] of Object.entries(llmResult.metrics)) {

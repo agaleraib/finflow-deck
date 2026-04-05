@@ -72,14 +72,15 @@ export async function runComparison(
     onProgress?.(`  Skipping AI pipeline (--skip-ai)`);
   }
 
-  // 3. Score human translation
-  onProgress?.(`  Scoring human translation...`);
+  // 3. Score human translation (Sonnet — evaluation only, doesn't affect pipeline)
+  onProgress?.(`  Scoring human translation (Sonnet)...`);
   const humanStart = Date.now();
   const humanScorecard = await scoreTranslation(
     sourceText,
     humanTranslation,
     profile,
     pair.language,
+    "sonnet",
   );
   const humanMs = Date.now() - humanStart;
   onProgress?.(

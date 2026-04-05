@@ -26,7 +26,13 @@ import { discoverDocumentPairs, readDocument } from "./docx-reader.js";
 import { runComparison, type GenericTranslator } from "./runner.js";
 import { aggregateResults, formatAggregateReport } from "./aggregation.js";
 import { formatDocumentReport } from "./report.js";
-import { exportMetricsCSV, exportSummaryCSV } from "./csv-export.js";
+import {
+  exportMetricsCSV,
+  exportSummaryCSV,
+  exportDocsCsv,
+  exportPhasesCsv,
+  exportMetricsCsv,
+} from "./csv-export.js";
 import type { BenchmarkConfig, ComparisonResult } from "./types.js";
 
 // --- Arg Parsing ---
@@ -393,20 +399,28 @@ async function main() {
 
   // CSV export
   if (config.exportCsv) {
-    const metricsCSVPath = join(
-      config.outputDir,
-      `metrics-${config.language}.csv`,
-    );
-    const summaryCSVPath = join(
-      config.outputDir,
-      `summary-${config.language}.csv`,
-    );
+    const runId = new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-");
 
-    writeFileSync(metricsCSVPath, exportMetricsCSV(results, config.language));
-    writeFileSync(summaryCSVPath, exportSummaryCSV(results, config.language));
+    // New 3-file CSV export
+    const docsPath = join(config.outputDir, `docs-${config.language}.csv`);
+    const phasesPath = join(config.outputDir, `phases-${config.language}.csv`);
+    const metricsDetailPath = join(config.outputDir, `metrics-detail-${config.language}.csv`);
 
-    console.log(`  Metrics CSV: ${metricsCSVPath}`);
-    console.log(`  Summary CSV: ${summaryCSVPath}`);
+    writeFileSync(docsPath, exportDocsCsv(results, config.language, runId));
+    writeFileSync(phasesPath, exportPhasesCsv(results, config.language, runId));
+    writeFileSync(metricsDetailPath, exportMetricsCsv(results, config.language, runId));
+
+    console.log(`  Docs CSV:    ${docsPath}`);
+    console.log(`  Phases CSV:  ${phasesPath}`);
+    console.log(`  Metrics CSV: ${metricsDetailPath}`);
+
+    // Legacy format (backward compat)
+    const legacyMetricsPath = join(config.outputDir, `metrics-${config.language}.csv`);
+    const legacySummaryPath = join(config.outputDir, `summary-${config.language}.csv`);
+    writeFileSync(legacyMetricsPath, exportMetricsCSV(results, config.language));
+    writeFileSync(legacySummaryPath, exportSummaryCSV(results, config.language));
+
+    console.log(`  Summary CSV: ${legacySummaryPath}`);
   }
 
   console.log("");

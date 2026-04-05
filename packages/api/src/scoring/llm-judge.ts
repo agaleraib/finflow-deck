@@ -8,6 +8,7 @@
 import type { MetricScore } from "./scorecard.js";
 import type { LanguageProfile, ScoringConfig } from "../profiles/types.js";
 import { runAgentStructured } from "../lib/anthropic.js";
+import type { ModelTier } from "../lib/types.js";
 import type { AgentConfig } from "../lib/types.js";
 
 /** Schema for a single metric judgment from the LLM. */
@@ -191,6 +192,7 @@ export async function scoreLlmMetrics(
   lang: LanguageProfile,
   language: string,
   scoring: ScoringConfig,
+  modelTier: ModelTier = "opus",
 ): Promise<LlmJudgeResult> {
   const config: AgentConfig = {
     name: "ScoringJudge",
@@ -198,7 +200,7 @@ export async function scoreLlmMetrics(
       "You are an expert financial translation quality assessor. " +
       "You evaluate translations with precision and objectivity. " +
       "Use the submit_scores tool to provide your structured evaluation.",
-    model: "opus",
+    model: modelTier,
     maxTokens: 4096,
   };
 

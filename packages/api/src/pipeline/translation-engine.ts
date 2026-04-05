@@ -178,30 +178,17 @@ export async function runTranslationEngine(
         : undefined,
     });
 
-    // Re-score after patching
-    emitEvent(onEvent, "scoring", "re-scoring", "Re-scoring after glossary enforcement...");
-    const patchScoringStart = Date.now();
-    const patchScoringResult = await scoreTranslationWithUsage(
-      sourceText,
-      currentText,
-      profile as ClientProfile,
-      language,
-    );
-    scorecard = patchScoringResult.scorecard;
+    // Update glossary metrics deterministically (no Opus re-score needed)
+    // The patcher only changes glossary terms — other metrics are unaffected
+    const glossaryMetric = scorecard.metrics["glossary_compliance"];
+    if (glossaryMetric) {
+      const newScore = Math.round(glossaryPatchResult.complianceAfter);
+      glossaryMetric.score = newScore;
+      glossaryMetric.passed = newScore >= glossaryMetric.threshold;
+      glossaryMetric.details = `Post-patcher: ${glossaryPatchResult.complianceAfter.toFixed(1)}%`;
+    }
 
-    audit.push({
-      stage: "scoring",
-      agent: "ScoringAgent (Opus)",
-      timestamp: now(),
-      durationMs: Date.now() - patchScoringStart,
-      tokens: patchScoringResult.usage
-        ? { input: patchScoringResult.usage.inputTokens, output: patchScoringResult.usage.outputTokens }
-        : undefined,
-      scores: scorecardToDict(scorecard),
-      reasoning: `Post-patcher re-score. Aggregate: ${scorecard.aggregateScore.toFixed(1)}. Failed: ${JSON.stringify(scorecard.failedMetrics)}`,
-    });
-
-    emitEvent(onEvent, "scoring", "complete", scorecardSummary(scorecard));
+    emitEvent(onEvent, "scoring", "updated", `Glossary updated to ${glossaryPatchResult.complianceAfter.toFixed(0)}% (deterministic, no re-score needed)`);
   }
 
   // 5. Gate check
