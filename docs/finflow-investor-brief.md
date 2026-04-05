@@ -50,6 +50,34 @@ FinFlow is a content multiplication engine with a quality scoring core. It monit
 | **Quality assurance** | None | 13-metric scoring, audit trail |
 | **Cost** | $3-5K/month (white-label fee) | $999-2,999/month (all-in) |
 
+### The duplicate content penalty — why white-label fails
+
+When a broker publishes rebranded third-party research, the same content appears on dozens of broker websites simultaneously. Search engines detect this duplicate content and penalize it — none of these pages rank well because there is no original source to reward.
+
+A broker publishing 2 rebranded reports per day accumulates pages that Google ignores. A broker publishing 10 original pieces per day in 5 languages accumulates pages that rank for long-tail search queries in each market ("EUR/USD análisis mayo 2026", "analyse GBP/JPY mai 2026").
+
+Original content has no competition from other sites. Every page targets unique keywords in the broker's voice, in their clients' languages.
+
+### Content ROI projection
+
+*All figures based on industry averages for financial services content marketing. Actual results vary by market, competition, and content quality.*
+
+| Metric | White-label 3rd party reports | FinFlow original content |
+|--------|------------------------------|--------------------------|
+| **New pages/month** | ~60 (rebranded) | ~1,500 (original, 5 languages) |
+| **Accumulated pages (6 months)** | ~360 | ~9,000 |
+| **Organic search visits/month (6mo)** | ~300* | ~30,000* |
+| **Equivalent ad spend/month** | ~$900* | ~$90,000* |
+| **Social impressions/month** | ~3,000 | ~225,000 |
+| **Monthly leads (0.5% conversion)** | ~1.5 | ~150 |
+| **Domain authority growth** | Minimal (duplicate content) | Significant (fresh original content) |
+
+\* *Search traffic estimates based on industry average of 5 visits/month for rebranded content (duplicate penalty) vs 20 visits/month for original indexed pages. Equivalent ad spend calculated at $3 CPC (financial keywords industry average). These are projections, not guarantees.*
+
+**The compounding effect:** Content accumulates. A page published on day 1 still generates search traffic on day 180. After 12 months, a broker using FinFlow has ~18,000 indexed original pages across multiple languages — a permanent SEO asset that grows in value as the domain builds authority.
+
+**Why rebranded content doesn't compound:** Google's duplicate content algorithms identify the original source (the third-party provider) and suppress copies. The broker's version receives little to no search traffic regardless of how many reports they publish.
+
 ### How it works
 
 ```
