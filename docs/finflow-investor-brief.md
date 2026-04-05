@@ -91,11 +91,15 @@ Analysis generation (multiple audience levels)
         |
 Quality scoring: 13 metrics evaluated
         |
+Compliance review (jurisdiction-specific: MiFID II, FCA, SEC, ASIC, MAS)
+        |
 Translation into client's languages
         |
 Quality scoring: 13 metrics on translated output
         |
-Human checkpoint (adaptive: 100% --> 10% over 12 months)
+HITL compliance approval (human signs off on regulatory compliance)
+        |
+Human quality checkpoint (adaptive: 100% --> 10% over 12 months)
         |
 Published: Blog, Email, Social, PDF - all branded
 ```
@@ -142,7 +146,33 @@ The 86% generic AI accuracy is not because the AI is bad — it is because finan
 
 ---
 
-## 5. Competitive Positioning
+## 5. Compliance — The Pipeline Stage Brokers Can't Skip
+
+### Why compliance matters
+
+Every jurisdiction where a broker operates has specific rules about financial content. MiFID II (EU) requires research independence disclosures and risk warnings. SEC/FINRA (US) enforces anti-fraud provisions and FINRA Rule 2210 on communications. FCA (UK) mandates that content be fair, clear, and not misleading. ASIC (Australia) applies RG 234 and Design and Distribution Obligations. MAS (Singapore) regulates under FAA and SFA. A single piece of content published across five jurisdictions must satisfy all five rule sets — plus the client's own internal compliance policies.
+
+Brokers are scared of this. Non-compliant content means fines, license risk, and reputational damage. This fear is why most brokers publish so little content — it's not just the cost of production, it's the cost of getting compliance wrong.
+
+### How it works
+
+A dedicated compliance agent checks every piece of content against jurisdiction-specific regulatory rules and the client's internal policies. This happens as a distinct pipeline stage — after analysis generation and quality scoring, before publication. The agent flags guaranteed-return language ("will reach" becomes "may reach"), verifies risk disclaimers are present and correctly translated, checks past-performance notices per jurisdiction, and identifies forbidden terms.
+
+### HITL compliance approval
+
+Every piece of content receives a human sign-off on regulatory compliance before publication. This is not the same as the quality checkpoint (which is adaptive and decreases over time). The compliance approval is a separate, non-negotiable gate. A human reviews the compliance agent's assessment and either approves or returns the content for correction.
+
+### Audit trail
+
+Every compliance check is documented. Every approval is logged with a timestamp and the identity of the approver. Every flagged term, every correction, every jurisdiction-specific rule that was applied — all recorded. This produces a compliance certificate per document that the broker can present to regulators if questioned.
+
+### What this means competitively
+
+This is what separates FinFlow from "just use ChatGPT." No generic AI tool offers jurisdiction-specific compliance checking, human sign-off on regulatory compliance, or an auditable trail of every compliance decision. For a regulated financial institution, content without a compliance audit trail is a liability. Content with one is an asset.
+
+---
+
+## 6. Competitive Positioning
 
 ### We replace FXStreet/TradingCentral, not "a person using ChatGPT"
 
@@ -156,6 +186,7 @@ The buyer's current spend is $3-5K/month on white-label research feeds. That is 
 | **Quality assurance** | Editorial review (opaque) | 13-metric scoring (auditable) |
 | **Volume** | Fixed feed (X pieces/day) | Scales with plan tier |
 | **SEO value** | Low (duplicate content) | High (original content) |
+| **Compliance review** | None | Jurisdiction-specific, HITL approved, auditable |
 | **Price** | $3-5K/month | $999-2,999/month |
 
 ### What we are NOT competing against
@@ -166,7 +197,7 @@ The buyer's current spend is $3-5K/month on white-label research feeds. That is 
 
 ---
 
-## 6. The Real Moat
+## 7. The Real Moat
 
 ### 1. Client relationships and domain knowledge
 100+ broker clients served over 15 years. We know the workflows, the compliance requirements, the terminology debates, the approval bottlenecks. This is sales leverage and product insight, not a data moat.
@@ -189,7 +220,7 @@ Market scanning, analysis generation, quality scoring, translation, compliance r
 
 ---
 
-## 7. Market Opportunity
+## 8. Market Opportunity
 
 ### Target customer
 Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently spending $3-5K/month on white-label content (FXStreet, TradingCentral, Autochartist) or publishing nothing. Wants to compete on content with larger brokers.
@@ -209,7 +240,7 @@ Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently 
 
 ---
 
-## 8. Business Model and Pricing
+## 9. Business Model and Pricing
 
 | Tier | Monthly Price | Instruments | Languages | Quality Scoring | HITL Model |
 |------|-------------|-------------|-----------|-----------------|------------|
@@ -239,7 +270,7 @@ Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently 
 
 ---
 
-## 9. Go-to-Market Strategy
+## 10. Go-to-Market Strategy
 
 ### Phase 1: Warm leads (Month 1-3)
 - Pilot with Tier1FX (internal company) — full feature validation
@@ -263,7 +294,7 @@ Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently 
 
 ---
 
-## 10. Current State and Traction
+## 11. Current State and Traction
 
 | Asset | Status | Detail |
 |-------|--------|--------|
@@ -283,7 +314,7 @@ Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently 
 
 ---
 
-## 11. Team and Background
+## 12. Team and Background
 
 **WordwideFX** was founded in 2010-2011 in Barcelona. 15+ years of specialized financial translation:
 
@@ -294,7 +325,7 @@ Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently 
 
 ---
 
-## 12. Risks and Limitations
+## 13. Risks and Limitations
 
 **Honest assessment of where we are:**
 
@@ -309,7 +340,7 @@ Small-to-mid forex/crypto broker, 50-200 employees, no research team. Currently 
 
 ---
 
-## 13. What We're NOT Doing
+## 14. What We're NOT Doing
 
 - Not competing on price with generic AI content (race to the bottom)
 - Not building a general-purpose translation tool (financial content only)

@@ -1087,10 +1087,18 @@ h4, .h4 {
               <div class="workflow__arrow">&rarr;</div>
               <div class="workflow__step fragment fade-up">
                 <div class="workflow__box" style="border-color: var(--success);">
-                  <div class="workflow__label">Human</div>
-                  <div class="workflow__sublabel">Approval</div>
+                  <div class="workflow__label">Compliance</div>
+                  <div class="workflow__sublabel">Jurisdiction Rules</div>
                 </div>
-                <div class="workflow__hitl">HITL Sign-off</div>
+                <div class="workflow__hitl">HITL Approval</div>
+              </div>
+              <div class="workflow__arrow">&rarr;</div>
+              <div class="workflow__step fragment fade-up">
+                <div class="workflow__box" style="border-color: var(--accent);">
+                  <div class="workflow__label">Human</div>
+                  <div class="workflow__sublabel">Quality Check</div>
+                </div>
+                <div class="workflow__hitl">Adaptive</div>
               </div>
               <div class="workflow__arrow">&rarr;</div>
               <div class="workflow__step fragment fade-up">
@@ -1286,7 +1294,7 @@ h4, .h4 {
             <div>
               <p class="kicker">11 // Compliance</p>
               <h2>Regulation<br><span class="accent-text">Built In</span></h2>
-              <p class="lead">Compliance is a pipeline stage, not an afterthought. Every piece is scored and auditable. Every document has a complete audit trail from source to publication.</p>
+              <p class="lead">Compliance is a pipeline stage, not an afterthought. A human signs off on regulatory compliance for every piece &mdash; non-negotiable, auditable, and what makes FinFlow safe for regulated institutions.</p>
               <div style="margin-top: 16px;">
                 <ul class="list" style="font-size: 0.85rem;">
                   <li><strong>MiFID II</strong> &mdash; EU: Research independence, risk warnings</li>
@@ -1298,13 +1306,23 @@ h4, .h4 {
               </div>
             </div>
             <div>
-              <div class="card fragment fade-up" style="margin-bottom: 16px; border-color: var(--success); padding: 20px;">
+              <div class="card fragment fade-up" style="margin-bottom: 12px; border-color: var(--success); padding: 20px;">
                 <h4 class="card__title" style="color: var(--success); margin-bottom: 12px;">What Gets Checked</h4>
                 <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.8;">
                   <li>Risk disclaimers present and correctly translated</li>
                   <li>No guaranteed return language ("will reach" &rarr; "may reach")</li>
                   <li>Past performance notices per jurisdiction</li>
                   <li>Forbidden terms flagged and replaced</li>
+                  <li>Client internal policies enforced</li>
+                </ul>
+              </div>
+              <div class="card fragment fade-up" style="margin-bottom: 12px; border-color: var(--warning); padding: 20px;">
+                <h4 class="card__title" style="color: var(--warning); margin-bottom: 12px;">HITL Compliance Approval</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.8;">
+                  <li>Human signs off on regulatory compliance &mdash; every piece</li>
+                  <li>Non-negotiable gate &mdash; does not decrease over time</li>
+                  <li>Separate from quality checkpoint (which is adaptive)</li>
+                  <li>What makes brokers trust FinFlow over generic AI</li>
                 </ul>
               </div>
               <div class="card fragment fade-up" style="border-color: var(--fin-teal); padding: 20px;">
@@ -1312,7 +1330,7 @@ h4, .h4 {
                 <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.8;">
                   <li>Source document &rarr; every transformation logged</li>
                   <li>Quality scores at each pipeline stage</li>
-                  <li>Human approvals timestamped and recorded</li>
+                  <li>Human approvals timestamped with approver identity</li>
                   <li>Compliance certificate per document</li>
                 </ul>
               </div>

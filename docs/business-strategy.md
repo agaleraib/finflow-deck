@@ -39,6 +39,7 @@ Go from 1-2 rebranded pieces/day to 10+ original branded pieces across multiple 
 - **Client perception:** Original analysis in your brand voice signals institutional credibility
 - **Retention:** Clients stay with brokers providing analysis in their language — a Thai trader receiving daily Thai-language EUR/USD analysis from their broker has a reason to stay
 - **Social distribution:** 10 pieces/day = daily content across Instagram, LinkedIn, Twitter, Facebook — each platform, each language
+- **Compliance safety:** Every piece is compliance-checked against the client's jurisdiction (MiFID II, SEC/FINRA, FCA, ASIC, MAS) before publication. A human signs off on regulatory compliance. Every check is logged and auditable. This is what makes FinFlow safe for regulated financial institutions — and what generic AI tools can never provide
 
 ---
 
@@ -53,6 +54,7 @@ These claims come from benchmark testing on 3 financial documents through the pr
 - **Error detection:** The pipeline catches overbought/oversold reversals and price transpositions that both generic AI and human translators miss. Financial documents have a specific failure mode — numbers and directional terms that look plausible but are wrong. Pattern-matching on these is where domain-specific systems outperform.
 - **13-metric quality scoring:** Every output is scored. 6 metrics are deterministic (glossary compliance, numerical integrity, structural fidelity, formatting, completeness, character encoding) — these produce identical results every run. 7 are LLM-judged (tone consistency, readability, contextual accuracy, compliance language, brand voice alignment, hedging appropriateness, target audience fit) — these vary ±1-3 points at temperature=0.
 - **Audit trail:** Every translation scored, every correction documented, every agent decision logged. This matters for MiFID II, SEC/FINRA, FCA, ASIC, and MAS compliance — not as a feature, but as a regulatory requirement brokers currently handle manually.
+- **HITL compliance approval:** Compliance review is a dedicated pipeline stage — not a checkbox, not an afterthought. A compliance agent checks content against jurisdiction-specific rules and the client's internal policies. Then a human signs off on regulatory compliance before publication. This gate is non-negotiable and does not decrease over time (unlike the quality review checkpoint). Every compliance check is documented, every approval logged with a timestamp and approver identity. The result is a compliance certificate per document that the broker can present to regulators. This is the single biggest trust builder for brokers who are scared of publishing non-compliant content — fines, license risk, and reputational damage are existential threats. No competitor offers compliance-checked, human-approved, auditable financial content.
 
 ---
 
@@ -144,7 +146,7 @@ These are companies we've worked with. We know their terminology, their tone, th
 
 - **Benchmark sample size is small** (3 documents). The numerical accuracy advantage is real but needs validation at scale.
 - **Only Spanish is production-tested.** Other languages use the same pipeline but haven't been benchmarked.
-- **The glossary moat is thin.** Any competitor can extract a comparable financial glossary in days. The real moat is the quality measurement system and the per-client learning loop.
+- **The glossary moat is thin.** Any competitor can extract a comparable financial glossary in days. The real moat is the quality measurement system, the HITL compliance approval process, and the per-client learning loop.
 - **LLM costs could shift.** Current unit economics assume Anthropic Claude pricing. Model cost changes affect margins directly.
 - **Regulatory landscape moves.** AI-generated financial content regulation is emerging and uncertain.
 
