@@ -3,6 +3,7 @@
 **Prepared by:** WordwideFX  
 **Date:** April 2026  
 **Status:** Pre-launch, Translation Engine complete (TypeScript), benchmarked  
+**Presentation:** [agaleraib.github.io/finflow-deck/presentation/finflow-deck.html](https://agaleraib.github.io/finflow-deck/presentation/finflow-deck.html)  
 **Live mockup:** [agaleraib.github.io/finflow-deck/mockup/finflow-ui-mockup.html](https://agaleraib.github.io/finflow-deck/mockup/finflow-ui-mockup.html)
 
 ---
