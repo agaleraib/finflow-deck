@@ -301,10 +301,67 @@ IronFX ES custom weights:
 
 ---
 
+## Cross-Document Consistency (separate tool)
+
+The 13 metrics above score a single document in isolation. They do not measure whether the system produces **identical terminology across multiple translations of the same or different documents**. This is measured by a separate tool: `consistency-test.ts`.
+
+### How it works
+
+The consistency benchmark runs the same document N times (default 5) through both FinFlow and a generic LLM, then compares term-by-term:
+
+1. For each glossary term in the source, check which Spanish translation was used in each run
+2. A term is **consistent** if all N runs produce the same translation
+3. A term is **drifting** if any run produces a different translation
+
+### What it measures
+
+| Metric | Description |
+|--------|-------------|
+| **consistency_rate** | Percentage of glossary terms translated the same way across all runs |
+| **drifting_terms** | Count and list of terms that changed between runs |
+| **variant_count** | For each drifting term, how many different translations were used |
+
+### Why this matters
+
+A generic LLM (no profile) translates from scratch each time. Without a glossary anchor, it may use "tendencia alcista" in one run and "tendencia ascendente" in the next — both valid, but inconsistent. For a client publishing 500 reports/year, this drift means their terminology changes randomly across documents.
+
+FinFlow's glossary reference in the translation prompt should produce the same term choices every time, because the model sees the same glossary and the same source text.
+
+### Expected results (not yet measured)
+
+Based on our scoring consistency data (13 metrics are near-deterministic at temperature=0), FinFlow should show high terminology consistency. The generic LLM's consistency is unknown — this is what the benchmark will measure.
+
+**Status:** Tool built (`packages/api/src/benchmark/consistency-test.ts`), not yet run. Blocked on glossary formatting fix (Blocker A in plan). Will be run on AM050515 with 5 runs each.
+
+### Output
+
+- `{reportId}-consistency.json` — full per-term consistency data
+- `{reportId}-consistency.csv` — term, finflow_consistent, generic_consistent, generic_variants (for presentations)
+- `{reportId}-finflow-run{N}.txt` / `{reportId}-generic-run{N}.txt` — all translations saved for manual review
+
+### Cost
+
+5 FinFlow runs + 5 Generic runs × ~$0.38 each = ~$3.80 per document.
+
+---
+
+## Long-Term Terminology Drift (not yet built)
+
+A future tool to monitor whether FinFlow's terminology choices change over time as the underlying LLM model is updated. This would:
+
+1. Store a baseline set of translations (per glossary term) from the current model version
+2. Periodically re-translate the same documents and compare against baseline
+3. Flag any terms where the model's preferred translation has shifted
+
+This is lower priority than cross-document consistency but important for production deployments where model updates (e.g., Claude Opus 4.6 → 4.7) could silently change translation preferences.
+
+**Status:** Not built. Will be considered after the full 30-doc benchmark validates the current pipeline.
+
+---
+
 ## What This Scoring System Cannot Measure
 
 1. **Client satisfaction** — Scores measure technical quality, not whether the client is happy with the output.
 2. **Cultural appropriateness** — Financial metaphors that work in one culture may not work in another. The judge checks regional variant but not cultural fit.
-3. **Consistency across documents** — Each document is scored independently. The same term translated differently across two documents is not detected. (Consistency benchmark is a separate tool.)
-4. **Translation speed** — Scoring measures quality, not throughput.
-5. **Long-term terminology drift** — The scoring captures point-in-time quality. Whether the system maintains consistency over months of production use requires longitudinal monitoring.
+3. **Translation speed** — Scoring measures quality, not throughput.
+4. **Cross-model consistency** — The scoring system does not detect if a model update changes translation preferences. (See Long-Term Terminology Drift above.)
