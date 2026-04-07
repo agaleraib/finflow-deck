@@ -30,6 +30,9 @@ packages/api/approach3-*/
 packages/api/benchmark-validation/
 packages/api/cost-estimation/
 
+# Uniqueness PoC harness output (large, generated, never tracked)
+uniqueness-poc-runs/
+
 # Local databases / caches
 finflow/data/translation_engine.db
 finflow/data/cache/*.csv

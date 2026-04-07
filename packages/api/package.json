@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "typecheck": "tsc --noEmit",
-    "build": "bun build src/index.ts --outdir dist --target bun"
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "poc:uniqueness": "bun run src/benchmark/uniqueness-poc/index.ts",
+    "poc:uniqueness:full": "bun run src/benchmark/uniqueness-poc/index.ts --full",
+    "poc:uniqueness:all": "bun run src/benchmark/uniqueness-poc/index.ts --all --full"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.40.0",
