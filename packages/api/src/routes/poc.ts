@@ -1,0 +1,324 @@
+/**
+ * Uniqueness PoC Playground routes (v1.0).
+ *
+ * Backend for `packages/playground/`. v1.0 surface is intentionally minimal:
+ *
+ *   GET  /poc/personas         → ContentPersona[]  (the 4 broker presets)
+ *   GET  /poc/fixtures         → NewsEvent[]       (the JSON fixtures on disk)
+ *   POST /poc/runs             → start a run; returns { runId, streamUrl }
+ *   GET  /poc/runs/:id/stream  → SSE stream of stage events for the run
+ *
+ * Out of scope for v1.0 (deferred to v1.1+ per
+ * docs/specs/2026-04-08-uniqueness-poc-playground.md §16):
+ *   - persona/tag editing, identity dropdown, stage checkboxes
+ *   - cost guards / cap enforcement
+ *   - run history, diff view, analyze panel, export
+ *
+ * v1.0 only enables Stage 6 (cross-tenant matrix). The runner unconditionally
+ * also runs Stages 1–3 (FA core, intra-tenant identities, similarity matrix);
+ * the playground UI ignores those — only the cross-tenant outputs are surfaced
+ * in the tenant grid.
+ */
+
+import { Hono } from "hono";
+import { streamSSE, type SSEStreamingApi } from "hono/streaming";
+import { z } from "zod";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { runUniquenessPoc, type RunCallbacks } from "../benchmark/uniqueness-poc/runner.js";
+import type {
+  ContentPersona,
+  NewsEvent,
+  RunResult,
+  IdentityOutput,
+  SimilarityResult,
+} from "../benchmark/uniqueness-poc/types.js";
+
+// ───────────────────────────────────────────────────────────────────
+// Disk loaders for personas + fixtures
+// ───────────────────────────────────────────────────────────────────
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const POC_ROOT = join(__dirname, "..", "benchmark", "uniqueness-poc");
+const PERSONAS_DIR = join(POC_ROOT, "personas");
+const FIXTURES_DIR = join(POC_ROOT, "fixtures");
+
+function loadPersonas(): ContentPersona[] {
+  if (!existsSync(PERSONAS_DIR)) return [];
+  return readdirSync(PERSONAS_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .map((f) => JSON.parse(readFileSync(join(PERSONAS_DIR, f), "utf-8")) as ContentPersona);
+}
+
+function loadFixtures(): NewsEvent[] {
+  if (!existsSync(FIXTURES_DIR)) return [];
+  return readdirSync(FIXTURES_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .map((f) => JSON.parse(readFileSync(join(FIXTURES_DIR, f), "utf-8")) as NewsEvent);
+}
+
+// ───────────────────────────────────────────────────────────────────
+// SSE event protocol — mirrors the spec §7.5 union (v1.0 subset)
+// ───────────────────────────────────────────────────────────────────
+
+export type PocSseEvent =
+  | { type: "run_started"; runId: string; estimatedCostUsd: number }
+  | { type: "stage_started"; stage: "core" | "identity" | "cross-tenant" | "judge" }
+  | { type: "core_analysis_completed"; body: string; tokens: number; costUsd: number }
+  | { type: "tenant_started"; tenantIndex: number; personaId: string }
+  | { type: "tenant_completed"; tenantIndex: number; output: IdentityOutput }
+  | { type: "judge_completed"; pairId: string; similarity: SimilarityResult }
+  | { type: "cost_updated"; totalCostUsd: number }
+  | { type: "run_completed"; runId: string; result: RunResult }
+  | { type: "run_errored"; runId: string; error: string };
+
+// ───────────────────────────────────────────────────────────────────
+// In-memory run registry — keyed by runId
+// ───────────────────────────────────────────────────────────────────
+//
+// Each entry buffers events as they fire so a late SSE consumer can replay
+// the full stream from the start. When a stream is connected the entry's
+// `listener` is set; the runner writes through both the buffer and the
+// listener.
+
+interface RunEntry {
+  runId: string;
+  events: PocSseEvent[];
+  listener: ((event: PocSseEvent) => void) | null;
+  done: boolean;
+}
+
+const runs = new Map<string, RunEntry>();
+
+function emit(entry: RunEntry, event: PocSseEvent): void {
+  entry.events.push(event);
+  if (event.type === "run_completed" || event.type === "run_errored") {
+    entry.done = true;
+  }
+  entry.listener?.(event);
+}
+
+// ───────────────────────────────────────────────────────────────────
+// Request schema (v1.0 minimal)
+// ───────────────────────────────────────────────────────────────────
+
+const PlaygroundRunRequestSchema = z.object({
+  eventBody: z.string().min(1),
+  eventTitle: z.string().optional(),
+  fixtureId: z.string().optional(),
+  tenants: z
+    .array(
+      z.object({
+        personaId: z.string().min(1),
+      }),
+    )
+    .min(2)
+    .max(6),
+});
+
+export type PlaygroundRunRequest = z.infer<typeof PlaygroundRunRequestSchema>;
+
+// ───────────────────────────────────────────────────────────────────
+// Run launcher
+// ───────────────────────────────────────────────────────────────────
+
+function buildEvent(req: PlaygroundRunRequest, fixtures: NewsEvent[]): NewsEvent {
+  const fixture = req.fixtureId
+    ? fixtures.find((f) => f.id === req.fixtureId)
+    : undefined;
+
+  const id =
+    fixture?.id ??
+    `playground-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+
+  // Default topic = eurusd (spec §18 open question 5; v1.0 hard-codes this)
+  const topicId = fixture?.topicId ?? "eurusd";
+  const topicName = fixture?.topicName ?? "EUR/USD";
+  const topicContext = fixture?.topicContext ?? "";
+
+  const title =
+    req.eventTitle ??
+    fixture?.title ??
+    req.eventBody.slice(0, 80);
+
+  return {
+    id,
+    title,
+    source: fixture?.source ?? "playground",
+    publishedAt: fixture?.publishedAt ?? new Date().toISOString(),
+    body: req.eventBody,
+    topicId,
+    topicName,
+    topicContext,
+  };
+}
+
+function startRun(
+  req: PlaygroundRunRequest,
+  personas: ContentPersona[],
+  fixtures: NewsEvent[],
+): { runId: string; entry: RunEntry } {
+  // Resolve personas by id
+  const tenantPersonas: ContentPersona[] = req.tenants.map((t) => {
+    const p = personas.find((x) => x.id === t.personaId);
+    if (!p) throw new Error(`Unknown personaId: ${t.personaId}`);
+    return p;
+  });
+
+  const event = buildEvent(req, fixtures);
+  const runId = `${new Date().toISOString().replace(/[:.]/g, "-")}_${event.id}`;
+
+  const entry: RunEntry = {
+    runId,
+    events: [],
+    listener: null,
+    done: false,
+  };
+  runs.set(runId, entry);
+
+  // Build callbacks that funnel into the entry buffer.
+  const callbacks: RunCallbacks = {
+    onRunStarted: (_runId, estimatedCostUsd) =>
+      emit(entry, { type: "run_started", runId, estimatedCostUsd }),
+    onStageStarted: (stage) =>
+      emit(entry, { type: "stage_started", stage }),
+    onCoreAnalysisCompleted: (body, costUsd, tokens) =>
+      emit(entry, { type: "core_analysis_completed", body, costUsd, tokens }),
+    onTenantStarted: (tenantIndex, personaId) =>
+      emit(entry, { type: "tenant_started", tenantIndex, personaId }),
+    onTenantCompleted: (tenantIndex, output) =>
+      emit(entry, { type: "tenant_completed", tenantIndex, output }),
+    onJudgeCompleted: (pairId, similarity) =>
+      emit(entry, { type: "judge_completed", pairId, similarity }),
+    onCostUpdated: (totalCostUsd) =>
+      emit(entry, { type: "cost_updated", totalCostUsd }),
+    onRunCompleted: (result) =>
+      emit(entry, { type: "run_completed", runId, result }),
+    onRunErrored: (error) =>
+      emit(entry, { type: "run_errored", runId, error: error.message }),
+  };
+
+  // Fire and forget — the route returned the runId already; the run continues
+  // in the background and the SSE consumer can connect at any time.
+  void (async () => {
+    try {
+      await runUniquenessPoc(
+        {
+          event,
+          withCrossTenantMatrix: {
+            identityId: "in-house-journalist",
+            personas: tenantPersonas,
+          },
+        },
+        callbacks,
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      emit(entry, { type: "run_errored", runId, error: error.message });
+    }
+  })();
+
+  return { runId, entry };
+}
+
+// ───────────────────────────────────────────────────────────────────
+// Hono route factory
+// ───────────────────────────────────────────────────────────────────
+
+export function createPocRoutes() {
+  const app = new Hono();
+
+  app.get("/personas", (c) => {
+    return c.json(loadPersonas());
+  });
+
+  app.get("/fixtures", (c) => {
+    return c.json(loadFixtures());
+  });
+
+  app.post("/runs", async (c) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid JSON body" }, 400);
+    }
+    const parsed = PlaygroundRunRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.issues }, 400);
+    }
+
+    try {
+      const personas = loadPersonas();
+      const fixtures = loadFixtures();
+      const { runId } = startRun(parsed.data, personas, fixtures);
+      return c.json({ runId, streamUrl: `/poc/runs/${runId}/stream` });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return c.json({ error: message }, 500);
+    }
+  });
+
+  app.get("/runs/:id/stream", (c) => {
+    const id = c.req.param("id");
+    const entry = runs.get(id);
+    if (!entry) {
+      return c.json({ error: `unknown run id: ${id}` }, 404);
+    }
+
+    return streamSSE(c, async (stream: SSEStreamingApi) => {
+      // Replay buffered events first.
+      for (const event of entry.events) {
+        await stream.writeSSE({
+          event: event.type,
+          data: JSON.stringify(event),
+        });
+      }
+
+      if (entry.done) {
+        return;
+      }
+
+      // Subscribe to live events. We bridge through a queue + Promise so the
+      // async handler can `await` between writes (Hono's SSE stream is async).
+      let resolveNext: (() => void) | null = null;
+      const queue: PocSseEvent[] = [];
+
+      entry.listener = (event) => {
+        queue.push(event);
+        if (resolveNext) {
+          const r = resolveNext;
+          resolveNext = null;
+          r();
+        }
+      };
+
+      try {
+        while (!entry.done || queue.length > 0) {
+          if (queue.length === 0) {
+            await new Promise<void>((resolve) => {
+              resolveNext = resolve;
+            });
+          }
+          const next = queue.shift();
+          if (!next) continue;
+          await stream.writeSSE({
+            event: next.type,
+            data: JSON.stringify(next),
+          });
+          if (next.type === "run_completed" || next.type === "run_errored") {
+            break;
+          }
+        }
+      } finally {
+        entry.listener = null;
+      }
+    });
+  });
+
+  return app;
+}

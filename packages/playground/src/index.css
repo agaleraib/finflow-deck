@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 CSS-first @theme — semantic tokens for the dark, premium,
+ * non-AI-looking aesthetic. Component classes reference these via
+ * `bg-background`, `text-foreground`, `text-accent`, etc.
+ *
+ * Trinary verdict palette is fixed and load-bearing — it must match the
+ * scatter chart and donut chart colors so the UI reads consistently.
+ */
+@theme {
+  --color-background: #0a0a0c;
+  --color-card: #14141a;
+  --color-card-elevated: #1a1a22;
+  --color-border: #262630;
+  --color-border-strong: #353541;
+  --color-foreground: #e4e4e7;
+  --color-foreground-dim: #a1a1aa;
+  --color-foreground-muted: #71717a;
+  --color-accent: #d97757;
+  --color-accent-dim: #b8623f;
+
+  --color-distinct: #4ade80;
+  --color-reskinned: #fbbf24;
+  --color-fabrication: #f87171;
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-background);
+}

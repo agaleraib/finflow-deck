@@ -351,6 +351,7 @@ async function runCrossTenantMatrix(
   identityId: string,
   coreAnalysisBody: string,
   personas: ContentPersona[],
+  callbacks?: RunCallbacks,
 ): Promise<CrossTenantMatrixResult> {
   if (personas.length < 3) {
     throw new Error(
@@ -363,9 +364,16 @@ async function runCrossTenantMatrix(
     throw new Error(`Unknown identity: ${identityId}`);
   }
 
-  // Run the same identity once per persona, in parallel
+  // Run the same identity once per persona, in parallel.
+  // Emit per-tenant lifecycle callbacks so the playground UI can populate
+  // each card progressively as its identity call resolves.
   const outputs = await Promise.all(
-    personas.map((persona) => runIdentity(identityId, coreAnalysisBody, persona)),
+    personas.map(async (persona, index) => {
+      callbacks?.onTenantStarted?.(index, persona.id);
+      const out = await runIdentity(identityId, coreAnalysisBody, persona);
+      callbacks?.onTenantCompleted?.(index, out);
+      return out;
+    }),
   );
 
   // Embed all outputs
@@ -409,6 +417,7 @@ async function runCrossTenantMatrix(
     });
 
     applyJudgeVerdict(sim, verdict);
+    callbacks?.onJudgeCompleted?.(sim.pairId, sim);
   }
 
   // Distribution stats
@@ -766,7 +775,30 @@ export interface RunOptions {
   };
 }
 
-export async function runUniquenessPoc(opts: RunOptions): Promise<RunResult> {
+/**
+ * Optional lifecycle callbacks the runner emits at each major stage transition.
+ *
+ * Used by the uniqueness PoC playground to stream stage events over SSE so the
+ * UI populates progressively as the run proceeds. The CLI does not pass any
+ * callbacks; every field is optional and the runner treats missing handlers as
+ * no-ops, so existing callers are unaffected.
+ */
+export interface RunCallbacks {
+  onRunStarted?: (runId: string, estimatedCostUsd: number) => void;
+  onStageStarted?: (stage: "core" | "identity" | "cross-tenant" | "judge") => void;
+  onCoreAnalysisCompleted?: (body: string, costUsd: number, tokens: number) => void;
+  onTenantStarted?: (tenantIndex: number, personaId: string) => void;
+  onTenantCompleted?: (tenantIndex: number, output: IdentityOutput) => void;
+  onJudgeCompleted?: (pairId: string, similarity: SimilarityResult) => void;
+  onCostUpdated?: (totalCostUsd: number) => void;
+  onRunCompleted?: (result: RunResult) => void;
+  onRunErrored?: (error: Error) => void;
+}
+
+export async function runUniquenessPoc(
+  opts: RunOptions,
+  callbacks?: RunCallbacks,
+): Promise<RunResult> {
   const runId = `${new Date().toISOString().replace(/[:.]/g, "-")}_${opts.event.id}`;
   const startedAt = new Date().toISOString();
   const startTime = Date.now();
@@ -775,10 +807,19 @@ export async function runUniquenessPoc(opts: RunOptions): Promise<RunResult> {
   console.log(`[runner] Event: ${opts.event.title}`);
   console.log(`[runner] Topic: ${opts.event.topicName}`);
 
+  callbacks?.onRunStarted?.(runId, 0);
+
   // Stage 1
   console.log(`[runner] Stage 1 — running core FA analysis (Opus)...`);
+  callbacks?.onStageStarted?.("core");
   const coreAnalysis = await runCoreAnalysis(opts.event);
   console.log(`[runner]   ✓ ${coreAnalysis.outputTokens} output tokens, ${(coreAnalysis.durationMs / 1000).toFixed(1)}s, $${coreAnalysis.costUsd.toFixed(4)}`);
+  callbacks?.onCoreAnalysisCompleted?.(
+    coreAnalysis.body,
+    coreAnalysis.costUsd,
+    coreAnalysis.outputTokens,
+  );
+  callbacks?.onCostUpdated?.(coreAnalysis.costUsd);
 
   // Stage 2
   console.log(`[runner] Stage 2 — adapting via ${IDENTITY_REGISTRY.length} identity agents (Sonnet, parallel)...`);
@@ -844,10 +885,12 @@ export async function runUniquenessPoc(opts: RunOptions): Promise<RunResult> {
   let narrativeStateTest: NarrativeStateTestResult | undefined;
   if (opts.withCrossTenantMatrix) {
     console.log(`[runner] Stage 6 — CROSS-TENANT MATRIX (the load-bearing test): ${opts.withCrossTenantMatrix.identityId} × ${opts.withCrossTenantMatrix.personas.length} personas...`);
+    callbacks?.onStageStarted?.("cross-tenant");
     crossTenantMatrix = await runCrossTenantMatrix(
       opts.withCrossTenantMatrix.identityId,
       coreAnalysis.body,
       opts.withCrossTenantMatrix.personas,
+      callbacks,
     );
     console.log(`[runner]   ✓ ${crossTenantMatrix.similarities.length} pairs`);
     console.log(`[runner]   ✓ cosine: mean=${crossTenantMatrix.meanCosine.toFixed(4)}, min=${crossTenantMatrix.minCosine.toFixed(4)}, max=${crossTenantMatrix.maxCosine.toFixed(4)}`);
@@ -913,7 +956,9 @@ export async function runUniquenessPoc(opts: RunOptions): Promise<RunResult> {
   const finishedAt = new Date().toISOString();
   const totalDurationMs = Date.now() - startTime;
 
-  return {
+  callbacks?.onCostUpdated?.(totalCostUsd);
+
+  const result: RunResult = {
     runId,
     startedAt,
     finishedAt,
@@ -930,4 +975,8 @@ export async function runUniquenessPoc(opts: RunOptions): Promise<RunResult> {
     verdict,
     verdictReasoning: reasoning,
   };
+
+  callbacks?.onRunCompleted?.(result);
+
+  return result;
 }

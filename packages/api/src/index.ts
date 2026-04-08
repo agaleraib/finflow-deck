@@ -10,6 +10,7 @@ import { cors } from "hono/cors";
 import { InMemoryProfileStore, InMemoryTranslationStore } from "./lib/store.js";
 import { createTranslateRoutes } from "./routes/translate.js";
 import { createProfileRoutes } from "./routes/profiles.js";
+import { createPocRoutes } from "./routes/poc.js";
 
 const app = new Hono();
 
@@ -23,6 +24,7 @@ const translationStore = new InMemoryTranslationStore();
 // Routes
 app.route("/translate", createTranslateRoutes(profileStore, translationStore));
 app.route("/profiles", createProfileRoutes(profileStore));
+app.route("/poc", createPocRoutes());
 
 // Health check
 app.get("/health", (c) => c.json({ status: "ok", service: "finflow-api" }));
