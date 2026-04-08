@@ -1,10 +1,29 @@
 # Uniqueness PoC — Session Journal (2026-04-07)
 
-**Session date:** 2026-04-07
+> ### ⚠️ REVISION 2026-04-08 — read this before §4, §5, §6, §9
+>
+> A follow-up session on 2026-04-08 re-scored the Stage 6 and Stage 8 outputs of the 2026-04-07 and 2026-04-08 runs under a **two-axis judge rubric** (factual fidelity × presentation similarity) that replaces the original single-axis "unique vs duplicate" judge. Under the new rubric, **the "0.87 cosine wall" that this journal describes as the most important finding is substantially a measurement artifact**, not an architectural ceiling. The original single-axis judge was rewarding fact fabrication (low overlap on levels/probabilities/direction) and punishing faithfulness (high overlap on the same shared facts), which is exactly backwards for a broker that must preserve the FA/TA substance. Headline revised findings:
+>
+> - **Stage 6 (baseline) under the new rubric scores 5/6 `distinct_products`** on the 2026-04-08 run and 4/6 on the 2026-04-07 run. The architecture was already essentially working; the old metric hid it.
+> - **Stage 8 (persona-tilt) is net-negative and is being killed.** Under the new rubric it tripled the `fabrication_risk` count (1→3) and bought ~zero presentation improvement. The tilt agent was mutating facts (levels, probabilities, direction) to score better on a metric that wasn't measuring the right thing. The §6 / §9 recommendation to make Stage 1B / Stage 8 a first-class production layer is **retracted**.
+> - **Helix Markets is the one persona that fails factual fidelity** independently of Stage 8. All six of its tag prompts (`tail-risk`, `crowded-trade`, `sentiment-extreme`, `contrarian`, `skeptical`, `provocative`) semantically encode "disagree with something" — and in a shared-FA architecture the only thing for Helix to disagree with is the source itself. This is a persona-design problem, not an architecture problem. See §13 below and `tags.ts`.
+> - **The real uniqueness metric is presentation similarity, and it is already in the target zone** (0.28–0.48 across Stage 6 pairs on the 2026-04-08 run, against a < 0.5 target) without the tilt layer and without masking facts.
+>
+> The section-level addenda are inline: §4.1, §6.1, §9.1, §13 (new). The rescoring artifacts are at:
+> - `uniqueness-poc-runs/2026-04-07T21-04-37-536Z_iran-strike-2026-04-07/report-rescored.md`
+> - `uniqueness-poc-runs/2026-04-08T11-40-20-923Z_iran-strike-2026-04-07/report-rescored.md`
+>
+> The rescoring script lives at `packages/api/src/benchmark/uniqueness-poc/rescore.ts`. The new two-axis judge prompt is defined inside that script and will be wired into `llm-judge.ts` + `runner.ts` in a follow-up commit.
+>
+> The original 2026-04-07 narrative below is preserved as-is for historical context — the confused interpretation is itself part of the record of how this PoC was understood before the measurement bug was found. Do not delete it. Just read this revision banner and the §4.1/§6.1/§9.1/§13 addenda first.
+
+---
+
+**Session date:** 2026-04-07 (+ 2026-04-08 revision)
 **Branch:** `workstream-b-sources-spec`
 **Owner:** Albert Galera
 **Working with:** Claude (Opus 4.6)
-**Status at end of session:** Phase 1 PoC complete, four runs analyzed, next experiment identified, all artifacts committed
+**Status at end of session:** Phase 1 PoC complete, four runs analyzed, next experiment identified, all artifacts committed. **2026-04-08 revision: measurement rubric was wrong; §4 table is an artifact; Stage 8 killed; Helix persona being rewritten.**
 
 This is a non-spec session journal — a high-fidelity record of the proof-of-concept work done on the FinFlow content uniqueness architecture. It exists so that future readers (the team, partners, future Claude sessions, and Albert himself when he comes back tomorrow) can pick up the experimental thread without having to re-derive what was learned.
 
@@ -160,7 +179,37 @@ After the four runs, we have statistically meaningful data on what each architec
 | + temporal narrative state (Run 4) | 0.8736 | **+0.006** (no contribution, slight regression) |
 | **Strict cross-tenant threshold** | **0.85** | (the bar to cross) |
 
-**Headline finding: there is a hard empirical floor at ~0.85-0.87 cosine when all writers consume the same shared core analysis.** Three additive prompt-time layers got close but cannot push past it. **The wall is the source analysis itself.**
+**Headline finding (original, retracted 2026-04-08): there is a hard empirical floor at ~0.85-0.87 cosine when all writers consume the same shared core analysis.** Three additive prompt-time layers got close but cannot push past it. **The wall is the source analysis itself.**
+
+### 4.1 REVISION 2026-04-08 — the wall was substantially a measurement artifact
+
+The single-axis "unique vs duplicate" rubric used by the original judge (see `llm-judge.ts` as of 2026-04-07) conflated two things that should have been scored independently:
+
+1. **Factual fidelity** — do both documents agree on the facts that must be shared (price levels, probabilities, directional call, historical anchors, set of transmission chains, conclusion)? This SHOULD be high; a broker whose tilt agent contradicts the source FA is fabricating, not differentiating.
+2. **Presentation similarity** — how alike do the two documents read as prose (voice, structure, lead, emphasis, framing)? This SHOULD be low; the goal is two different writers producing different prose from the same facts.
+
+The original judge collapsed these into one number, so documents that were doing the right thing (same facts, different prose) got flagged `duplicate` for the *wrong reason* — the judge was counting the shared facts as evidence of copying, when in fact the shared facts were the required state. Conversely, any document that mutated facts (invented a level, reassigned a probability) could score as `unique` even though it was contradicting the source — also the wrong direction.
+
+Re-scoring the existing Stage 6 outputs with a two-axis rubric shows:
+
+| Run | Distinct products | Reskinned | Fabrication risk | Fidelity mean | Presentation mean |
+|---|---:|---:|---:|---:|---:|
+| 2026-04-07 Stage 6 (Run 4 / iran-strike) | **4/6** | 0 | 2/6 | 0.885 | 0.488 |
+| 2026-04-08 Stage 6 (latest / iran-strike) | **5/6** | 0 | 1/6 | 0.925 | 0.378 |
+
+Compare these rows with §5's table below which reports "6/6 flagged duplicate by the LLM judge — FAIL." **Every pair the old judge flagged on the 2026-04-08 Stage 6 run — except the one involving Helix — is actually a `distinct_products` success under the two-axis rubric.** The 0.87 mean cosine was not the hard floor the journal believed; it was a floor on a metric that had the wrong sign on its shared-facts term.
+
+The one pair that legitimately fails is `Helix Markets ↔ Northbridge Wealth`, which has factual fidelity 0.88 with two level/probability divergences. This is a persona-design problem (see §13), not an architecture problem.
+
+**Corrected §4 table (measured under the two-axis rubric):**
+
+| Layer | Presentation similarity mean | What it means |
+|---|---:|---|
+| 2026-04-08 Stage 6 baseline (universal core + tags + persona overlay) | **0.38** | Already in the target zone (< 0.5) without the tilt layer |
+| Cross-tenant target | **< 0.5** | The real bar |
+| Stage 8 treatment (persona-tilt on top of Stage 6) | **0.39** (essentially unchanged) | Tilt bought nothing on the axis it was designed to improve, AND dragged fidelity from 0.925 → 0.835 |
+
+The "0.07 cosine of differentiation" that §4 attributed to the tag layer was real, but it was measured against the wrong target. Under the right target, the tag layer already gets the architecture across the line.
 
 ## 5. The product-bar vs SEO-bar distinction — both bars matter, only one is cleared
 
@@ -218,6 +267,25 @@ The two-stage architecture costs ~50% more than full sharing but ~60% less than 
 **Hypothesis to test:** with Stage 5.7b in place, the cross-tenant cosine should drop from 0.87 to 0.70-0.78, well below the 0.85 bar. The mechanism: each persona-tilted analytical view contains different facts, different emphasis, different conclusions, so the identity adaptation that follows is starting from a divergent foundation rather than a convergent one.
 
 **This is the experiment to run tomorrow.** The harness change is small (one new stage in `runner.ts`, one new prompt module for the persona-tilt agent, one new test stage that compares "current Stage 6" vs "Stage 6 with 5.7b enabled"). Cost: ~$1.50-$2.00 per run. Expected outcome: PASS or BORDERLINE on cross-tenant verdict for the first time.
+
+### 6.1 REVISION 2026-04-08 — Stage 1B / Stage 8 was a mistake, retracted
+
+The Stage 1B insight was premised on the wall at 0.87 being a real architectural ceiling. §4.1 shows it wasn't. Worse, when the 2026-04-08 run actually built and executed Stage 8, it produced exactly the failure mode last session's Albert asked about: *"any of those will produce misleading information by turning or changing FA and TA output into something completely different, particularly in terms of levels or prices?"* — yes, they did.
+
+**Stage 8 measured outcome on the 2026-04-08 run, under the two-axis rubric:**
+
+| Metric | Stage 6 baseline (control) | Stage 8 treatment | Delta |
+|---|---:|---:|---:|
+| `distinct_products` count | 5/6 | 3/6 | **−2** |
+| `fabrication_risk` count | 1/6 | 3/6 | **+2** |
+| Factual fidelity mean | 0.925 | 0.835 | **−0.09** (catastrophic) |
+| Presentation similarity mean | 0.378 | 0.388 | +0.01 (null) |
+
+The tilt agent pushed Helix's fidelity from 0.88 → 0.72 and dragged `Premium ↔ Helix` from 0.95 → 0.72. It bought near-zero presentation improvement. **The treatment strictly damaged the output quality on the axis that matters for broker integrity, while failing to improve the axis it was built to improve.**
+
+**Decision 2026-04-08:** Stage 8 is killed. The `PersonaTiltTestResult` type, the `runPersonaTiltTest` runner stage, the `prompts/persona-tilt-agent.ts` module, and the Stage 8 rendering in `report.ts` are all to be removed in a follow-up commit. Do NOT wire any form of "persona-tilted analytical view" into the production architecture without the new two-axis rubric catching fabrication first.
+
+**What a faithful "contrarian broker" looks like instead:** if a future workstream genuinely needs an analytically divergent view (e.g. a contrarian independent-research house), it should be built as a *house-view-conditioned FA agent* — an extra input to the FA stage itself that gives it contrarian priors before it generates the analysis, so the divergence is born at the FA layer with proper reasoning and all downstream stages consume it faithfully. This is a separate workstream, not a tilt layer.
 
 ## 7. Ancillary findings
 
@@ -318,6 +386,19 @@ The build steps for Stage 1B:
 | 0.85-0.88 | No improvement | Reframe the conversation: maybe 0.87 cosine is acceptable for content that obviously reads as different products; tune thresholds; consider conformance engine as the primary cross-tenant tool |
 | > 0.88 | Hurt | Real architectural finding — the persona tilt is being ignored or backfiring; needs deeper investigation |
 
+### 9.1 REVISION 2026-04-08 — the Stage 8 table above is obsolete
+
+Stage 8 was built and executed. It fell into a decision class that the above table did not anticipate: **the cosine number went nowhere (0.87 → 0.87) but a rescoring under the two-axis rubric revealed it had corrupted factual fidelity (0.925 → 0.835) as the price of that null result.** The old decision table could not distinguish "null + safe" from "null + unsafe" because it did not separate fidelity from presentation.
+
+**The actual next experiments, as of 2026-04-08 (superseding §9):**
+
+1. **Rework the Helix persona** (§13). Rewrite the six Helix-owned tag prompts in `tags.ts` so they license emphasis/ordering rather than counter-claims. Re-run Stage 6 and verify Helix clears factual fidelity ≥ 0.9 across all pairs. Cost: ~$0.60 + $0.05 rescore.
+2. **Wire the two-axis judge into `llm-judge.ts` + `runner.ts` + `report.ts`** as the default judge, replacing the single-axis `unique/duplicate` rubric. Adjust `aggregateVerdict` to HALT on `fabrication_risk`, fail on `reskinned_same_article`, pass on `distinct_products`. Consider firing the judge on every cross-tenant pair (not just borderline) since the new rubric is the authoritative metric and the mechanical metrics become diagnostics.
+3. **Delete Stage 8** from the runner, the report, and the type definitions. The `persona-tilt-agent.ts` prompt module can be kept as a reference for the "don't do this" pattern, or deleted outright.
+4. **Add the same-persona variance probe** ("Bloomberg two-analysts" test). Generate N drafts from the same persona on the same source with varied temperature and a writer-instance nonce. Measure presentation similarity. This tests whether natural sampling variation produces writerly divergence, and if not, what explicit writer-instance state would.
+5. **Masking as a diagnostic (not a gate).** Once the two-axis judge is in production, add an optional preprocessing step that strips numeric levels/probabilities/directional words before cosine/ROUGE scoring. Use it as a sanity check alongside the judge, not as a replacement. The judge is now the authoritative metric.
+6. **Integrate the conformance engine** (`packages/api/src/pipeline/translation-engine.ts`) as the downstream deterministic layer that enforces glossary, regional variant, and brand voice on top of the identity layer's output. Expected to push presentation similarity further without any fidelity cost.
+
 ## 10. Open questions parked for later
 
 These came up during the session and were not resolved:
@@ -327,7 +408,8 @@ These came up during the session and were not resolved:
 3. **Educator length cap.** Educator consistently produces 1300+ words against an 850 target. Fix: add a hard length instruction.
 4. **Conformance engine integration.** The existing translation engine in `packages/api/src/pipeline/translation-engine.ts` is the architecture's intended primary cross-tenant differentiator (per spec). It was deliberately not tested in the PoC. Hypothesis: it would add another 0.05-0.10 cosine drop via deterministic glossary substitution + regional variant rewrites + brand voice corrections. This is a bigger lift to wire into the harness (~1-2 hours of integration) but is the next natural experiment after Stage 1B.
 5. **Multi-event temporal validation.** The narrative state test only used 2 events (Iran strike + Iran retaliation). If we accumulate 5-10 events on the same topic per persona, the narrative state becomes much richer and may produce more divergence than the single-event test showed. Worth retesting after Stage 1B is in place.
-6. **Are we measuring the right thing?** Cosine 0.87 between a 200-word terse trade alert and a 1500-word educational essay might be acceptable to a human reader even though the embedding model groups them together. The judge is currently the strictest measurement tool; the question is whether the judge's "duplicate" verdict matches what a real client reader would perceive. Consider doing a small human-judgment pass.
+6. **Are we measuring the right thing?** Cosine 0.87 between a 200-word terse trade alert and a 1500-word educational essay might be acceptable to a human reader even though the embedding model groups them together. The judge is currently the strictest measurement tool; the question is whether the judge's "duplicate" verdict matches what a real client reader would perceive. Consider doing a small human-judgment pass. **[RESOLVED 2026-04-08 — the answer was no; see §4.1 and §13. A two-axis rubric replaces the single-axis judge.]**
+7. **FA prompt should name one explicit invalidation level.** (Added 2026-04-08 after the Helix rewrite verification.) When the new Helix tags were tested on the iran-strike fixture, one `fabrication_risk` flag remained on `FastTrade ↔ Helix` — both writers had to *infer* the invalidation level because the source FA mentions multiple technical levels (1.0820 support, 1.0920 resistance, 1.0980 pre-event equilibrium) without designating one as *the* invalidation. FastTrade inferred 1.0980; Helix inferred 1.0820 with slightly sloppy language ("the level that must hold to maintain the bearish case" — backwards for a support level in a bearish scenario). Neither writer fabricated, but the judge's hard rule fires on any stop-level divergence. The clean fix is upstream: instruct the FA agent to always emit an explicit `invalidation_level` field in its analysis, so all downstream personas cite the same level verbatim. This is a separate workstream from the tag rewrite and benefits *all* personas, not just Helix. Consider it when touching the FA agent prompt next. Tracked as a future consideration; not urgent, the current behavior is accepted per 2026-04-08 session decision ("A + C later").
 
 ## 11. Methodology notes for future sessions
 
@@ -345,6 +427,24 @@ If you're reading this in a future session and trying to pick up the thread: the
 The second most important thing is the **Stage 1B insight in §6** — the architectural fix that the data is pointing at and that hasn't been tested yet. If Albert hasn't run the Stage 1B experiment yet when you join, that's the highest-value next step.
 
 And the third most important thing is to **read the actual prose**, not just the numbers. The metrics suggest one story; the prose often tells a more useful one.
+
+## 13. REVISION 2026-04-08 — the Helix persona problem and the governing rule for tags
+
+Under the two-axis rubric, Helix Markets is the one persona that consistently fails factual fidelity — independently of whether Stage 8 is enabled. Reading the six tag prompts Helix carries (`tail-risk`, `crowded-trade`, `sentiment-extreme`, `contrarian`, `skeptical`, `provocative`) alongside the prompts of the other three personas reveals a structural difference:
+
+**The other three personas' tags are all about emphasis and selection.** They say "frame", "lead with", "foreground", "anchor in". They tell the writer which slice of the source to emphasize. They do not license the writer to contradict anything.
+
+**All six of Helix's tags semantically encode "disagree with something".** `tail-risk` says *"the consensus is underpricing"*. `crowded-trade` says *"what would unwind it"*. `contrarian` says *"challenge the consensus, be willing to be wrong loudly"*. `skeptical` says *"what if the data is misleading?"*. `provocative` says *"do not soften the implications"*. `sentiment-extreme` says *"the piece is about positioning extremes, not fundamentals"*.
+
+In a shared-FA architecture where every persona reads the same source analysis, there is no consensus for Helix to disagree with **except the source itself**. The writer has no other reference point. So when `contrarian` says "challenge the consensus" and `tail-risk` says "the consensus is underpricing", the model reads the FA's probabilities as "the consensus" and obediently writes "that probability is underpriced, the real number is higher" — fabricating a counter-claim the source does not support. This is exactly the output pattern the 2026-04-08 fidelity score picked up.
+
+**Governing rule for tags in a shared-FA architecture (add this to `tags.ts` as a top-of-file comment):**
+
+> Tags must license **emphasis and ordering**, not **counter-claims**. A tag may tell the writer WHICH fact to lead with, WHICH scenario to foreground, WHICH level to quote first, HOW MUCH SPACE to give each transmission chain, and in WHAT VOICE to render it. A tag must NOT tell the writer to change a level, reassign a probability, reverse a directional call, add a scenario the source did not cover, or invent a counter-thesis. The writer's job is to present the source's analysis, not to argue with it. A genuinely divergent analytical view requires its own FA pass with conditioning priors, not a downstream tilt — see the "house-view-conditioned FA" workstream for that path.
+
+**The immediate fix is a rewrite of Helix's six tag prompts.** Each rewrite keeps the voice (skeptical, provocative, contrarian-in-register) but redirects the counter-claim license to an emphasis license. Before/after pairs are in the follow-up commit; the pattern is "don't renumber, re-order" — the skeptical voice is free to foreground the source's tail scenario, to quote the invalidation level prominently, to write "the base case hangs on a thin assumption," but not to write "the real probability is 40% not 25%." After the rewrite, the expectation is that Helix clears factual fidelity ≥ 0.9 across all pairs while maintaining its distinct presentation voice.
+
+**What this means for tag authoring generally:** a contributor adding a new tag to `tags.ts` should read the governing rule and ask: "does my tag require the writer to disagree with something?" If yes, the tag is unsafe for the shared-FA architecture and either needs rewriting or needs to be parked for the house-view-conditioned FA workstream.
 
 ---
 

@@ -11,6 +11,55 @@
  * The descriptions below get injected verbatim into the prompt — they tell
  * the LLM exactly what each tag means in writing terms. Sharper descriptions
  * = more differentiated outputs.
+ *
+ * ─────────────────────────────────────────────────────────────────────
+ * GOVERNING RULE FOR TAG AUTHORING (established 2026-04-08 after PoC)
+ * ─────────────────────────────────────────────────────────────────────
+ *
+ * Tags must license **emphasis and ordering**, not **counter-claims**.
+ *
+ * A tag MAY tell the writer:
+ *   • WHICH fact to lead with
+ *   • WHICH scenario to foreground
+ *   • WHICH level to quote first
+ *   • HOW MUCH SPACE to give each transmission chain
+ *   • IN WHAT VOICE to render the analysis (skeptical, energetic, warm, ...)
+ *   • IN WHAT STRUCTURE (narrative vs bulleted, Socratic vs declarative, ...)
+ *
+ * A tag MUST NOT tell the writer to:
+ *   • Change a price level, support, resistance, stop, or invalidation
+ *   • Reassign a scenario probability
+ *   • Reverse the directional call
+ *   • Add a scenario the source did not cover
+ *   • Invent a counter-thesis the source does not support
+ *   • Contradict the source's conclusions or historical anchors
+ *
+ * Why this rule exists: in a shared-FA architecture, every persona reads
+ * the SAME core FA/TA analysis. If a tag tells the writer to "challenge
+ * the consensus" or "the consensus is underpricing X", the writer has no
+ * reference point for "the consensus" EXCEPT the source itself — so the
+ * writer obediently fabricates a counter-claim against the source, which
+ * damages factual fidelity without producing meaningful uniqueness.
+ *
+ * This was measured empirically on 2026-04-07/08. The original Helix
+ * persona carried six "disagree with something" tags (tail-risk, crowded-
+ * trade, sentiment-extreme, contrarian, skeptical, provocative) and
+ * consistently produced fabrication_risk verdicts under the two-axis
+ * judge rubric. The rewrites in this file preserve Helix's skeptical
+ * voice but redirect the skepticism from contradicting numbers to
+ * foregrounding risks the source already acknowledges.
+ *
+ * The writer's job is to PRESENT the source's analysis, not to ARGUE
+ * with it. A genuinely divergent analytical view requires its own FA
+ * pass with conditioning priors (the "house-view-conditioned FA"
+ * workstream), not a downstream tilt or an argumentative tag.
+ *
+ * When adding a new tag, ask: "Does my tag require the writer to
+ * disagree with anything?" If yes, it is unsafe for the shared-FA
+ * architecture. Rewrite it to license emphasis instead.
+ *
+ * See `docs/poc-uniqueness-session-2026-04-07.md` §13 for the full
+ * rationale and the before/after pattern for the Helix rewrite.
  */
 
 // ───────────────────────────────────────────────────────────────────
@@ -88,7 +137,7 @@ export const ANGLE_TAG_DESCRIPTIONS: Record<AngleTag, string> = {
   "volatility-watch":
     "Frame the event through the volatility lens — implied vs realized vol, term structure, vol-of-vol. The story is about expected variance, not direction.",
   "tail-risk":
-    "Foreground the tail-risk scenario — what is the low-probability high-impact case that the consensus is underpricing?",
+    "Foreground the tail-risk scenario the source identifies. Give it more narrative weight and more space than the base case. Quote the source's stated probability for the tail scenario verbatim — do NOT restate it as a different number. Let the reader feel the asymmetry through emphasis, ordering, and vivid language about what the tail case would look like if it occurred, not through renumbering. The skepticism is in the frame, not in the math.",
   "hedge-suggestion":
     "Frame everything around hedging strategies — what to use, how to size, what the carry cost is.",
   "safe-haven":
@@ -114,9 +163,9 @@ export const ANGLE_TAG_DESCRIPTIONS: Record<AngleTag, string> = {
   "flow-watch":
     "Frame the event in terms of order flow and capital movement — fast money vs real money, hot capital vs structural flows.",
   "sentiment-extreme":
-    "Lead with sentiment indicators — AAII, Fear & Greed, put/call, fund-manager surveys. The piece is about positioning extremes, not fundamentals.",
+    "Lead with the sentiment and positioning indicators the source provides (AAII, Fear & Greed, put/call, fund-manager surveys, COT). Frame the event through the lens of crowd positioning. The source's fundamentals remain the anchor — sentiment is your lens on them, not a replacement for them. Use only the levels, probabilities, and directional calls the source provides.",
   "crowded-trade":
-    "Frame the event in terms of crowded trades — what is everyone long/short, where is the consensus, what would unwind it.",
+    "Frame the event through positioning: which side of the trade is crowded, which levels in the source are pain points for that crowd, how the scenarios in the source map onto who gets hurt if each one plays out. Use only the levels and scenarios the source provides. The unwind trigger is whichever invalidation level the source identifies — do NOT invent a different one.",
 };
 
 // ───────────────────────────────────────────────────────────────────
@@ -166,15 +215,15 @@ export type PersonalityTag =
 
 export const PERSONALITY_TAG_DESCRIPTIONS: Record<PersonalityTag, string> = {
   contrarian:
-    "Take the unfashionable side. Challenge the consensus. Where everyone else sees signal, you see noise (or vice versa). Be willing to be wrong loudly.",
+    "Write in a skeptical, independent register. Your job is to foreground the uncomfortable parts of the source analysis — the scenario the base case glosses over, the level that would invalidate the dominant narrative, the assumption everyone is treating as given. Do NOT invent a counter-thesis. Do NOT reassign probabilities. Do NOT contradict the source's levels or direction. Make the reader feel the asymmetry that is already in the source by leading with the overlooked scenario, by giving the invalidation level more weight than the confirmation level, and by questioning the implicit confidence of the base case in voice and framing — not in numbers.",
   "consensus-aligned":
     "You side with the prevailing institutional view. Your job is to validate and refine it, not challenge it. Be the responsible adult in the room.",
   independent:
     "You don't care what the consensus is. Your view is your own — neither contrarian for its own sake nor consensus for safety. Just rigorously independent.",
   skeptical:
-    "Question the narrative. Ask 'but what if the data is misleading?' or 'who is pushing this story and why?'. Probe before accepting.",
+    "Question the narrative's confidence, not its facts. Ask the reader to notice what would have to be true for the base case to hold, and what would break it. Use the source's own breakpoints, invalidation levels, and acknowledged risks as the material for your questioning — do NOT invent new ones. 'What happens if 1.0820 breaks?' is fair game if 1.0820 is the source's level. 'The real level is 1.0920 not 1.0820' is not. Probe the framing; respect the math.",
   provocative:
-    "Make the reader uncomfortable. Surface the questions they are avoiding. Do not soften the implications.",
+    "Make the reader uncomfortable with the asymmetry that is already in the source. Surface the scenario the source acknowledges but the base case glosses over. Quote the invalidation level prominently. Do not soften the tone or the implications — but soften nothing factual. Everything you say about prices, probabilities, and direction must be traceable to the source analysis. The provocation is in what you lead with and how you frame it, not in claims the source does not support.",
   balanced:
     "Present multiple sides fairly. Refuse to take a strong view when the evidence does not support one. Hedge appropriately.",
   cautious:
