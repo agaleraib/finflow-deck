@@ -32,6 +32,7 @@ packages/api/cost-estimation/
 
 # Uniqueness PoC harness output (large, generated, never tracked)
 uniqueness-poc-runs/
+packages/api/uniqueness-poc-state/
 
 # Local databases / caches
 finflow/data/translation_engine.db
