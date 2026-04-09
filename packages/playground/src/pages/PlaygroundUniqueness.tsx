@@ -9,6 +9,10 @@ import TenantCard, {
 import SoloRunPanel from "../components/SoloRunPanel";
 import FidelityPresentationScatter from "../components/FidelityPresentationScatter";
 import TrinaryVerdictDonut from "../components/TrinaryVerdictDonut";
+import ActivityLog, {
+  type ActivityEntry,
+  formatEventForLog,
+} from "../components/ActivityLog";
 import {
   fetchFixtures,
   fetchPersonas,
@@ -44,6 +48,12 @@ interface PageState {
   /** Stage 1 core FA body, populated from `core_analysis_completed`. */
   coreAnalysisBody: string | null;
   errorMessage: string | null;
+  /** Ordered list of SSE events formatted for the activity log panel. */
+  activityLog: ActivityEntry[];
+  /** Epoch ms when the current/most-recent run started. Drives elapsed time. */
+  runStartedAtMs: number | null;
+  /** The most recent `stage_started` label, for the "current stage" indicator. */
+  currentStage: string | null;
 }
 
 type Action =
@@ -161,13 +171,40 @@ function reducer(state: PageState, action: Action): PageState {
         coreAnalysisBody: null,
         costUsd: null,
         errorMessage: null,
+        activityLog: [],
+        runStartedAtMs: Date.now(),
+        currentStage: null,
       };
     }
     case "sse": {
       const event = action.event;
+      // Append every SSE event to the activity log so the user always has
+      // a live trace of what the backend is doing — this is the fix for
+      // the "running indicator + nothing else" UX gap.
+      //
+      // The `?? []` / `?? null` defaults below make the reducer tolerant
+      // of HMR state carry-over where the pre-patch state doesn't yet
+      // have these fields. Without them, the first SSE event after an
+      // HMR update would throw "Spread syntax requires ...iterable".
+      const runStartedAtMs = state.runStartedAtMs ?? null;
+      const logEntry = formatEventForLog(event, runStartedAtMs);
+      const activityLog = [...(state.activityLog ?? []), logEntry];
+      const prevCurrentStage = state.currentStage ?? null;
+      const currentStage =
+        event.type === "stage_started" ? logEntry.label : prevCurrentStage;
+
+      // Helper: every branch below returns a state patch; we merge the log
+      // fields in at the end so each case doesn't have to repeat them.
+      const withLog = (patch: Partial<PageState>): PageState => ({
+        ...state,
+        ...patch,
+        activityLog,
+        currentStage,
+      });
+
       switch (event.type) {
         case "core_analysis_completed": {
-          return { ...state, coreAnalysisBody: event.body };
+          return withLog({ coreAnalysisBody: event.body });
         }
         case "tenant_started": {
           // Route by tenantIndex, not personaId — two pipelines can share a
@@ -175,7 +212,7 @@ function reducer(state: PageState, action: Action): PageState {
           const tenants = state.tenants.map((t, i) =>
             i === event.tenantIndex ? { ...t, status: "generating" as const } : t,
           );
-          return { ...state, tenants };
+          return withLog({ tenants });
         }
         case "tenant_completed": {
           const tenants = state.tenants.map((t, i) =>
@@ -188,14 +225,14 @@ function reducer(state: PageState, action: Action): PageState {
                 }
               : t,
           );
-          return { ...state, tenants };
+          return withLog({ tenants });
         }
         case "solo_identity_started": {
           // Solo mode targets pipeline index 0 exclusively.
           const tenants = state.tenants.map((t, i) =>
             i === 0 ? { ...t, status: "generating" as const } : t,
           );
-          return { ...state, tenants };
+          return withLog({ tenants });
         }
         case "solo_identity_completed": {
           const tenants = state.tenants.map((t, i) =>
@@ -208,30 +245,37 @@ function reducer(state: PageState, action: Action): PageState {
                 }
               : t,
           );
-          return { ...state, tenants };
+          return withLog({ tenants });
         }
         case "judge_completed": {
           const others = state.pairs.filter(
             (p) => p.pairId !== event.similarity.pairId,
           );
-          return { ...state, pairs: [...others, event.similarity] };
+          return withLog({ pairs: [...others, event.similarity] });
         }
         case "cost_updated": {
-          return { ...state, costUsd: event.totalCostUsd };
+          return withLog({ costUsd: event.totalCostUsd });
         }
         case "solo_run_completed":
         case "run_completed": {
-          return {
-            ...state,
+          return withLog({
             runStatus: "complete",
             costUsd: event.result.totalCostUsd,
-          };
+            currentStage: null,
+          });
         }
         case "run_errored": {
-          return { ...state, runStatus: "error", errorMessage: event.error };
+          return withLog({
+            runStatus: "error",
+            errorMessage: event.error,
+            currentStage: null,
+          });
         }
+        case "run_started":
+        case "stage_started":
+          return withLog({});
         default:
-          return state;
+          return withLog({});
       }
     }
     case "set_status": {
@@ -283,6 +327,9 @@ export default function PlaygroundUniqueness() {
     pairs: [],
     coreAnalysisBody: null,
     errorMessage: null,
+    activityLog: [],
+    runStartedAtMs: null,
+    currentStage: null,
   });
 
   useEffect(() => {
@@ -520,6 +567,12 @@ export default function PlaygroundUniqueness() {
         onToggleStage={(stage) => dispatch({ type: "toggle_stage", stage })}
         onQuickMode={(mode) => dispatch({ type: "set_quick_mode", mode })}
         onRunMode={(mode) => dispatch({ type: "set_run_mode", mode })}
+      />
+
+      <ActivityLog
+        entries={state.activityLog}
+        running={running}
+        currentStage={state.currentStage}
       />
 
       {isSolo ? (
