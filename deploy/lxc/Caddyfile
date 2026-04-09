@@ -17,12 +17,40 @@
 10.1.10.225:443 {
     tls internal
 
-    # Basic Auth gates everything below. Each tester gets a per-user bcrypt
-    # hash — generate with: `caddy hash-password` on the LXC, paste the
-    # resulting $2a$... string after the username.
+    # ─────────────────────────────────────────────────────────────
+    # BASIC AUTH — DO NOT cp THIS FILE VERBATIM TO THE LXC
+    # ─────────────────────────────────────────────────────────────
+    # The per-tester bcrypt hashes below are placeholders. The running
+    # LXC copy at /etc/caddy/Caddyfile contains the real hashes and is
+    # NOT in sync with this block — that's intentional: the hashes are
+    # secrets and must not be committed to git.
+    #
+    # If you ever need to reconcile this file to the LXC (e.g. after
+    # editing any OTHER block in this Caddyfile), the safe workflow is:
+    #
+    #   ssh playground
+    #   # preserve the real basic_auth block first
+    #   sed -n '/basic_auth \* {/,/^    }/p' /etc/caddy/Caddyfile > /tmp/auth.snippet
+    #   # then apply the repo version
+    #   cp /srv/playground/app/deploy/lxc/Caddyfile /etc/caddy/Caddyfile
+    #   # and merge the real block back in (or edit manually)
+    #   # FINALLY:
+    #   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+    #   systemctl reload caddy
+    #
+    # Future improvement (not yet wired up): move hashes to env vars via
+    # a caddy.service systemd drop-in loading EnvironmentFile, and use
+    # Caddy's {env.VAR} placeholders here. Requires testing on a throw-
+    # away Caddy instance first to confirm the placeholder expands
+    # cleanly inside `basic_auth` — there are some known edge cases
+    # with `$` characters in bcrypt hashes interacting with other
+    # interpolators. Left as a TODO; see deploy/lxc/README.md §Auth.
+    #
+    # To add a tester today, edit /etc/caddy/Caddyfile ON THE LXC
+    # directly and systemctl reload caddy. Do not add real hashes here.
     basic_auth * {
-        # alex <hash>
-        # bel  <hash>
+        # alex <bcrypt-hash-lives-only-on-lxc>
+        # bel  <bcrypt-hash-lives-only-on-lxc>
     }
 
     # Reverse-proxy the api (Hono) for /poc/* — no strip_prefix, see above.
