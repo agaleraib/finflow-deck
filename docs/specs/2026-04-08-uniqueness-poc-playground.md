@@ -967,6 +967,144 @@ If those eight criteria are met, v1 is done.
 
 ---
 
+## 20. Known issues from implementation (2026-04-09)
+
+Gaps discovered **after** the spec was written and v1.0 / v1.1 / v1.2 shipped. These are not "risks" (pre-implementation concerns) or "open questions" (unresolved design decisions from discovery) — they are real behaviors that don't match the spec and need fixing in a future commit.
+
+### 20.1 The stages selector lies about Stage 2
+
+**Observed behavior.** The config card in Compare mode shows 6 stage checkboxes (`1 FA` locked / `2 6-id` / `4 repro` / `5 A/B` / `6 X-tenant` / `7 narr`). **Stage 2's checkbox has no effect.** The runner's top-level `runUniquenessPoc` function unconditionally runs Stages 1 → 2 → 3 before it even considers the optional `withCrossTenantMatrix` / `withReproducibility` / `withPersonaDifferentiation` / `withNarrativeStateTest` flags. Unchecking Stage 2 in the UI just tells the route not to render the Stage 2 outputs — the Stage 2 identity calls and Sonnet cost still happen invisibly.
+
+**Why it matters.** The UI is dishonest to anyone reading it literally. A user who unchecks Stage 2 expecting cheaper runs will see the same cost. A new developer looking at the code will be confused about what the checkbox actually gates. More subtly, the "run N things, see what happens" mental model doesn't work when one of the Ns is a lie.
+
+**Two options for the fix** — ordered from smallest to largest scope. The user's preference is **Option B** (long-term), with **Option A** as an optional short-term patch if it becomes annoying in the meantime.
+
+#### Option A — honest independent toggles (short-term, ~20 minutes)
+
+Relabel the UI to match actual behavior without changing any runner code:
+
+- **Remove Stages 1 and 2 from the UI entirely.** They're always on; don't expose them. Replace them with a small muted info line at the top of the stages group: *"Stages 1–3 (FA core + identity adaptation + embeddings) always run. Diagnostics below are optional."*
+- **Rename Stages 4/5/6/7 to descriptive labels,** dropping the stage numbers. Current → proposed:
+  - `Stage 4 repro` → `Reproducibility diagnostic` (with tooltip: "Runs the journalist 3× on the same source to measure sampling noise. ~$0.09 added.")
+  - `Stage 5 A/B` → `Persona A/B probe` (with tooltip: "Runs one identity with two different personas to measure the persona overlay's differentiation budget. ~$0.06 added.")
+  - `Stage 6 X-tenant` → `Cross-pipeline matrix` (with tooltip: "The load-bearing cross-pipeline uniqueness test. ~$0.30–0.60 added. **Required** for the scatter/donut charts.")
+  - `Stage 7 narr` → `Narrative-state A/B` (with tooltip: "Second-event A/B measuring whether injected narrative state changes cross-pipeline divergence. Requires the cross-pipeline matrix AND a fixture with a continuation event. ~$0.60 added.")
+- Update `enabledStages` state to use semantic keys (`reproducibility` / `personaAB` / `crossTenant` / `narrativeState`) instead of stage numbers.
+- **Scope:** `packages/playground/src/components/TopBar.tsx` only. No backend changes. No runner changes. Dependency rules (narrative-state requires cross-pipeline) stay the same.
+- **Value:** honest UI with zero runner refactor.
+- **Downsides:** still doesn't make the "skipped" stages actually cheap — Stage 2's ~$0.18 of identity calls still runs on every Compare run. The cost ticker is still honest-but-bloated.
+
+#### Option B — true pipeline selector (long-term, ~1–2 hours)
+
+Refactor the runner so stages are genuinely independently invokable, then expose a "stop-after-stage" pipeline selector in the UI.
+
+**Backend refactor** (the real work):
+- Split `runUniquenessPoc` into independently-invokable stage functions: `runCore` → `runIntraTenantIdentities` → `runEmbeddings` → `runCrossTenantMatrix` → `runNarrativeStateTest`. Each takes the prior stage's outputs as input.
+- Expose a new higher-level entry point `runPipelineUpTo(opts, terminalStage)` that invokes stages sequentially and stops after `terminalStage` completes. The existing `runUniquenessPoc(opts)` becomes a thin wrapper that calls `runPipelineUpTo(opts, lastEnabledStage)`.
+- The CLI keeps working identically (it currently calls `runUniquenessPoc` with everything enabled — still valid).
+- `POST /poc/runs` threads the terminal stage from the request into the runner.
+- `RunOptions` loses the `with*` boolean flags in favor of a single `terminalStage: "core" | "intra-tenant" | "cross-tenant" | "narrative-state"` field. The `with*` flags can stay as optional backwards-compat aliases during a deprecation period if needed.
+
+**UI changes:**
+- Replace the 6 checkboxes with a **single dropdown or segmented control**: `Run up to:` `[ Core FA ] [ Intra-tenant (6 identities) ] [ Cross-pipeline matrix ] [ Narrative state A/B ]`.
+- Each option shows the incremental cost on hover: `+ $0.22` for core, `+ $0.18` for intra-tenant, `+ $0.30` for cross-pipeline, `+ $0.60` for narrative state.
+- The dropdown enforces a linear pipeline — you can't skip stages, only stop earlier or later.
+- The reproducibility diagnostic and persona A/B diagnostic don't fit the linear model — they're orthogonal probes, not pipeline stages. Promote them to a separate "Diagnostics" section with their own independent checkboxes alongside the pipeline selector.
+
+**Scope:**
+- `packages/api/src/benchmark/uniqueness-poc/runner.ts` — split into stage functions, add `runPipelineUpTo`, keep CLI-facing shim working
+- `packages/api/src/routes/poc.ts` — request schema updated, route threads `terminalStage` into runner
+- `packages/playground/src/components/TopBar.tsx` — replace stages checkboxes with pipeline selector + orthogonal diagnostics checkboxes
+- `packages/playground/src/lib/types.ts` — mirror backend schema change
+- `packages/playground/src/pages/PlaygroundUniqueness.tsx` — reducer state updated
+
+**Value:**
+- The mental model actually matches the code
+- "Run up to core" costs ~$0.22 (Stage 1 only) — true Solo-mode-cheap runs available in Compare mode for cheap iteration
+- "Run up to cross-pipeline" is the common case (the current default behavior)
+- "Run up to narrative state" is the full-fat run
+- Cost estimator becomes honest per selection
+- The spec's §16 "Stage 2 cannot truly be skipped" limitation is resolved
+
+**Downsides:**
+- Runner refactor carries some risk — the CLI must keep producing byte-identical output, so the shim needs careful testing
+- The spec's `enabledStages: Set<StageId>` state shape changes, which ripples through saved run configs (if the user loads an old run from history, the stages field needs backwards compat)
+- 1–2 hours of focused work, single agent run
+
+### 20.2 Plan going forward
+
+**Decision 2026-04-09:** The user is continuing to play with the v1.2 playground as-is. They prefer **Option B** as the eventual fix because it matches the cleaner "where to stop" mental model, and they're fine with Option A being skipped entirely if we go straight to B. No urgency — the lie is documented now and the next time anyone touches the stages picker code, this is the shape of the fix.
+
+**Priority:** Not blocking. Park this as a `v1.3` or `v1.4` item after the user has finished iterating on tags/personas via the current v1.2 playground and hits the point where the cost friction of the always-on Stage 2 actually annoys them.
+
+**Implementation trigger:** Either the user explicitly requests it, or the next time someone touches `runUniquenessPoc` or `runner.ts` for an unrelated reason and the refactor is a natural extension of that work.
+
+### 20.3 Missing "Stop run" / cancel button
+
+**Observed gap.** Once the user clicks Run all (Compare) or Run solo, they're locked in for the full duration of the run — ~90s for Solo, ~270s for Compare, up to ~10+ minutes if Stage 7 narrative state is enabled. There is no way to cancel a run mid-flight. If the user notices a mistake (wrong fixture, wrong persona selection, typo in a tag, realized they wanted to flip to Solo first), their only options are (a) wait it out and pay for a run they don't want, or (b) kill the dev server, losing all other in-flight state.
+
+**Why it matters.** Iteration is the whole point of the playground. The whole §19 success criterion is *"compress the CLI iteration loop from ~15 minutes to ~30 seconds."* A cancellable run is worth a lot in that loop — spotting a mistake 20s into a run and being able to stop immediately saves both API cost (~$0.40 per aborted mid-run) and ~4 minutes of wall clock per mistake. Over a typical 1-hour tag-iteration session with 6-10 runs, saving even 2 mistakes pays for the feature.
+
+**Design**
+
+**UI:**
+- The Run button (in `TopBar.tsx`) becomes a toggle based on `runStatus`:
+  - `idle` / `complete` / `error` → label `Run all` (or `Run solo`), primary accent style, click starts a run
+  - `running` → label `Stop run`, danger/destructive style (red border + red text, not filled — subtle but unmistakable), click cancels
+- While the run is cancelling, show a transient `Stopping…` state for ~300ms before transitioning back to `idle`
+- Toast or inline banner on successful cancel: *"Run cancelled. Partial outputs preserved below."* — dismissable
+- Tenant cards that were mid-generation render their status pill as `cancelled` with a muted grey color (new status alongside pending/generating/complete/error)
+- The scatter + donut charts do NOT render for a cancelled run — there's nothing meaningful to show
+
+**Backend (the real work):**
+
+Cancellation through `AbortSignal` threading — this is how Node, Bun, and the Anthropic SDK all handle cancellation.
+
+- `POST /poc/runs` creates an `AbortController` per run and stores `controller` alongside the run entry in the in-memory `runs` map
+- New route `DELETE /poc/runs/:id` — looks up the run, calls `controller.abort()`, emits a final `run_cancelled` SSE event on the stream, closes the stream
+- `RunCallbacks` gains an optional `signal: AbortSignal` parameter threaded through `runUniquenessPoc` → `runCrossTenantMatrix` → `runIdentity` → `client.messages.create({ ..., signal })` — the Anthropic SDK respects it and cancels in-flight HTTP requests
+- Between stages, the runner checks `signal.aborted` and throws a `CancelledError` if set, so cancellation happens at stage boundaries even if no LLM call was currently in flight
+- The `runSoloForPipeline` helper gets the same signal-threading treatment
+- Costs for already-completed stages are still counted; in-flight Sonnet calls that abort mid-stream charge for input tokens only (Anthropic's billing behavior on aborted streams — verify empirically, but at worst it's a ~$0.02 savings floor)
+
+**New SSE event:**
+```ts
+type PocSseEvent =
+  | ...existing events...
+  | { type: 'run_cancelled'; runId: string; reason: 'user_cancelled'; partialCostUsd: number }
+```
+
+**Frontend:**
+- `DELETE /poc/runs/:id` wrapper in `packages/playground/src/lib/api.ts`
+- New action `CANCEL_RUN` in the reducer: closes the EventSource, sets `runStatus: "cancelled"`, leaves tenant card outputs in whatever partial state they were in
+- `TopBar.tsx` Run button click handler branches on `runStatus` — idle → `POST /poc/runs`, running → `DELETE /poc/runs/:id`
+- New `cancelled` status on `TenantState.status` rendered with the muted grey color
+- Partial-state preservation: a tenant that had already `complete`d before the cancel keeps its body visible; a tenant that was mid-`generating` clears to `cancelled` with no body
+
+**Edge cases:**
+- **Double-click on Stop** — idempotent, the second DELETE is a no-op
+- **Cancel after natural completion** — the button naturally transitions to `Run all` when `run_completed` fires, so by the time the user could cancel, there's nothing to cancel. Frontend guards with `if (runStatus !== "running") return`
+- **Cancel during SSE reconnect** — unlikely but possible. The client's EventSource auto-reconnects; if it does and the run is already marked cancelled, the reconnect picks up the `run_cancelled` event from the buffered queue
+- **Cancelled runs and run history** — cancelled runs are NOT saved to the in-memory `runs` map's "completed" slot, and would NOT be persisted to `runs.index.json` when v1.2's persistence layer is implemented. They disappear on refresh
+- **Kill the dev server during a cancel** — the abort signal can't propagate to a dead process. Restart leaves the run orphaned in the map. Acceptable for v1.
+
+**Scope:**
+- `packages/api/src/routes/poc.ts` — new DELETE route, AbortController per run, signal propagation
+- `packages/api/src/benchmark/uniqueness-poc/runner.ts` — `RunCallbacks.signal?: AbortSignal` threading, `CancelledError` throws at stage boundaries, `client.messages.create({ ..., signal })` on every LLM call site
+- `packages/playground/src/lib/types.ts` — new `run_cancelled` event, `cancelled` status on `TenantState.status`
+- `packages/playground/src/lib/api.ts` — `cancelRun(runId)` fetch wrapper
+- `packages/playground/src/pages/PlaygroundUniqueness.tsx` — `CANCEL_RUN` reducer action, SSE handler for `run_cancelled`, `runStatus === "cancelled"` rendering
+- `packages/playground/src/components/TopBar.tsx` — Run button toggle on `runStatus`, danger styling for Stop
+- `packages/playground/src/components/TenantCard.tsx` — new `cancelled` status pill color
+
+**Effort:** ~1.5 hours for an agent run, single commit. Independent of §20.1/20.2 — can land before or after the stages-selector fix without conflict.
+
+**Priority:** **Higher than §20.1 and §20.2.** Stop-run is immediately useful every session the user iterates. The stages selector is only annoying when cost or mental-model clarity become issues. If only one of §20.1/20.2/20.3 ships, it should be 20.3.
+
+**Implementation trigger:** Next agent run on the playground branch, or inline if Claude and the user have the time. No prerequisites — can land on top of `005d85a` directly.
+
+---
+
 **End of spec.**
 
-*Generated 2026-04-08 by Claude (Opus 4.6) at the end of an extended discovery session with Albert. Captures the design decisions for a uniqueness PoC playground GUI, sub-phased v1.0 / v1.1 / v1.2 to ship value continuously. Implementation has not begun. Next concrete step: a v1.0 implementation commit that creates `packages/web/src/pages/PlaygroundUniqueness.tsx` and the minimum Hono routes.*
+*Generated 2026-04-08 by Claude (Opus 4.6) at the end of an extended discovery session with Albert. Captures the design decisions for a uniqueness PoC playground GUI, sub-phased v1.0 / v1.1 / v1.2 to ship value continuously. Implementation has landed as commits 540a9b0 (v1.0) / 8058f48 (SSE fix) / 337c0b8 (v1.1) / 14e9b47 (v1.2) / 005d85a (port fix) on `workstream-b-playground`. §20 added 2026-04-09 to track known issues discovered after implementation.*
