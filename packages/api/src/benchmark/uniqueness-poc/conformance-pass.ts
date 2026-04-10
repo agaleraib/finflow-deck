@@ -153,6 +153,13 @@ function buildBrandRules(persona: ContentPersona): string[] {
     rules.push(`Brand positioning: ${persona.brandPositioning}`);
   }
 
+  // Company background — available facts the writer should weave in
+  if (persona.companyBackground && persona.companyBackground.length > 0) {
+    rules.push(
+      `Company background (weave naturally where relevant, don't force every fact): ${persona.companyBackground.join("; ")}`,
+    );
+  }
+
   // Forbidden claims
   for (const claim of persona.forbiddenClaims) {
     rules.push(`FORBIDDEN: must not use the phrase "${claim}" or equivalent`);
