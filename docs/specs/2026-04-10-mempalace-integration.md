@@ -532,3 +532,92 @@ reflect the new MemPalace dependency and architectural changes:
 These updates happen in a single commit after the merge, not during
 the worktree experimentation. The documentation should describe the
 shipped state, not the in-progress experiment.
+
+---
+
+## 10. Production storage consolidation: Postgres + pgvector
+
+**When:** After the integration is validated and merged (Phases 1-4
+complete), but before shipping to production tenants.
+
+**Why:** MemPalace currently uses **two** storage engines — ChromaDB
+(vector search for drawers) and SQLite (temporal knowledge graph).
+FinFlow's locked production stack (`docs/specs/2026-04-07-deployment-stack.md`)
+specifies **Postgres + pgvector**. Running three databases in production
+(Postgres + ChromaDB + SQLite) is operationally expensive — three backup
+strategies, three failure modes, three monitoring surfaces, three sets of
+connection management. Consolidating onto Postgres eliminates this.
+
+**Feasibility:** Postgres + pgvector can do everything MemPalace needs:
+
+| Capability | Current backend | Postgres equivalent |
+|---|---|---|
+| Vector similarity search | ChromaDB collections | `pgvector` index on embeddings column, `<=>` operator for cosine distance |
+| Metadata filtering (wing, room, source) | ChromaDB `where` filters | Standard SQL `WHERE` clauses — strictly more powerful (joins, subqueries, aggregations) |
+| Temporal knowledge graph | SQLite (entities + triples tables) | Postgres tables — better concurrency, ACID transactions, proper joins, `tstzrange` for temporal validity |
+| Write-ahead log | JSONL file on disk | Postgres WAL (built-in, production-grade, point-in-time recovery) |
+| Deduplication (content hashing) | ChromaDB metadata + app-level check | Unique index on content hash column — database-enforced, race-free |
+
+**What ChromaDB gives up:** zero-config embedded mode (no server needed).
+This is valuable for local development on the Mac Studio but irrelevant
+in production where Postgres is already running.
+
+**What SQLite gives up:** single-file simplicity. Same argument — in
+production, Postgres is the operational choice regardless.
+
+**Implementation plan:**
+
+1. Write a `PostgresPalace` class in `packages/mempalace/` that
+   implements the same interface as the existing `Palace` class but
+   talks to Postgres + pgvector instead of ChromaDB:
+   - Table: `mempalace_drawers` (id, wing, room, content, embedding
+     vector(1536), source_file, source_mtime, added_by, filed_at,
+     importance, metadata JSONB)
+   - Index: `USING ivfflat (embedding vector_cosine_ops)` for fast
+     similarity search
+   - Query: `SELECT * FROM mempalace_drawers WHERE wing=$1 AND room=$2
+     ORDER BY embedding <=> $3 LIMIT $4`
+
+2. Write a `PostgresKnowledgeGraph` class that replaces the SQLite
+   implementation:
+   - Tables: `kg_entities` (id, name, type, properties JSONB, created_at)
+     and `kg_triples` (id, subject, predicate, object, valid_from
+     timestamptz, valid_to timestamptz, confidence, source_closet,
+     extracted_at)
+   - Temporal queries use `WHERE valid_from <= $as_of AND (valid_to IS
+     NULL OR valid_to > $as_of)` — cleaner than the current Python
+     string comparison
+   - GiST index on `tstzrange(valid_from, valid_to)` for efficient
+     temporal range queries
+
+3. Add a `MEMPALACE_STORAGE=postgres` env var (default: `chromadb` for
+   backwards compatibility). When set to `postgres`, the palace and
+   knowledge graph use the Postgres adapters. Connection string comes
+   from `DATABASE_URL` (same as the rest of FinFlow).
+
+4. Write a one-time migration script: `migrate-mempalace-to-postgres.ts`
+   that reads all drawers from ChromaDB and all triples from SQLite,
+   re-embeds if needed, and inserts into Postgres. Run once per
+   environment (Mac Studio, LXC) during the transition.
+
+5. Update the Drizzle schema (FinFlow's ORM) to include the MemPalace
+   tables, so they participate in the same migration pipeline as the
+   rest of the database.
+
+**What stays the same:** the Python-level interfaces (`Palace`,
+`KnowledgeGraph`), the MCP tools, the CLI commands, the TS client in
+`mempalace-client.ts`, and the `narrative-memory.ts` module. The storage
+swap is invisible to everything above the adapter layer.
+
+**What changes:** backup is now `pg_dump` (one command for the entire
+FinFlow dataset including MemPalace), monitoring is Postgres metrics
+(one dashboard), and scaling is Postgres replication (if ever needed).
+
+**Effort:** ~1 day for the adapters + migration script. Low risk because
+the interface contracts are already defined by the ChromaDB/SQLite
+implementations — the Postgres adapters just need to pass the same tests.
+
+**Decision point:** do NOT start this until Phases 1-4 are validated.
+If the MemPalace integration doesn't prove its value, the consolidation
+is moot. If it does, this becomes a prerequisite for the production
+deployment (workstream D).
