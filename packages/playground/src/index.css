@@ -123,6 +123,67 @@
   --duration-slow: 400ms;
 
   --sidebar-width: 240px;
+  --sidebar-collapsed-width: 56px;
+}
+
+/* ══════════════════════════════════════════════════════
+   Light theme — swap the palette when data-theme="light"
+   is on <html>. Every variable below overrides its dark
+   default. Components don't need to know which theme is
+   active — they just read the same variables.
+   ══════════════════════════════════════════════════════ */
+:root[data-theme="light"] {
+  --bg-root: #f5f5f7;
+  --bg-app: #fafafa;
+  --bg-sidebar: #f0f0f2;
+  --bg-surface: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-hover: #ebebee;
+  --bg-active: #e2e2e6;
+  --bg-overlay: rgba(255, 255, 255, 0.85);
+
+  --border: rgba(0, 0, 0, 0.08);
+  --border-light: rgba(0, 0, 0, 0.06);
+  --border-focus: rgba(0, 0, 0, 0.18);
+
+  --text-primary: #1a1a1e;
+  --text-secondary: #5a5a60;
+  --text-muted: #9a9aa0;
+  --text-inverse: #fafafa;
+
+  --accent: #3d8c84;
+  --accent-muted: rgba(61, 140, 132, 0.7);
+  --accent-subtle: rgba(61, 140, 132, 0.10);
+  --accent-glow: rgba(61, 140, 132, 0.04);
+
+  --success: #2d7a4a;
+  --success-subtle: rgba(45, 122, 74, 0.10);
+  --danger: #b55252;
+  --danger-subtle: rgba(181, 82, 82, 0.10);
+  --warning: #a88a3a;
+  --warning-subtle: rgba(168, 138, 58, 0.10);
+  --info: #4a6fa8;
+  --info-subtle: rgba(74, 111, 168, 0.10);
+  --purple: #7a6aa8;
+  --purple-subtle: rgba(122, 106, 168, 0.10);
+
+  --distinct: #2d7a4a;
+  --reskinned: #a88a3a;
+  --fabrication: #b55252;
+}
+
+/* Light mode scrollbars */
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.10);
+}
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* Hide ambient glow effects in light mode */
+:root[data-theme="light"] .ambient-grid,
+:root[data-theme="light"] .ambient-glow {
+  display: none;
 }
 
 *,
@@ -168,6 +229,41 @@ body,
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── App shell grid ────────────────────────────────────── */
+.app-shell {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 52px 1fr;
+  background: var(--bg-app);
+}
+
+/* Ambient glow effects (dark mode only — hidden via CSS in light mode) */
+.ambient-grid {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at top, black 20%, transparent 70%);
+  z-index: 0;
+}
+.ambient-glow {
+  position: fixed;
+  top: 20%;
+  left: 60%;
+  width: 600px;
+  height: 400px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ── Animations ─────────────────────────────────────── */
@@ -479,6 +575,23 @@ select.input {
 }
 
 /* ── Sidebar (used by AppShell) ──────────────────────── */
+.sidebar-root {
+  width: var(--sidebar-width);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width var(--duration-normal) var(--ease-out);
+}
+.sidebar-root[data-collapsed] {
+  width: 56px;
+}
+.sidebar-nav {
+  flex: 1;
+  padding: var(--sp-5) 0;
+  overflow-y: auto;
+}
 .sidebar-label {
   font-size: 10px;
   font-weight: 600;
@@ -487,6 +600,7 @@ select.input {
   text-transform: uppercase;
   padding: 0 var(--sp-5);
   margin-bottom: var(--sp-2);
+  white-space: nowrap;
 }
 .sidebar-item {
   display: flex;
@@ -499,6 +613,11 @@ select.input {
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-out);
   position: relative;
+  white-space: nowrap;
+}
+.sidebar-root[data-collapsed] .sidebar-item {
+  justify-content: center;
+  padding: var(--sp-2) 0;
 }
 .sidebar-item:hover {
   color: var(--text-primary);
@@ -523,9 +642,40 @@ select.input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  flex-shrink: 0;
   opacity: 0.6;
 }
 .sidebar-item.active .sidebar-icon {
   opacity: 1;
+}
+
+/* Bottom bar — theme toggle + collapse button */
+.sidebar-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+.sidebar-root[data-collapsed] .sidebar-bottom {
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) 0;
+}
+.sidebar-bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.sidebar-bottom-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }

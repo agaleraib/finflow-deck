@@ -14,14 +14,16 @@ bun run dev                       # Vite dev server
 - **Runtime/API:** Bun + Hono + Zod (strict TypeScript, no `any`)
 - **LLM:** Anthropic Claude via `@anthropic-ai/sdk`, structured output via `tool_use` (no JSON-in-text parsing)
 - **Web:** React 19 + Vite 8 + Tailwind v4 + framer-motion + react-router 7
+- **Playground:** React 19 + Vite 6 + Tailwind v4 + Recharts + Radix UI + lucide-react (icons). Light/dark theme via `data-theme="light"` on `<html>`, CSS variable swap in `index.css`.
 - **Storage:** Repository pattern over interfaces in `lib/types.ts`; in-memory impls today (`InMemoryProfileStore`, `InMemoryTranslationStore`). Real DB deferred (Convex vs Supabase TBD).
 - **Document ingest:** `mammoth` for `.docx`
 
 ## Monorepo Layout
 ```
 packages/
-  api/    @finflow/api    — translation engine + benchmark suite
-  web/    finflow-web     — React UI (login, dashboard, pipeline monitor)
+  api/        @finflow/api    — translation engine + benchmark suite
+  playground/ finflow-playground — uniqueness PoC playground (Vite + React)
+  web/        finflow-web     — React UI (login, dashboard, pipeline monitor)
 finflow/                  — legacy Python prototype (reference only, partially deleted)
 docs/                     — architecture, specs, metrics reference
 ```

@@ -15,15 +15,7 @@ interface Props {
 
 export default function AppShell({ children, costUsd, runStatus }: Props) {
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "var(--sidebar-width) 1fr",
-        gridTemplateRows: "52px 1fr",
-        background: "var(--bg-app)",
-      }}
-    >
+    <div className="app-shell min-h-screen">
       <div style={{ gridColumn: "1 / -1" }}>
         <Topbar costUsd={costUsd} runStatus={runStatus} />
       </div>
@@ -36,38 +28,14 @@ export default function AppShell({ children, costUsd, runStatus }: Props) {
           position: "relative",
         }}
       >
-        {/* Subtle ambient glow */}
+        {/* Subtle ambient glow — only in dark mode */}
         <div
           aria-hidden
-          style={{
-            position: "fixed",
-            top: 0,
-            left: "var(--sidebar-width)",
-            right: 0,
-            bottom: 0,
-            pointerEvents: "none",
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-            maskImage:
-              "radial-gradient(ellipse at top, black 20%, transparent 70%)",
-            zIndex: 0,
-          }}
+          className="ambient-grid"
         />
         <div
           aria-hidden
-          style={{
-            position: "fixed",
-            top: "20%",
-            left: "60%",
-            width: 600,
-            height: 400,
-            transform: "translate(-50%, -50%)",
-            background:
-              "radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
+          className="ambient-glow"
         />
         <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
       </main>
