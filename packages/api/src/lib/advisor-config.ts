@@ -5,7 +5,7 @@
  * between runs without restarting the server.
  */
 
-/** Enable the Sonnet agentic pipeline loop (replaces specialist dispatch). */
+/** Sonnet agentic pipeline loop (replaces specialist dispatch). On by default. Set FINFLOW_PIPELINE_LOOP=0 to disable. */
 export function isPipelineLoopEnabled(): boolean {
-  return process.env.FINFLOW_PIPELINE_LOOP === "1";
+  return process.env.FINFLOW_PIPELINE_LOOP !== "0";
 }
