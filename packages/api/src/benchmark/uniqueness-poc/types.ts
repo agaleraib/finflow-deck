@@ -358,6 +358,32 @@ export interface CrossTenantMatrixResult {
   judgeFailures: JudgeFailureRecord[];
   /** Cost of the optional conformance pass (0 when not enabled). */
   conformanceCostUsd?: number;
+  /**
+   * Per-output conformance pass details — reasoning, changed flag, token
+   * usage. Present only when the conformance pass ran successfully.
+   * Indexed in the same order as `outputs` and `personas`.
+   */
+  conformanceDetails?: ConformanceDetail[];
+}
+
+/**
+ * Per-output conformance pass result, persisted alongside the cross-tenant
+ * matrix so the pipeline inspector can show what changed and why.
+ */
+export interface ConformanceDetail {
+  personaId: string;
+  personaName: string;
+  /** Whether the conformance specialist actually modified the text. */
+  changed: boolean;
+  /** The specialist's reasoning for what it changed (or why it didn't). */
+  reasoning: string;
+  /** Token usage from the specialist call. */
+  inputTokens: number;
+  outputTokens: number;
+  /** Cost of this individual conformance call. */
+  costUsd: number;
+  /** The body BEFORE the conformance pass (only when changed=true, to enable diffing). */
+  preConformanceBody?: string;
 }
 
 export interface RunResult {

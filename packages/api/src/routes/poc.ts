@@ -52,6 +52,7 @@ import { IDENTITY_REGISTRY } from "../benchmark/uniqueness-poc/prompts/identitie
 import {
   persistRun,
   persistSoloRun,
+  RUNS_OUTPUT_ROOT,
   type PersistableSoloRunResult,
 } from "../benchmark/uniqueness-poc/persist.js";
 
@@ -757,6 +758,105 @@ export function createPocRoutes() {
         entry.listener = null;
       }
     });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Historical run browsing (v1.1 — pipeline inspector)
+  // ─────────────────────────────────────────────────────────────────
+
+  /** List all persisted runs, newest first. Returns lightweight metadata. */
+  app.get("/history", (c) => {
+    if (!existsSync(RUNS_OUTPUT_ROOT)) return c.json([]);
+    const dirs = readdirSync(RUNS_OUTPUT_ROOT, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort()
+      .reverse();
+
+    const summaries = dirs.map((dirName) => {
+      const rawPath = join(RUNS_OUTPUT_ROOT, dirName, "raw-data.json");
+      if (!existsSync(rawPath)) {
+        return { runId: dirName, startedAt: dirName, event: null, verdict: null, totalCostUsd: 0 };
+      }
+      try {
+        const raw = JSON.parse(readFileSync(rawPath, "utf-8")) as RunResult;
+        return {
+          runId: raw.runId,
+          startedAt: raw.startedAt,
+          finishedAt: raw.finishedAt,
+          eventTitle: raw.event?.title ?? null,
+          eventId: raw.event?.id ?? null,
+          verdict: raw.verdict,
+          totalCostUsd: raw.totalCostUsd,
+          totalDurationMs: raw.totalDurationMs,
+          identityCount: raw.identityOutputs?.length ?? 0,
+          crossTenantVerdict: raw.crossTenantMatrix?.verdict ?? null,
+          hasConformance: !!raw.crossTenantMatrix?.conformanceDetails,
+        };
+      } catch {
+        return { runId: dirName, startedAt: dirName, event: null, verdict: null, totalCostUsd: 0 };
+      }
+    });
+
+    return c.json(summaries);
+  });
+
+  /** Get the full raw-data.json for a specific run. */
+  app.get("/history/:runId", (c) => {
+    const runId = c.req.param("runId");
+    const rawPath = join(RUNS_OUTPUT_ROOT, runId, "raw-data.json");
+    if (!existsSync(rawPath)) {
+      return c.json({ error: `Run not found: ${runId}` }, 404);
+    }
+    try {
+      const raw = JSON.parse(readFileSync(rawPath, "utf-8"));
+      return c.json(raw);
+    } catch (err) {
+      return c.json({ error: `Failed to parse run data: ${err instanceof Error ? err.message : String(err)}` }, 500);
+    }
+  });
+
+  /** List files in a run directory (for the inspector tree). */
+  app.get("/history/:runId/files", (c) => {
+    const runId = c.req.param("runId");
+    const runDir = join(RUNS_OUTPUT_ROOT, runId);
+    if (!existsSync(runDir)) {
+      return c.json({ error: `Run not found: ${runId}` }, 404);
+    }
+
+    const listDir = (dir: string, prefix: string): string[] => {
+      const entries = readdirSync(dir, { withFileTypes: true });
+      const files: string[] = [];
+      for (const entry of entries) {
+        const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          files.push(...listDir(join(dir, entry.name), rel));
+        } else {
+          files.push(rel);
+        }
+      }
+      return files;
+    };
+
+    return c.json({ runId, files: listDir(runDir, "") });
+  });
+
+  /** Read a specific file from a run directory. */
+  app.get("/history/:runId/file/*", (c) => {
+    const runId = c.req.param("runId");
+    const filePath = c.req.path.replace(`/poc/history/${runId}/file/`, "");
+    if (!filePath || filePath.includes("..")) {
+      return c.json({ error: "Invalid file path" }, 400);
+    }
+    const fullPath = join(RUNS_OUTPUT_ROOT, runId, filePath);
+    if (!existsSync(fullPath)) {
+      return c.json({ error: `File not found: ${filePath}` }, 404);
+    }
+    const content = readFileSync(fullPath, "utf-8");
+    if (filePath.endsWith(".json")) {
+      return c.json(JSON.parse(content));
+    }
+    return c.text(content);
   });
 
   return app;

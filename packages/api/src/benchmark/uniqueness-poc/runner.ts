@@ -541,6 +541,7 @@ async function runCrossTenantMatrix(
   // pulling in the full 13-metric loop.
   let conformedOutputs = outputs;
   let conformanceCostUsd = 0;
+  let conformanceDetails: import("./types.js").ConformanceDetail[] | undefined;
   if (withConformancePass) {
     try {
       const { runConformancePassAll } = await import("./conformance-pass.js");
@@ -555,7 +556,20 @@ async function runCrossTenantMatrix(
       );
       conformedOutputs = conformanceResult.outputs;
       conformanceCostUsd = conformanceResult.totalCostUsd;
-      const changedCount = conformanceResult.conformanceResults.filter((r) => r.changed).length;
+      // Capture per-output conformance details for the pipeline inspector
+      conformanceDetails = conformanceResult.conformanceResults.map((r, i) => ({
+        personaId: personas[i]!.id,
+        personaName: personas[i]!.name,
+        changed: r.changed,
+        reasoning: r.reasoning,
+        inputTokens: r.usage.inputTokens,
+        outputTokens: r.usage.outputTokens,
+        costUsd: r.costUsd,
+        // Only save the pre-conformance body when something actually changed
+        // (avoids doubling the JSON size when nothing was rewritten)
+        preConformanceBody: r.changed ? outputs[i]!.body : undefined,
+      }));
+      const changedCount = conformanceDetails.filter((r) => r.changed).length;
       console.log(`[runner]   Conformance pass complete: ${changedCount}/${outputs.length} outputs rewritten, cost $${conformanceCostUsd.toFixed(4)}`);
     } catch (err) {
       console.error(`[runner]   ⚠ Conformance pass failed, using raw outputs:`, err instanceof Error ? err.message : err);
@@ -683,6 +697,7 @@ async function runCrossTenantMatrix(
     verdictReasoning,
     judgeFailures: crossTenantJudgeFailures,
     conformanceCostUsd: conformanceCostUsd > 0 ? conformanceCostUsd : undefined,
+    conformanceDetails,
   };
 }
 
