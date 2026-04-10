@@ -471,3 +471,64 @@ Phases 0 and 3 can happen on `workstream-b-playground` directly (no
 content generation changes). Phases 1 and 2 must stay in the worktree
 until validated. Phase 4 can go either way — the `/poc/feedback` endpoint
 is harmless even without MemPalace backing it.
+
+---
+
+## 8. Pre-integration: fork MemPalace into the monorepo
+
+Before starting Phase 0, fork the MemPalace source into
+`packages/mempalace/` within the FinFlow monorepo. The integration
+requires custom Python logic (financial entity extraction, persona-aware
+knowledge graph schemas, structured editorial-memory queries) that
+doesn't exist in upstream MemPalace. Keeping the fork in-repo means
+the worktree branch is self-contained: one branch, one validation pass,
+no cross-repo coordination.
+
+**Steps:**
+1. Copy the MemPalace source into `packages/mempalace/`
+2. Add a minimal `pyproject.toml` or `setup.py` for local editable install
+3. Verify `mempalace status` still works when run from the in-repo copy
+4. Update `CLAUDE.md` monorepo layout section to include `packages/mempalace/`
+5. The installed system-wide copy (`~/.browser-use-env/...`) remains for
+   non-FinFlow use; FinFlow's pipeline references the in-repo copy
+
+---
+
+## 9. Post-validation: documentation updates
+
+After all phases pass validation and the worktree is merged into
+`workstream-b-playground`, update the following project documentation to
+reflect the new MemPalace dependency and architectural changes:
+
+1. **`docs/architecture.md`** — add a new section describing the memory
+   layer: what MemPalace is, why it's there, what it stores (narrative
+   state, market context, run findings, tester feedback), how the pipeline
+   queries it, and the temporal knowledge graph schema for editorial memory.
+
+2. **`CLAUDE.md`** — update the monorepo layout to include
+   `packages/mempalace/`, add MemPalace to the Stack section (Python +
+   ChromaDB + SQLite), document the `FINFLOW_USE_MEMPALACE=1` feature
+   flag, and note the new rooms in `mempalace.yaml`.
+
+3. **`docs/pipeline-reference.md`** — add the MemPalace query/store steps
+   to the pipeline flow diagram. The narrative memory query happens
+   before identity generation; the fact extraction + storage happens
+   after persist. The FA Agent's prior-analysis query happens before
+   Stage 1.
+
+4. **`docs/specs/2026-04-07-content-pipeline.md`** — update §7 (temporal
+   continuity) to reference the MemPalace-backed implementation instead
+   of the placeholder narrative-state-store.
+
+5. **`deploy/lxc/README.md`** — if MemPalace is deployed to the LXC, add
+   Python + MemPalace + ChromaDB to the prerequisite stack, document the
+   data directory location on the ZFS volume, and add a maintenance note
+   for the MemPalace ChromaDB data (backup, repair, migration).
+
+6. **`packages/api/src/benchmark/uniqueness-poc/README.md`** — document
+   the `FINFLOW_USE_MEMPALACE` env var, the mempalace-client.ts module,
+   and the narrative-memory.ts interface.
+
+These updates happen in a single commit after the merge, not during
+the worktree experimentation. The documentation should describe the
+shipped state, not the in-progress experiment.
