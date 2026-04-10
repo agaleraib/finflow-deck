@@ -103,7 +103,7 @@ flowchart TD
 
 | Component | Translation pipeline | Content pipeline | Shared? |
 |---|---|---|---|
-| **Style & Voice enforcement** | `correctStyle()` specialist — fixes formality, sentence structure, brand adherence against a `LanguageProfile` | Dedicated brand-voice prompt via `callAgentWithUsage` — rewrites for persona formality, hedging, company background | **Pattern shared**, not code. Content pipeline uses a dedicated prompt, not the translation specialist directly. |
+| **Style & Voice enforcement** | `correctStyle()` specialist — fixes formality, sentence structure, brand adherence against a `LanguageProfile`. **TODO: remove from translation pipeline** — when content flows through the content pipeline's conformance pass first, brand voice is already enforced before translation. Running it again in the translation loop is redundant and risks undoing the divergence the conformance pass created. The translation pipeline should only enforce language-level quality (Terminology, Structural, Linguistic), not brand voice. | Dedicated brand-voice prompt via `callAgentWithUsage` — rewrites for persona formality, hedging, company background. This is the canonical location for brand voice enforcement. | **Content pipeline owns Style & Voice**. Translation pipeline to be stripped of it. |
 | **Terminology / Glossary** | `glossary-patcher.ts` — deterministic + Haiku, per-language | Not yet wired (planned §20.5 Part B). English glossary could add deterministic divergence. | **Planned** |
 | **Structural specialist** | Fixes formatting vs source document | N/A — no source document in content generation | **No** |
 | **Linguistic specialist** | Fixes fluency, meaning, regional correctness | N/A — content is generated, not translated | **No** |
