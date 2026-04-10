@@ -13,7 +13,7 @@ import type { ClientProfile } from "../profiles/types.js";
 import { getLanguageProfile } from "../profiles/types.js";
 import { scoreTranslationWithUsage } from "../agents/scoring-agent.js";
 import { enforceGlossary } from "./glossary-patcher.js";
-import { scorecardSummary, scorecardToDict } from "../scoring/scorecard.js";
+import { scorecardSummary } from "../scoring/scorecard.js";
 import type { Scorecard } from "../scoring/scorecard.js";
 import { emitEvent } from "./events.js";
 import type { EventHandler } from "../lib/types.js";
@@ -91,11 +91,14 @@ function buildUserMessage(
 ): string {
   const langProfile = getLanguageProfile(profile, language);
   const tone = langProfile.tone;
-  const glossaryLines = Object.entries(langProfile.glossary)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(0, 50) // cap to avoid huge prompts
+  const glossaryEntries = Object.entries(langProfile.glossary)
+    .sort(([a], [b]) => a.localeCompare(b));
+  const glossaryCapped = glossaryEntries.length > 50;
+  const glossaryLines = glossaryEntries
+    .slice(0, 50)
     .map(([en, target]) => `  "${en}" → "${target}"`)
-    .join("\n");
+    .join("\n")
+    + (glossaryCapped ? `\n  ... and ${glossaryEntries.length - 50} more terms (enforced by the enforce_glossary tool)` : "");
 
   const brandRules =
     langProfile.brandRules.length > 0

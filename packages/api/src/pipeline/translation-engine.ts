@@ -229,6 +229,10 @@ export async function runTranslationEngine(
     );
 
     // --- Advisor pipeline loop (feature-flagged) ---
+    // On advisor failure, advisorSucceeded stays false and we fall through
+    // to the specialist path for this round.
+    let advisorSucceeded = false;
+
     if (usePipelineLoop) {
       const advisorStart = Date.now();
       try {
@@ -241,6 +245,7 @@ export async function runTranslationEngine(
           onEvent,
         );
         const advisorMs = Date.now() - advisorStart;
+        advisorSucceeded = true;
 
         currentText = advisorResult.correctedText;
 
@@ -284,44 +289,44 @@ export async function runTranslationEngine(
             return result;
           }
         }
+
+        // Final authoritative Opus re-score
+        emitEvent(onEvent, "scoring", "re-scoring", `Final re-score (Opus) after round ${roundNum}...`);
+        previousScorecard = scorecard;
+        const reScoringStart = Date.now();
+        scoringResult = await scoreTranslationWithUsage(sourceText, currentText, profile as ClientProfile, language);
+        const reScoringMs = Date.now() - reScoringStart;
+        scorecard = scoringResult.scorecard;
+
+        audit.push({
+          stage: "scoring",
+          agent: "ScoringAgent (Opus)",
+          timestamp: now(),
+          durationMs: reScoringMs,
+          tokens: scoringResult.usage
+            ? { input: scoringResult.usage.inputTokens, output: scoringResult.usage.outputTokens }
+            : undefined,
+          scores: scorecardToDict(scorecard),
+          reasoning: `Round ${roundNum} final re-score. Aggregate: ${scorecard.aggregateScore.toFixed(1)}. Failed: ${JSON.stringify(scorecard.failedMetrics)}`,
+        });
+
+        emitEvent(onEvent, "scoring", "complete", `Round ${roundNum}: ${scorecard.aggregateScore.toFixed(1)}/${scorecard.aggregateThreshold}`);
+
+        if (scorecard.passed) {
+          emitEvent(onEvent, "gate", "passed", `All metrics pass after ${roundNum} correction round(s).`);
+          const result = buildResult(clientId, language, sourceText, currentText, scorecard, true, roundNum, false, audit);
+          await persist(translationStore, result);
+          return result;
+        }
+
+        continue; // next outer-loop round
       } catch (err) {
-        console.warn(`[pipeline-loop] Advisor loop failed, falling back to specialist pipeline: ${err}`);
-        // Fall through to the specialist path below
+        console.warn(`[pipeline-loop] Advisor loop failed, falling back to specialist pipeline for round ${roundNum}: ${err}`);
+        // advisorSucceeded remains false — fall through to specialist path
       }
-
-      // Final authoritative Opus re-score
-      emitEvent(onEvent, "scoring", "re-scoring", `Final re-score (Opus) after round ${roundNum}...`);
-      previousScorecard = scorecard;
-      const reScoringStart = Date.now();
-      scoringResult = await scoreTranslationWithUsage(sourceText, currentText, profile as ClientProfile, language);
-      const reScoringMs = Date.now() - reScoringStart;
-      scorecard = scoringResult.scorecard;
-
-      audit.push({
-        stage: "scoring",
-        agent: "ScoringAgent (Opus)",
-        timestamp: now(),
-        durationMs: reScoringMs,
-        tokens: scoringResult.usage
-          ? { input: scoringResult.usage.inputTokens, output: scoringResult.usage.outputTokens }
-          : undefined,
-        scores: scorecardToDict(scorecard),
-        reasoning: `Round ${roundNum} final re-score. Aggregate: ${scorecard.aggregateScore.toFixed(1)}. Failed: ${JSON.stringify(scorecard.failedMetrics)}`,
-      });
-
-      emitEvent(onEvent, "scoring", "complete", `Round ${roundNum}: ${scorecard.aggregateScore.toFixed(1)}/${scorecard.aggregateThreshold}`);
-
-      if (scorecard.passed) {
-        emitEvent(onEvent, "gate", "passed", `All metrics pass after ${roundNum} correction round(s).`);
-        const result = buildResult(clientId, language, sourceText, currentText, scorecard, true, roundNum, false, audit);
-        await persist(translationStore, result);
-        return result;
-      }
-
-      continue; // next outer-loop round
     }
 
-    // --- Current specialist pipeline (default) ---
+    // --- Specialist pipeline (default, or fallback when advisor fails) ---
 
     // Arbiter decides
     emitEvent(
