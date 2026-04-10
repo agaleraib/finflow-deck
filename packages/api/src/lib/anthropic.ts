@@ -257,9 +257,8 @@ export async function runAgentLoop<T>(
 
     totalInput += response.usage.input_tokens;
     totalOutput += response.usage.output_tokens;
-    const usageAny = response.usage as unknown as Record<string, number>;
-    totalCacheRead += usageAny.cache_read_input_tokens ?? 0;
-    totalCacheCreation += usageAny.cache_creation_input_tokens ?? 0;
+    totalCacheRead += response.usage.cache_read_input_tokens ?? 0;
+    totalCacheCreation += response.usage.cache_creation_input_tokens ?? 0;
     turnCount++;
 
     // Append assistant response to conversation
