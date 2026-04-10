@@ -41,13 +41,13 @@ NEW_LOCK=$(sha256sum packages/api/bun.lock packages/playground/bun.lock 2>/dev/n
 
 if [ "$OLD_LOCK" != "$NEW_LOCK" ]; then
   echo "▶ lockfiles changed — running bun install..."
-  cd packages/api && ~/.bun/bin/bun install
-  cd ../playground && ~/.bun/bin/bun install
+  cd packages/api && /home/playground/.bun/bin/bun install
+  cd ../playground && /home/playground/.bun/bin/bun install
   cd /srv/playground/app
 fi
 
 echo "▶ building playground..."
-cd packages/playground && ~/.bun/bin/bun run build
+cd packages/playground && /home/playground/.bun/bin/bun run build
 cd /srv/playground/app
 
 echo "▶ restarting api service..."
