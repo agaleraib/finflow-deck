@@ -30,6 +30,16 @@ script) walkthrough.
   The running copy lives at `/etc/caddy/Caddyfile` on the LXC. The two files
   should be kept in sync. Differences between this file and the running copy
   are a bug.
+- **`update-live.sh`** — deployment script that runs on the LXC. Fetches
+  origin, fast-forwards to `origin/playground-live`, reinstalls deps if
+  lockfiles changed, rebuilds the playground frontend, restarts the API
+  service, and health-checks. Does NOT touch Caddy. The live copy lives at
+  `/srv/playground/app/update-live.sh` — keep in sync with this repo copy.
+- **`finflow-api-live.service`** — systemd unit for the API service.
+  Installed at `/etc/systemd/system/finflow-api-live.service` on the LXC.
+  Runs as `playground:playground`, reads `.env.live`, writes only to
+  `/srv/playground/runs`. Includes systemd hardening (NoNewPrivileges,
+  ProtectSystem=strict, etc.).
 
 ## ⚠ Auth — the per-tester bcrypt hashes are NOT in this file
 
@@ -105,32 +115,98 @@ password rotation to be a one-command operation.
 - **`.env.live`** — contains the live Anthropic API key. Never committed.
   Lives only at `/srv/playground/app/.env.live` on the LXC, `chmod 640`,
   owned `root:playground`.
-- **systemd unit** — `/etc/systemd/system/finflow-api-live.service`. Stable
-  enough that drift is unlikely; if you change it, document the change here
-  and copy the new version into this directory.
 - **smb.conf** — the `[runs]` share stanza. Samba config is mostly default
   Ubuntu; the only FinFlow-specific lines are the `[runs]` share and the
   global `server min protocol = SMB2` hardening. Both can be reconstructed
   from scratch using the session playbook.
-- **`update-live.sh`** — lives at `/srv/playground/app/update-live.sh` on
-  the LXC, owned by the `playground` user. It's a short bash script; the
-  session playbook has the full source if it ever needs to be recreated.
 
-## Updating the running Caddyfile
+## Promoting to live
+
+### Branch model
+
+```
+workstream-b-playground   (dev — all active work)
+        │
+        │  git checkout playground-live
+        │  git merge --ff-only workstream-b-playground
+        │  git push origin playground-live
+        │
+        ▼
+  playground-live         (promotion branch — LXC tracks this)
+        │
+        │  ssh playground
+        │  ./update-live.sh
+        │
+        ▼
+  LXC running state       (CT 101 / 10.1.10.225)
+```
+
+`playground-live` exists only as a gate — it is always a fast-forward of
+`workstream-b-playground`. The LXC's `update-live.sh` refuses non-linear
+merges (`git merge --ff-only`), so if `playground-live` is ever behind in
+a way that can't fast-forward, something went wrong.
+
+### Step-by-step: promote code to live
+
+Run from the Mac Studio (dev machine):
+
+```bash
+# 1. Make sure workstream-b-playground is clean and pushed
+git checkout workstream-b-playground
+git push origin workstream-b-playground
+
+# 2. Fast-forward playground-live to match
+git checkout playground-live
+git merge --ff-only workstream-b-playground
+git push origin playground-live
+
+# 3. Switch back to your working branch
+git checkout workstream-b-playground
+
+# 4. Deploy on the LXC
+ssh playground "./update-live.sh"
+```
+
+`update-live.sh` does: `git fetch` → `git merge --ff-only origin/playground-live`
+→ reinstall deps if lockfiles changed → `bun run build` (playground frontend)
+→ `systemctl restart finflow-api-live` → health-check.
+
+### Updating the running Caddyfile
+
+`update-live.sh` does NOT touch Caddy. Caddyfile changes are always a
+separate, manual step so a typo doesn't take down the tester environment
+mid-promotion.
 
 When you change `deploy/lxc/Caddyfile` in this repo:
 
-1. Commit and push the change to `playground-live` (via `live-promote`)
+1. Promote the code to live (steps above)
 2. SSH to the LXC as root: `ssh playground`
-3. Copy the file into place: `cp /srv/playground/app/deploy/lxc/Caddyfile /etc/caddy/Caddyfile`
+3. Copy the file: `cp /srv/playground/app/deploy/lxc/Caddyfile /etc/caddy/Caddyfile`
+   (⚠ see the auth-hash warning above — if the `basic_auth` block changed,
+   reconcile manually instead of blindly copying)
 4. Validate: `caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile`
 5. Reload: `systemctl reload caddy`
 6. Verify: `tail -f /var/log/caddy/playground-access.log` and hit an endpoint
 
-This is deliberately manual. `update-live.sh` restarts the api service but
-does **not** touch Caddy — a typo in the Caddyfile would otherwise take down
-the entire tester environment mid-promotion, and we'd rather catch it with a
-deliberate `caddy validate` step before applying.
+### Updating the systemd unit
+
+If you change `deploy/lxc/finflow-api-live.service` in this repo:
+
+1. Promote the code to live (steps above)
+2. SSH to the LXC as root: `ssh playground`
+3. Copy the file: `cp /srv/playground/app/deploy/lxc/finflow-api-live.service /etc/systemd/system/`
+4. Reload systemd: `systemctl daemon-reload`
+5. Restart: `systemctl restart finflow-api-live`
+6. Verify: `journalctl -u finflow-api-live -f`
+
+### Updating the deployment script itself
+
+If you change `deploy/lxc/update-live.sh` in this repo:
+
+1. Promote the code to live (steps above)
+2. SSH to the LXC: `ssh playground`
+3. Copy: `cp /srv/playground/app/deploy/lxc/update-live.sh /srv/playground/app/update-live.sh`
+4. Make sure it's executable: `chmod +x /srv/playground/app/update-live.sh`
 
 ## Bootstrapping a new LXC from scratch
 
