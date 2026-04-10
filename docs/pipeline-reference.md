@@ -153,3 +153,15 @@ flowchart LR
 ```
 
 **Status:** ProfileExtractionAgent exists. Company scrape agent and questionnaire are planned.
+
+---
+
+## 6. Planned changes
+
+| Task | Scope | What changes | Why |
+|---|---|---|---|
+| **Remove Style & Voice from translation pipeline** | Translation engine | Remove `correctStyle()` from specialist dispatch. Drop 3 metrics (`formality_level`, `sentence_length_ratio`, `brand_voice_adherence`) from scoring — 13 metrics → 10. Rewire `METRIC_CATEGORIES.style` removal through gate, arbiter, aggregate scoring, thresholds, and any code that references style metrics. Update `ProfileExtractionAgent` to stop extracting tone fields into `LanguageProfile` (they move to `ContentPersona` only). | Content pipeline's conformance pass is the canonical owner of brand voice. Running Style & Voice again in translation is redundant and risks undoing conformance-pass divergence. |
+| **Add `preferredStructure` to ContentPersona** | Content pipeline | New field on `ContentPersona`: per-persona section order and count directive, injected into identity agent's user message. E.g. Premium: "context → analysis → scenarios → levels" vs FastTrade: "trade idea → levels → why → risk". | Conformance pass fixed voice divergence but document structure (section order, narrative arc) is still identical between personas. `preferredStructure` breaks the blueprint. |
+| **Wire glossary patcher into content pipeline** (§20.5 Part B) | Content pipeline | Pipe each cross-tenant output through `glossary-patcher.ts` with a per-tenant English glossary after the conformance pass. Deterministic term substitution. | Adds a third divergence layer (terminology) on top of voice (conformance pass) and structure (`preferredStructure`). |
+| **Company scrape agent** | Onboarding | New agent that scrapes client website (about/team/press pages) and extracts candidate `companyBackground` facts. Feeds into the unified onboarding questionnaire. | `companyBackground` is currently manually authored in persona JSON fixtures. Production needs automated extraction. |
+| **Section labels + termMap** (§20.5 Part A) | Content pipeline | Per-persona section label and domain terminology overrides on `ContentPersona`. Identity agents substitute placeholders against the persona's map. | "WHAT:" vs "THE SETUP:" vs "POSITIONING:" — visual differentiation at the label level. |
