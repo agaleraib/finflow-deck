@@ -476,6 +476,13 @@ async function runCrossTenantMatrix(
    * message forces this exact target. The CLI never sets this.
    */
   tenantWordCountOverrides?: Array<number | null>,
+  /**
+   * When true, run the Style & Voice specialist on each output after
+   * generation but before embedding/similarity scoring. This enforces
+   * persona-specific brand voice and drives structural divergence between
+   * outputs that share the same identity agent.
+   */
+  withConformancePass?: boolean,
 ): Promise<CrossTenantMatrixResult> {
   if (personas.length < 2) {
     throw new Error(
@@ -519,8 +526,31 @@ async function runCrossTenantMatrix(
     }),
   );
 
+  // ── Conformance pass (optional) ──────────────────────────────────
+  // When enabled, run the Style & Voice specialist on each output to
+  // enforce persona-specific brand voice. This is the content pipeline's
+  // equivalent of the translation engine's conformance loop, scoped to
+  // the two specialists that drive divergence (Style & Voice) without
+  // pulling in the full 13-metric loop.
+  let conformedOutputs = outputs;
+  if (withConformancePass) {
+    const { runConformancePassAll } = await import("./conformance-pass.js");
+    console.log(`[runner] Stage 6 — conformance pass: enforcing brand voice on ${outputs.length} outputs...`);
+    const conformanceResult = await runConformancePassAll(
+      outputs,
+      personas,
+      (index, changed) => {
+        const p = personas[index]!;
+        console.log(`[runner]   ${changed ? "✓" : "○"} ${p.name}: ${changed ? "rewritten for brand voice" : "no changes needed"}`);
+      },
+    );
+    conformedOutputs = conformanceResult.outputs;
+    const changedCount = conformanceResult.conformanceResults.filter((r) => r.changed).length;
+    console.log(`[runner]   Conformance pass complete: ${changedCount}/${outputs.length} outputs rewritten`);
+  }
+
   // Embed all outputs
-  const embedded = await embedOutputs(outputs);
+  const embedded = await embedOutputs(conformedOutputs);
 
   // Build pairwise matrix using STRICT cross-tenant thresholds.
   //
@@ -1000,6 +1030,12 @@ export interface RunOptions {
      * `personas.length` when provided. The CLI never sets this.
      */
     tenantWordCountOverrides?: Array<number | null>;
+    /**
+     * When true, run the Style & Voice specialist on each output after
+     * generation to enforce persona-specific brand voice, before
+     * embedding and similarity scoring. Adds ~$0.10-0.20 per output.
+     */
+    withConformancePass?: boolean;
   };
   /**
    * Run the temporal narrative continuity test (Stage 7)?
@@ -1187,6 +1223,7 @@ export async function runUniquenessPoc(
       opts.event.topicName,
       opts.withCrossTenantMatrix.tenantIdentityIds,
       opts.withCrossTenantMatrix.tenantWordCountOverrides,
+      opts.withCrossTenantMatrix.withConformancePass,
     );
     console.log(`[runner]   ✓ ${crossTenantMatrix.similarities.length} pairs`);
     console.log(`[runner]   ✓ cosine: mean=${crossTenantMatrix.meanCosine.toFixed(4)}, min=${crossTenantMatrix.minCosine.toFixed(4)}, max=${crossTenantMatrix.maxCosine.toFixed(4)}`);
