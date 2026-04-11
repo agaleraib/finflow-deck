@@ -44,3 +44,6 @@ finflow/data/cache/*.csv
 .vscode/
 .idea/
 *.swp
+
+# Claude harness session state
+.harness-state/
