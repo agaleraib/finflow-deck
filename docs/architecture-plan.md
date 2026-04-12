@@ -27,7 +27,7 @@ The core insight: GoBot already solves the hardest problems (agent orchestration
 |---|---|---|
 | Agent system | `src/agents/base.ts` - AgentConfig with name, model, reasoning style, systemPrompt | Each FinFlow agent (TA, FA, Compliance, etc.) becomes an AgentConfig |
 | Cross-agent invocation | `[INVOKE:agent\|question]` tags, parsed by `src/lib/cross-agent.ts`, with permission map in `AGENT_INVOCATION_MAP` | TA and FA agents deliberate via invoke tags; Quality agent orchestrates |
-| HITL decisions | `src/lib/board/decisions.ts` - inline Telegram buttons (approve/defer/reject/discuss), `async_tasks` in Supabase | Report approval, compliance sign-off, translation approval, publish authorization |
+| HITL decisions | `src/lib/board/decisions.ts` - inline Telegram buttons (approve/defer/reject/discuss), `async_tasks` in Postgres | Report approval, compliance sign-off, translation approval, publish authorization |
 | Board orchestrator | `src/lib/board/orchestrator.ts` - sequential agent execution, structured output via `tool_use`, synthesis | Report generation pipeline: gather data, run agents, synthesize, present for review |
 | Model router | `src/lib/model-router.ts` - tiered routing (haiku/sonnet/opus + GPT-4o/Gemini) with budget tracking | News classification (Haiku), translation (Sonnet/GPT-4o per language), analysis (Sonnet), arbitration (Opus) |
 | Scheduled jobs | `src/scheduler/executor.ts` - ScheduledJobDef with classification, locking, failure tracking | Market monitoring schedules, report generation cadences, distribution windows |
@@ -112,7 +112,7 @@ The core insight: GoBot already solves the hardest problems (agent orchestration
 ```
 Classification: trivial (handler)
 Schedule: */5 * * * *  (every 5 minutes for breaking, hourly for regular)
-Pattern: Fetch data via REST APIs -> Classify with Qwen 7B -> Store in Supabase
+Pattern: Fetch data via REST APIs -> Classify with Qwen 7B -> Store in Postgres
 ```
 
 **Data sources and APIs:**
@@ -128,7 +128,7 @@ Pattern: Fetch data via REST APIs -> Classify with Qwen 7B -> Store in Supabase
 
 **Relevance scoring:** Qwen 7B classifies as `breaking | high | medium | low | noise`, Haiku second pass on `high` items.
 
-**Storage:** `news_items` table in Supabase with pgvector embeddings for semantic deduplication.
+**Storage:** `news_items` table in Postgres with pgvector embeddings for semantic deduplication.
 
 ### 3.2 Technical Analysis Agent
 
@@ -280,13 +280,13 @@ config/clients/{client-slug}/
 | Layer | Technology |
 |---|---|
 | Runtime | Bun (GoBot's existing runtime) |
-| Database | Supabase (self-hosted at 10.1.10.233) |
+| Database | Postgres 16 + pgvector (self-managed, LXC 102 on Proxmox node0) |
 | Queue | BullMQ + Redis (proper job queues for multi-tenant) |
 | LLM Primary | Anthropic Claude (Opus/Sonnet/Haiku) |
 | LLM Secondary | OpenAI GPT-4o/4.1/4o-mini, Google Gemini 2.5 Pro/2.0 Flash |
 | Charts | TradingView Lightweight + Plotly + Puppeteer |
-| Storage | Supabase Storage |
-| Auth | Supabase Auth + API keys (multi-tenant RLS) |
+| Storage | Local filesystem / S3-compatible (TBD) |
+| Auth | Custom auth + API keys (multi-tenant Postgres RLS) |
 | Monitoring | Chronicle telemetry + Grafana |
 
 ---
@@ -351,12 +351,12 @@ packages/api/src/
     events.ts                 # SSE event types for streaming progress
   profiles/
     types.ts                  # Zod schemas: ClientProfile, ToneProfile, ScoringConfig
-    store.ts                  # In-memory profile store (Convex/Supabase TBD)
+    store.ts                  # In-memory profile store (Postgres + Drizzle TBD)
   lib/
     anthropic.ts              # SDK wrapper, streaming, tool_use
     model-router.ts           # Haiku/Sonnet/Opus routing
     cross-agent.ts            # [INVOKE:agent|question] parsing
-    store.ts                  # In-memory store implementations
+    store.ts                  # In-memory store implementations (Postgres + Drizzle TBD)
     types.ts                  # AgentConfig, store interfaces
   routes/
     translate.ts              # POST /translate, POST /translate/stream (SSE)
@@ -389,5 +389,5 @@ packages/api/src/
 | Regulatory liability | Medium | Critical | "Informational purposes only"; compliance templates; legal review |
 | Data source API changes/outages | Medium | High | Multiple sources per type; circuit breaker; graceful degradation |
 | Report accuracy credibility | Medium | High | Backtesting (Phase 6); transparent confidence scores |
-| Client data isolation failure | Low | Critical | Supabase RLS; separate schemas; penetration testing |
+| Client data isolation failure | Low | Critical | Postgres RLS; separate schemas; penetration testing |
 | LLM API cost at scale | Medium | Medium | Intelligent model routing (Haiku/mini for triage, Sonnet for quality); daily budget tracking; per-client caps; API costs trending down ~30% YoY |
