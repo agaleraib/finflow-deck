@@ -177,22 +177,29 @@ export class PostgresEditorialMemoryStore implements EditorialMemoryStore {
     // Reverse to oldest-first (matching in-memory store's sort asc → slice(-5))
     const recentPieces = recentPieceRows.map(rowToPieceLog).reverse();
 
-    // Run contradiction detection (once per tenant+topic per session)
+    // Run contradiction detection (once per tenant+topic per session).
+    // When detection runs, use its return value directly — avoids a redundant
+    // DB query after the Anthropic HTTP call, which triggers a Bun event-loop
+    // stall (DB→HTTP→DB interleave deadlock).
     const detectionKey = ttKey(args.tenantId, args.topicId);
+    let pendingContradictions: EditorialContradiction[];
     if (!this.contradictionDetectionRan.has(detectionKey)) {
-      await this.detectContradictions({
+      const detected = await this.detectContradictions({
         tenantId: args.tenantId,
         topicId: args.topicId,
         coreAnalysis: args.coreAnalysis,
       });
       this.contradictionDetectionRan.add(detectionKey);
+      // Use returned contradictions directly — they were just inserted,
+      // no need to re-query (and re-querying hangs Bun after HTTP).
+      pendingContradictions = detected.filter((c) => c.resolution === "pending");
+    } else {
+      // Detection already ran this session — safe to query DB (no prior HTTP).
+      pendingContradictions = await this.getPendingContradictions(
+        args.tenantId,
+        args.topicId,
+      );
     }
-
-    // Get all pending contradictions
-    const pendingContradictions = await this.getPendingContradictions(
-      args.tenantId,
-      args.topicId,
-    );
 
     return assembleEditorialContext({
       tenantId: args.tenantId,
