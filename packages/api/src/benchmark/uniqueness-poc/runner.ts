@@ -545,8 +545,9 @@ async function runCrossTenantMatrix(
           topicId: editorialMemoryTopicId,
           coreAnalysis: editorialMemoryCoreAnalysis,
         });
-        console.log(`[runner]     editorial memory: getContext(${persona.id}) — done (${ctx.renderedBlock.length} chars, ${ctx.includedFacts.length} facts, ${ctx.contradictions.length} contradictions)`);
-        editorialMemoryBlocks.push(ctx.renderedBlock || undefined);
+        const block = ctx.renderedBlock || undefined;
+        console.log(`[runner]     editorial memory: getContext(${persona.id}) — done (${block?.length ?? 0} chars, ${ctx.includedFacts.length} facts, ${ctx.contradictions.length} contradictions)`);
+        editorialMemoryBlocks.push(block);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`[runner]   ⚠ editorial memory getContext failed for ${persona.id}: ${msg.slice(0, 200)}`);
@@ -948,21 +949,27 @@ async function runNarrativeStateTest(args: {
   const editorialMemStore = args.editorialMemory;
   if (editorialMemStore) {
     // Sequential — same Bun deadlock workaround as Stage 6
+    console.log(`[runner]   Stage 7 editorial memory: fetching context for ${args.personas.length} treatment personas (sequential)...`);
+    const emT0 = Date.now();
     stage7EditorialBlocks = [];
     for (const persona of args.personas) {
       try {
+        console.log(`[runner]     editorial memory: getContext(${persona.id}) — start`);
         const ctx = await editorialMemStore.getContext({
           tenantId: persona.id,
           topicId: args.secondEvent.topicId,
           coreAnalysis: secondCoreAnalysis.body,
         });
-        stage7EditorialBlocks.push(ctx.renderedBlock || undefined);
+        const block = ctx.renderedBlock || undefined;
+        console.log(`[runner]     editorial memory: getContext(${persona.id}) — done (${block?.length ?? 0} chars, ${ctx.includedFacts.length} facts, ${ctx.contradictions.length} contradictions)`);
+        stage7EditorialBlocks.push(block);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`[runner]     ⚠ editorial memory getContext failed for ${persona.id}: ${msg.slice(0, 200)}`);
         stage7EditorialBlocks.push(undefined);
       }
     }
+    console.log(`[runner]   Stage 7 editorial memory: all ${args.personas.length} personas done in ${Date.now() - emT0}ms`);
     const hits = stage7EditorialBlocks.filter((b) => b !== undefined).length;
     if (hits > 0) {
       console.log(
