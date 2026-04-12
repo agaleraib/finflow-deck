@@ -380,7 +380,10 @@ export class PostgresEditorialMemoryStore implements EditorialMemoryStore {
   }): Promise<EditorialContradiction[]> {
     const t0 = Date.now();
     const activeFacts = await this.listActiveFacts(args.tenantId, args.topicId);
-    console.log(`[pg-store] detectContradictions(${args.tenantId}) — ${activeFacts.length} active facts (${Date.now() - t0}ms)`);
+    const checkable = activeFacts.filter(
+      (f) => f.factType === "position" || f.factType === "level",
+    );
+    console.log(`[pg-store] detectContradictions(${args.tenantId}) — ${activeFacts.length} active facts, ${checkable.length} checkable (${Date.now() - t0}ms)`);
     console.log(`[pg-store] detectContradictions(${args.tenantId}) — calling Haiku...`);
     const detection = await detectContradictionsLLM(
       activeFacts,
