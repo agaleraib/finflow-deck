@@ -1,7 +1,7 @@
 # Editorial Memory System — Native Temporal Knowledge Graph for FinFlow Content Pipeline
 
 **Date:** 2026-04-12
-**Status:** Phase 3 In Progress (Tasks 10-11 done, Task 12 pending)
+**Status:** Phase 3 Near-Complete (Tasks 10-11 done, Task 12 blocked on workstream C pipeline)
 **Branch:** TBD (new branch from `master`)
 **Owners:** Albert Galera (decisions), Claude (drafting + implementation)
 **Supersedes:** `2026-04-10-mempalace-integration.md` (philosophy adopted, Python dependency rejected)
@@ -884,10 +884,11 @@ Replace the in-memory store with Postgres + pgvector. Wire into the content pipe
   - **Depends on:** Tasks 4, 10
   - **Verify:** All acceptance criteria from the in-memory store also pass against the Postgres implementation. Vector search uses pgvector `<=>` operator. `bun run typecheck` passes.
 
-- [ ] **Task 12:** Content pipeline integration
-  - **Files:** `packages/api/src/pipeline/` (modifications to identity adaptation layer)
-  - **Depends on:** Tasks 11, 8
+- [ ] **Task 12:** Content pipeline integration — **BLOCKED** (production identity adaptation layer not yet built; PoC harness integration done in Task 6)
+  - **Files:** `packages/api/src/pipeline/` (modifications to identity adaptation layer, when it exists)
+  - **Depends on:** Tasks 11, 8, **and** workstream C production content pipeline (stage 7b)
   - **Verify:** With `FINFLOW_EDITORIAL_MEMORY=1`, identity calls include editorial memory context. Without the flag, behavior is unchanged. `bun run typecheck` passes.
+  - **Blocked because:** The production content pipeline's identity adaptation layer (stage 7b from `docs/specs/2026-04-07-content-pipeline.md`) has not been implemented. Identity agents are only called from the PoC harness today, which already has editorial memory wired in (Task 6, commit 0f69454). Unblocks when stage 7b ships.
 
 ---
 
