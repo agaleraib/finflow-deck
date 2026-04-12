@@ -1,7 +1,7 @@
 # Plan — FinFlow (wordwideAI)
 
-**Last updated:** 2026-04-11
-**Current focus:** Workstream C — content pipeline (advisor loop validation + MemPalace integration)
+**Last updated:** 2026-04-12
+**Current focus:** Workstream C — content pipeline (advisor loop validation + editorial memory system)
 **This session:** completed branching-model consolidation (Workstream A cleanup) — retired `workstream-b-playground`, repointed `live-promote` at `master`. See memory `project_branching_model_2026_04_11.md`.
 
 **Source of truth for workstream definitions:** `.harness-profile`
@@ -30,7 +30,7 @@
 |----|------|--------|-----------|-----------|
 | A  | Cleanup & docs | ongoing | _n/a — maintenance track_ | `finflow/` legacy Python directory deleted; `architecture.md` + `pipeline-reference.md` current |
 | B  | @wfx/sources (universal ingest) | **paused** — no code | `docs/specs/2026-04-07-data-sources.md` (Draft) | `packages/sources/` published with RSS + YouTube + HTML adapters |
-| C  | FinFlow content pipeline | **active — current focus** | `docs/specs/2026-04-07-content-pipeline.md` | advisor loop passes full corpus validation; MemPalace integration deployed on LXC; first tenant shipping content |
+| C  | FinFlow content pipeline | **active — current focus** | `docs/specs/2026-04-07-content-pipeline.md` | advisor loop passes full corpus validation; editorial memory system deployed; first tenant shipping content |
 | D  | @wfx/publishers (output adapters) | planned | `docs/specs/2026-04-07-publishers.md` | `packages/publishers/` adapters (Telegram/Instagram/WordPress/email) shippable |
 
 > **Note on B vs C:** the now-retired `workstream-b-playground` branch carried uniqueness PoC + MemPalace integration work. That work is **content-pipeline (C)**, not @wfx/sources (B). The branch name was misleading.
@@ -39,19 +39,19 @@
 
 - **A — next action:** resolve the open naming question below (realign `.harness-profile` or keep as-is); continue Python deletion in `finflow/`.
 - **B — next action:** none (paused). Resume by scaffolding `packages/sources/` once C unblocks.
-- **C — next action:** run full corpus validation for advisor loop (blocker — see `feedback_unified_pass_risk.md`). Then ship MemPalace integration to LXC.
+- **C — next action:** run full corpus validation for advisor loop (blocker — see `feedback_unified_pass_risk.md`). Then implement editorial memory system (spec: `2026-04-12-editorial-memory.md`, 3-phase build).
 - **D — next action:** none (planned). First adapter scoping waits on C reaching first-tenant-shipping milestone.
 
 ## Active-now focus (Workstream C)
 
-**This week:** advisor loop validation + MemPalace integration (newest thread).
+**This week:** advisor loop validation + editorial memory system (supersedes MemPalace integration).
 
 **Active C specs:**
-- `docs/specs/2026-04-10-mempalace-integration.md` — freshest active thread; MemPalace itself operational since 2026-04-10
+- `docs/specs/2026-04-12-editorial-memory.md` — **freshest active thread**; native TS editorial memory system (Postgres + pgvector + OpenAI embeddings, contradiction detection). Supersedes `2026-04-10-mempalace-integration.md`
 - `docs/specs/2026-04-10-advisor-pipeline-loop.md` — implemented, default-on in master (commit `a44fdca`); pending full corpus validation
 - `docs/specs/2026-04-10-advisor-tool-poc.md` — active design + implementation in `packages/api/src/pipeline/`
 - `docs/specs/2026-04-08-uniqueness-poc-playground.md` — stabilizing (architecture in target zone after 2026-04-08 revision)
-- `docs/specs/2026-04-08-narrative-state-persistence.md` — design
+- `docs/specs/2026-04-08-narrative-state-persistence.md` — **implemented** (coexists with editorial memory during transition)
 - `docs/specs/2026-04-07-content-uniqueness.md` — design (two-axis judge: fidelity × presentation)
 
 **Blockers:** advisor loop needs full corpus validation before shipping (see memory `feedback_unified_pass_risk.md`).
