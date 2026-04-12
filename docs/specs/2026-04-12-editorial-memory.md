@@ -825,44 +825,44 @@ Replace the in-memory store with Postgres + pgvector. Wire into the content pipe
 
 ### Phase 1
 
-- [ ] **Task 1:** Define core types and interfaces
+- [x] **Task 1:** Define core types and interfaces (done in 5797f96)
   - **Files:** `packages/api/src/memory/types.ts`, `packages/api/src/memory/store.ts`
   - **Depends on:** Nothing
   - **Verify:** `bun run typecheck` passes. Types are importable from other modules.
 
-- [ ] **Task 2:** Implement OpenAI embedding service
+- [x] **Task 2:** Implement OpenAI embedding service (done in 5797f96)
   - **Files:** `packages/api/src/memory/embeddings.ts`, `packages/api/src/memory/openai-embeddings.ts`
   - **Depends on:** Task 1
   - **Verify:** With `OPENAI_API_KEY` set: `embed("test")` returns 1536-dim array. Without key: `embed("test")` returns null within 5s. `bun run typecheck` passes.
 
-- [ ] **Task 3:** Implement fact extraction agent
+- [x] **Task 3:** Implement fact extraction agent (done in 5797f96)
   - **Files:** `packages/api/src/memory/fact-extractor.ts`
   - **Depends on:** Task 1
   - **Verify:** Given a sample article body, the extractor returns 3-10 structured facts via Haiku tool_use. Each fact has valid `factType`, non-empty `content`, valid `confidence`. Cost < $0.005 per call. `bun run typecheck` passes.
 
-- [ ] **Task 4:** Implement in-memory editorial memory store
+- [x] **Task 4:** Implement in-memory editorial memory store (done in 5797f96)
   - **Files:** `packages/api/src/memory/in-memory-store.ts`
   - **Depends on:** Tasks 1, 2, 3
   - **Verify:** `recordArticle` -> `getContext` round-trip works. `getHouseView` returns the most recent position. `clearMemory` invalidates all facts. Vector search with `queryHints` returns different results than recency-only. `bun run typecheck` passes.
 
-- [ ] **Task 5:** Implement context assembler (rendered block builder)
+- [x] **Task 5:** Implement context assembler (done in 5797f96)
   - **Files:** `packages/api/src/memory/context-assembler.ts`
   - **Depends on:** Task 1
   - **Verify:** Given facts + contradictions, produces a markdown block under 600 tokens. Block contains: active position, prior coverage, guidelines. Empty facts produce empty string. `bun run typecheck` passes.
 
-- [ ] **Task 6:** Wire into PoC harness
+- [x] **Task 6:** Wire into PoC harness (done in 0f69454)
   - **Files:** `packages/api/src/benchmark/uniqueness-poc/runner.ts` (modification)
   - **Depends on:** Tasks 4, 5
   - **Verify:** `bun run poc:uniqueness:full --fixture iran-strike` without editorial memory flag behaves identically to baseline. With `--editorial-memory` flag: Stage 6 + Stage 7 identity calls include memory context, facts are extracted and stored, second-run identity calls include prior facts. `bun run typecheck` passes.
 
 ### Phase 2
 
-- [ ] **Task 7:** Implement contradiction detector
+- [x] **Task 7:** Implement contradiction detector (done in 75aaa8b)
   - **Files:** `packages/api/src/memory/contradiction-detector.ts`
   - **Depends on:** Tasks 1, 3
   - **Verify:** Given active position facts and a contradicting core analysis, returns at least one `EditorialContradiction` with valid `tensionType` and non-empty `explanation`. Given a reinforcing core analysis, returns empty array. Cost < $0.005 per call. `bun run typecheck` passes.
 
-- [ ] **Task 8:** Integrate contradiction detection into store and context assembler
+- [x] **Task 8:** Integrate contradiction detection into store and context assembler (done in 75aaa8b)
   - **Files:** `packages/api/src/memory/in-memory-store.ts` (modification), `packages/api/src/memory/context-assembler.ts` (modification)
   - **Depends on:** Tasks 4, 5, 7
   - **Verify:** `getContext` with contradicting core analysis includes "Contradiction alerts" section in rendered block. `recordArticle` resolves pending contradictions when article text contains acknowledgment language. `bun run typecheck` passes.

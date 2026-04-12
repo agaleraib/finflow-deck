@@ -1,7 +1,7 @@
 # Postgres + pgvector LXC — Dedicated Database Container for FinFlow
 
 **Date:** 2026-04-12
-**Status:** Draft
+**Status:** Phases 1-2 Complete (CT 230 live, Postgres 16.13 + pgvector 0.8.2), Phases 3-5 pending
 **Branch:** N/A (infrastructure, not application code)
 **Owners:** Albert Galera (decisions), Claude (drafting)
 **Depends on:**
@@ -478,7 +478,7 @@ Deferred. Install during implementation if it proves useful during the editorial
 
 ### Phase 1: LXC Creation
 
-- [ ] **Task 1:** Create CT 230 on Proxmox node0
+- [x] **Task 1:** Create CT 230 on Proxmox node0
   - **Files:** N/A (Proxmox CLI / web UI)
   - **Depends on:** Nothing
   - **Steps:**
@@ -521,7 +521,7 @@ Deferred. Install during implementation if it proves useful during the editorial
 
 ### Phase 2: Postgres + pgvector
 
-- [ ] **Task 3:** Install PostgreSQL 16 from PGDG repository
+- [x] **Task 3:** Install PostgreSQL 16 from PGDG repository
   - **Files:** N/A (inside CT 230)
   - **Depends on:** Task 1
   - **Steps:**
@@ -537,7 +537,7 @@ Deferred. Install during implementation if it proves useful during the editorial
     3. Verify service: `systemctl status postgresql@16-main`
   - **Verify:** `psql -U postgres -c 'SELECT version()'` returns PostgreSQL 16.x.
 
-- [ ] **Task 4:** Install pgvector extension
+- [x] **Task 4:** Install pgvector extension (0.8.2)
   - **Files:** N/A (inside CT 230)
   - **Depends on:** Task 3
   - **Steps:**
@@ -557,7 +557,7 @@ Deferred. Install during implementation if it proves useful during the editorial
     2. Verify: `psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS vector; SELECT extversion FROM pg_extension WHERE extname = 'vector';"`
   - **Verify:** `CREATE EXTENSION IF NOT EXISTS vector` succeeds. Extension version is 0.7+ (HNSW support).
 
-- [ ] **Task 5:** Apply postgresql.conf and pg_hba.conf tuning
+- [x] **Task 5:** Apply postgresql.conf and pg_hba.conf tuning
   - **Files:** `/etc/postgresql/16/main/postgresql.conf`, `/etc/postgresql/16/main/pg_hba.conf`
   - **Depends on:** Task 3
   - **Steps:**
@@ -567,7 +567,7 @@ Deferred. Install during implementation if it proves useful during the editorial
     4. Verify settings: `psql -U postgres -c "SHOW shared_buffers; SHOW effective_cache_size; SHOW work_mem; SHOW listen_addresses;"`
   - **Verify:** All SHOW commands return expected values. `listen_addresses` is `10.1.10.230`. `ss -tlnp | grep 5432` shows binding on `10.1.10.230:5432` only.
 
-- [ ] **Task 6:** Create roles and databases
+- [x] **Task 6:** Create roles and databases
   - **Files:** N/A (SQL commands)
   - **Depends on:** Tasks 4, 5
   - **Steps:**
@@ -630,7 +630,7 @@ Deferred. Install during implementation if it proves useful during the editorial
 
 ### Phase 5: Smoke Test
 
-- [ ] **Task 11:** Run editorial memory migration against finflow_dev
+- [x] **Task 11:** Run editorial memory migration against finflow_dev
   - **Files:** `packages/api/drizzle/0000_tense_energizer.sql`, `packages/api/drizzle.config.ts`
   - **Depends on:** Tasks 6, 8
   - **Steps:**
