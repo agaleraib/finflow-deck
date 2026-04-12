@@ -16,6 +16,9 @@
  *                                 narrative-state store. Off by default so
  *                                 existing runs are byte-identical to today.
  *                                 Spec: docs/specs/2026-04-08-narrative-state-persistence.md
+ *   --editorial-memory             Enable editorial memory (PostgresEditorialMemoryStore
+ *                                 when DATABASE_URL_DEV is set, InMemoryEditorialMemoryStore
+ *                                 otherwise). Also enabled by FINFLOW_EDITORIAL_MEMORY=1.
  *   --sequence <id>               Run an `EventSequence` fixture from
  *                                 fixtures/sequences/<id>.json end-to-end:
  *                                 walks steps 1..N-1 through Stage 6 only
@@ -49,6 +52,7 @@ import {
   FileSystemNarrativeStateStore,
   type NarrativeStateStore,
 } from "./narrative-state-store.js";
+import type { EditorialMemoryStore } from "../../memory/store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = join(__dirname, "fixtures");
@@ -176,6 +180,8 @@ interface RunOneOptions {
   skipNarrativeStateTest?: boolean;
   /** Skip Stage 4 reproducibility and Stage 5 persona-differentiation (used by sequence intermediate steps). */
   skipReproducibility?: boolean;
+  /** Editorial memory store — when provided, injects editorial context into identity calls. */
+  editorialMemory?: EditorialMemoryStore;
 }
 
 /**
@@ -256,6 +262,7 @@ async function runOne(
     fixtureId: opts.fixtureNamespace ?? fixtureId,
     persistNarrativeState: opts.persistNarrativeState,
     readNarrativeStateInCrossTenant: opts.readNarrativeStateInCrossTenant,
+    editorialMemory: opts.editorialMemory,
   };
 
   const result = await runUniquenessPoc(runOpts);
@@ -380,6 +387,9 @@ async function main() {
   const full = args.includes("--full");
   const all = args.includes("--all");
   const persistNarrativeState = args.includes("--persist-narrative-state");
+  const useEditorialMemory =
+    args.includes("--editorial-memory") ||
+    process.env["FINFLOW_EDITORIAL_MEMORY"] === "1";
   const sequenceFlagIndex = args.indexOf("--sequence");
   const sequenceId =
     sequenceFlagIndex >= 0 ? args[sequenceFlagIndex + 1] : undefined;
@@ -406,6 +416,48 @@ async function main() {
     process.exit(1);
   }
 
+  // Editorial memory store — lazily instantiated only when the flag is set.
+  // Uses PostgresEditorialMemoryStore when DATABASE_URL_DEV or DATABASE_URL is
+  // available, otherwise falls back to InMemoryEditorialMemoryStore.
+  let editorialMemory: EditorialMemoryStore | undefined;
+  if (useEditorialMemory) {
+    const dbUrl =
+      process.env["DATABASE_URL_DEV"] ?? process.env["DATABASE_URL"];
+    if (dbUrl) {
+      const { drizzle } = await import("drizzle-orm/postgres-js");
+      const postgres = (await import("postgres")).default;
+      const schema = await import("../../db/schema/editorial-memory.js");
+      const { PostgresEditorialMemoryStore } = await import(
+        "../../memory/postgres-store.js"
+      );
+      const { OpenAIEmbeddingService } = await import(
+        "../../memory/openai-embeddings.js"
+      );
+      const client = postgres(dbUrl);
+      const db = drizzle(client, { schema });
+      editorialMemory = new PostgresEditorialMemoryStore({
+        db,
+        embeddings: new OpenAIEmbeddingService(),
+      });
+      console.log(
+        `[index] Editorial memory: PostgresEditorialMemoryStore (${dbUrl.replace(/\/\/.*@/, "//***@")})`,
+      );
+    } else {
+      const { InMemoryEditorialMemoryStore } = await import(
+        "../../memory/in-memory-store.js"
+      );
+      const { OpenAIEmbeddingService } = await import(
+        "../../memory/openai-embeddings.js"
+      );
+      editorialMemory = new InMemoryEditorialMemoryStore({
+        embeddings: new OpenAIEmbeddingService(),
+      });
+      console.log(
+        "[index] Editorial memory: InMemoryEditorialMemoryStore (no DATABASE_URL — facts will not persist between runs)",
+      );
+    }
+  }
+
   mkdirSync(RUNS_OUTPUT_ROOT, { recursive: true });
 
   if (sequenceFlagIndex >= 0) {
@@ -425,14 +477,14 @@ async function main() {
     const fixtures = ["iran-strike", "fed-rate-decision", "china-tariffs"];
     console.log(`[index] Running all ${fixtures.length} fixtures${full ? " with --full mode" : ""}...`);
     for (const id of fixtures) {
-      await runOne(id, { full, store, persistNarrativeState });
+      await runOne(id, { full, store, persistNarrativeState, editorialMemory });
     }
     return;
   }
 
   const fixtureId = positional[0] ?? "iran-strike";
-  console.log(`[index] Running fixture: ${fixtureId}${full ? " (--full mode)" : ""}${persistNarrativeState ? " [persist-narrative-state]" : ""}`);
-  await runOne(fixtureId, { full, store, persistNarrativeState });
+  console.log(`[index] Running fixture: ${fixtureId}${full ? " (--full mode)" : ""}${persistNarrativeState ? " [persist-narrative-state]" : ""}${editorialMemory ? " [editorial-memory]" : ""}`);
+  await runOne(fixtureId, { full, store, persistNarrativeState, editorialMemory });
 }
 
 main().catch((err) => {
