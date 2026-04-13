@@ -924,11 +924,15 @@ async function runNarrativeStateTest(args: {
     console.log(`[runner]     ✓ ${personaName}: ${e.directionalView} (${e.directionalViewConfidence}), thesis="${e.keyThesisStatements[0]?.slice(0, 60)}..."`);
   }
 
-  // STEP 3 — Generate CONTROL group (no narrative state) on second event
-  console.log(`[runner]   Stage 7.3 — control group: 4 journalist runs on second event WITHOUT narrative state (parallel)...`);
+  // STEP 3 — Generate CONTROL group (WITH extracted narrative state) on second event.
+  // This is the old memory system: ephemeral, same-run extraction from Stage 6 outputs.
+  console.log(`[runner]   Stage 7.3 — control group: 4 journalist runs on second event WITH extracted narrative state (parallel)...`);
   const controlOutputs = await Promise.all(
-    args.personas.map((persona) =>
-      runIdentity(args.identityId, secondCoreAnalysis.body, persona),
+    args.personas.map((persona, i) =>
+      runIdentity(args.identityId, secondCoreAnalysis.body, persona, {
+        narrativeState: narrativeStates[i]!.state,
+        topicName: args.secondEvent.topicName,
+      }),
     ),
   );
   for (const out of controlOutputs) {
@@ -964,14 +968,26 @@ async function runNarrativeStateTest(args: {
     }
   }
 
-  console.log(`[runner]   Stage 7.4 — treatment group: 4 journalist runs on second event WITH narrative state (parallel)...`);
+  // STEP 4 — Generate TREATMENT group on second event.
+  // When editorial memory is available: use it INSTEAD of narrative state (the
+  // correct A/B — persistent vector DB memory vs ephemeral extraction).
+  // When no editorial memory: fall back to narrative state (legacy behaviour).
+  const hasEditorialMemory = stage7EditorialBlocks && stage7EditorialBlocks.some((b) => b !== undefined);
+  const treatmentLabel = hasEditorialMemory ? "editorial memory" : "narrative state";
+  console.log(`[runner]   Stage 7.4 — treatment group: 4 journalist runs on second event WITH ${treatmentLabel} (parallel)...`);
   const treatmentOutputs = await Promise.all(
     args.personas.map((persona, i) => {
       const editorialBlock = stage7EditorialBlocks?.[i];
+      if (editorialBlock) {
+        // Editorial memory path — no narrative state injection.
+        return runIdentity(args.identityId, secondCoreAnalysis.body, persona, {
+          editorialMemoryBlock: editorialBlock,
+        });
+      }
+      // Fallback: narrative state (when --editorial-memory is off or getContext failed).
       return runIdentity(args.identityId, secondCoreAnalysis.body, persona, {
         narrativeState: narrativeStates[i]!.state,
         topicName: args.secondEvent.topicName,
-        ...(editorialBlock ? { editorialMemoryBlock: editorialBlock } : {}),
       });
     }),
   );

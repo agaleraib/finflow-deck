@@ -381,7 +381,7 @@ export function renderReport(result: RunResult): string {
     lines.push(`## 7. Temporal narrative continuity test (Stage 7)`);
     lines.push("");
     lines.push(
-      `**Hypothesis:** per-client narrative memory adds another differentiation layer on top of the static persona+tag layers. Mechanism: each persona's prior coverage of ${ns.secondEvent.topicName} (from Stage 6) is extracted into structured narrative state and injected as context when the same persona writes about a *continuation* event a few days later. The control group writes the second event with no narrative state; the treatment group writes the same second event with their respective narrative states injected.`,
+      `**Hypothesis:** persistent editorial memory (vector DB) produces better cross-tenant differentiation than the ephemeral narrative-state extractor. Both groups write about the same continuation event on ${ns.secondEvent.topicName}. The control group uses the old system (extracted narrative state from Stage 6 outputs). The treatment group uses editorial memory from the vector DB (when \`--editorial-memory\` is active) or falls back to narrative state when editorial memory is unavailable.`,
     );
     lines.push("");
     lines.push(`**Second event used:** *${ns.secondEvent.title}* (${ns.secondEvent.source}, ${ns.secondEvent.publishedAt})`);
@@ -390,7 +390,7 @@ export function renderReport(result: RunResult): string {
     // Headline numbers
     lines.push("### Headline differential");
     lines.push("");
-    lines.push("| Metric | Control (no state) | Treatment (with state) | Improvement |");
+    lines.push("| Metric | Control (narrative state) | Treatment (editorial memory) | Improvement |");
     lines.push("|---|---:|---:|---:|");
     lines.push(
       `| **Cosine mean** | ${ns.controlMeanCosine.toFixed(4)} | ${ns.treatmentMeanCosine.toFixed(4)} | ${ns.cosineImprovement >= 0 ? "−" : "+"}${Math.abs(ns.cosineImprovement).toFixed(4)} ${ns.cosineImprovement > 0 ? "✅" : "❌"} |`,
@@ -402,7 +402,7 @@ export function renderReport(result: RunResult): string {
     lines.push(`**Treatment verdict:** ${verdictBadge(ns.treatmentVerdict)} — ${ns.treatmentVerdictReasoning}`);
     lines.push("");
     lines.push(
-      `*A positive cosine improvement means the narrative-state injection produced more cross-tenant differentiation than the control. A meaningful improvement (~0.03 or more) would validate temporal continuity as a real layer of the architecture that compounds with usage.*`,
+      `*A negative cosine improvement (treatment < control) means editorial memory produced more cross-tenant differentiation than the narrative-state extractor. A meaningful improvement (~0.03 or more) would validate persistent editorial memory as a superior differentiation layer.*`,
     );
     lines.push("");
 
@@ -431,7 +431,7 @@ export function renderReport(result: RunResult): string {
     }
 
     // Pairwise matrices side by side
-    lines.push("### Control matrix (no narrative state)");
+    lines.push("### Control matrix (extracted narrative state)");
     lines.push("");
     lines.push("| Pair | Cosine | ROUGE-L | Status |");
     lines.push("|---|---:|---:|---|");
@@ -442,7 +442,7 @@ export function renderReport(result: RunResult): string {
     }
     lines.push("");
 
-    lines.push("### Treatment matrix (with narrative state)");
+    lines.push("### Treatment matrix (editorial memory)");
     lines.push("");
     lines.push("| Pair | Cosine | ROUGE-L | Status |");
     lines.push("|---|---:|---:|---|");
@@ -454,10 +454,10 @@ export function renderReport(result: RunResult): string {
     lines.push("");
 
     // The treatment outputs in full so the reader can see them
-    lines.push(`### Treatment outputs in full (with narrative state injected)`);
+    lines.push(`### Treatment outputs in full (editorial memory injected)`);
     lines.push("");
     lines.push(
-      `*These are the second-event pieces written by each persona's journalist with their prior coverage as memory. The reader should be able to feel the narrative continuity — references to prior takes, consistent positioning, building on the established framing.*`,
+      `*These are the second-event pieces written by each persona's journalist with editorial memory from the vector DB. The reader should see differentiation driven by each persona's accumulated editorial history — distinct positions, different emphasis, divergent framing.*`,
     );
     lines.push("");
     for (let i = 0; i < ns.treatmentOutputs.length; i++) {
