@@ -39,11 +39,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { execSync } from "node:child_process";
 import type {
   NewsEvent,
   ContentPersona,
   EventSequence,
   RunResult,
+  RunManifest,
 } from "./types.js";
 import { runUniquenessPoc } from "./runner.js";
 import { persistRun, RUNS_OUTPUT_ROOT } from "./persist.js";
@@ -166,6 +168,56 @@ function loadPersona(id: string): ContentPersona {
 // route so CLI runs and playground runs land on disk with the exact same
 // filesystem layout. Any change to the on-disk format should happen there.
 
+// ─── Manifest builder ────────────────────────────────────────────
+
+function getGitCommitHash(): string | null {
+  try {
+    return execSync("git rev-parse --short HEAD", { encoding: "utf-8" }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function detectRuntime(): { name: string; version: string } {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const isBun = typeof globalThis.Bun !== "undefined";
+  return { name: isBun ? "bun" : "node", version: process.version };
+}
+
+function buildManifest(opts: {
+  source: "cli" | "dashboard";
+  memoryBackend: RunManifest["memoryBackend"];
+  stagesEnabled: RunManifest["stagesEnabled"];
+  cliFlags: string[];
+  fixtureId: string;
+  eventIds: string[];
+  personaIds: string[];
+  identityIds: string[];
+  editorialMemoryState?: RunManifest["editorialMemoryState"];
+  sequenceId?: string | null;
+  sequenceStep?: number | null;
+  sequenceStepCount?: number | null;
+}): RunManifest {
+  return {
+    version: 1,
+    timestamp: new Date().toISOString(),
+    gitCommitHash: getGitCommitHash(),
+    source: opts.source,
+    runtime: detectRuntime(),
+    memoryBackend: opts.memoryBackend,
+    editorialMemoryState: opts.editorialMemoryState ?? null,
+    stagesEnabled: opts.stagesEnabled,
+    cliFlags: opts.cliFlags,
+    fixtureId: opts.fixtureId,
+    eventIds: opts.eventIds,
+    personaIds: opts.personaIds,
+    identityIds: opts.identityIds,
+    sequenceId: opts.sequenceId ?? null,
+    sequenceStep: opts.sequenceStep ?? null,
+    sequenceStepCount: opts.sequenceStepCount ?? null,
+  };
+}
+
 interface RunOneOptions {
   full: boolean;
   /** Turn on Stage 6 write-back into the narrative-state store. */
@@ -182,6 +234,14 @@ interface RunOneOptions {
   skipReproducibility?: boolean;
   /** Editorial memory store — when provided, injects editorial context into identity calls. */
   editorialMemory?: EditorialMemoryStore;
+  /** Memory backend type for manifest. */
+  memoryBackend: RunManifest["memoryBackend"];
+  /** Raw CLI flags for manifest. */
+  cliFlags: string[];
+  /** Sequence metadata for manifest. */
+  sequenceId?: string | null;
+  sequenceStep?: number | null;
+  sequenceStepCount?: number | null;
 }
 
 /**
@@ -234,8 +294,37 @@ async function runOne(
       ? loadFixture("iran-retaliation")
       : null;
 
+  const hasStage4 = full && !opts.skipReproducibility;
+  const hasStage6 = full && allPersonas.length >= 2;
+  const hasStage7 = !!narrativeContinuation;
+  const eventIds = [event.id];
+  if (narrativeContinuation) eventIds.push(narrativeContinuation.id);
+
+  const manifest = buildManifest({
+    source: "cli",
+    memoryBackend: opts.memoryBackend,
+    stagesEnabled: {
+      stage1: true,
+      stage2: true,
+      stage3: true,
+      stage4: !!hasStage4,
+      stage5: !!hasStage4,
+      stage6: !!hasStage6,
+      stage7: hasStage7,
+    },
+    cliFlags: opts.cliFlags,
+    fixtureId,
+    eventIds,
+    personaIds: allPersonas.map((p) => p.id),
+    identityIds: ["in-house-journalist"],
+    sequenceId: opts.sequenceId,
+    sequenceStep: opts.sequenceStep,
+    sequenceStepCount: opts.sequenceStepCount,
+  });
+
   const runOpts = {
     event,
+    manifest,
     ...(full && {
       ...(opts.skipReproducibility
         ? {}
@@ -289,7 +378,7 @@ async function runOne(
   return result;
 }
 
-async function runSequence(sequenceId: string): Promise<void> {
+async function runSequence(sequenceId: string, seqOpts: { memoryBackend: RunManifest["memoryBackend"]; cliFlags: string[] }): Promise<void> {
   const sequence = loadSequence(sequenceId);
   console.log(
     `[index] Loaded sequence ${sequence.id}: "${sequence.title}" (${sequence.steps.length} steps, topicId=${sequence.topicId})`,
@@ -332,15 +421,14 @@ async function runSequence(sequenceId: string): Promise<void> {
       store,
       fixtureNamespace: sequence.id,
       persistNarrativeState: true,
-      // Steps 2..N read accumulated history into Stage 6 identity calls.
-      // Step 1 starts from an empty store so there's nothing to read.
       readNarrativeStateInCrossTenant: i > 0,
-      // Only the final step runs Stage 7 (the A/B continuity test).
-      // Intermediate steps exist to accumulate history.
       skipNarrativeStateTest: !isFinal,
-      // Intermediate steps skip Stage 4+5 to keep sequence cost down.
-      // The final step runs them for the usual report.
       skipReproducibility: !isFinal,
+      memoryBackend: seqOpts.memoryBackend,
+      cliFlags: seqOpts.cliFlags,
+      sequenceId: sequence.id,
+      sequenceStep: i + 1,
+      sequenceStepCount: sequence.steps.length,
     });
     results.push(result);
   }
@@ -420,6 +508,7 @@ async function main() {
   // Uses PostgresEditorialMemoryStore when DATABASE_URL_DEV or DATABASE_URL is
   // available, otherwise falls back to InMemoryEditorialMemoryStore.
   let editorialMemory: EditorialMemoryStore | undefined;
+  let memoryBackendType: RunManifest["memoryBackend"] = "none";
   if (useEditorialMemory) {
     const dbUrl =
       process.env["DATABASE_URL_DEV"] ?? process.env["DATABASE_URL"];
@@ -439,6 +528,7 @@ async function main() {
         db,
         embeddings: new OpenAIEmbeddingService(),
       });
+      memoryBackendType = "editorial-memory-postgres";
       console.log(
         `[index] Editorial memory: PostgresEditorialMemoryStore (${dbUrl.replace(/\/\/.*@/, "//***@")})`,
       );
@@ -452,6 +542,7 @@ async function main() {
       editorialMemory = new InMemoryEditorialMemoryStore({
         embeddings: new OpenAIEmbeddingService(),
       });
+      memoryBackendType = "editorial-memory-inmemory";
       console.log(
         "[index] Editorial memory: InMemoryEditorialMemoryStore (no DATABASE_URL — facts will not persist between runs)",
       );
@@ -465,7 +556,7 @@ async function main() {
       console.error("ERROR: --sequence requires a sequence id, e.g. --sequence eur-usd-q2-2026");
       process.exit(1);
     }
-    await runSequence(sequenceId);
+    await runSequence(sequenceId, { memoryBackend: memoryBackendType, cliFlags: args.filter((a) => a.startsWith("--")) });
     return;
   }
 
@@ -477,14 +568,14 @@ async function main() {
     const fixtures = ["iran-strike", "fed-rate-decision", "china-tariffs"];
     console.log(`[index] Running all ${fixtures.length} fixtures${full ? " with --full mode" : ""}...`);
     for (const id of fixtures) {
-      await runOne(id, { full, store, persistNarrativeState, editorialMemory });
+      await runOne(id, { full, store, persistNarrativeState, editorialMemory, memoryBackend: memoryBackendType, cliFlags: args.filter((a) => a.startsWith("--")) });
     }
     return;
   }
 
   const fixtureId = positional[0] ?? "iran-strike";
   console.log(`[index] Running fixture: ${fixtureId}${full ? " (--full mode)" : ""}${persistNarrativeState ? " [persist-narrative-state]" : ""}${editorialMemory ? " [editorial-memory]" : ""}`);
-  await runOne(fixtureId, { full, store, persistNarrativeState, editorialMemory });
+  await runOne(fixtureId, { full, store, persistNarrativeState, editorialMemory, memoryBackend: memoryBackendType, cliFlags: args.filter((a) => a.startsWith("--")) });
 }
 
 main().catch((err) => {

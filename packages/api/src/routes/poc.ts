@@ -23,6 +23,7 @@
 import { Hono } from "hono";
 import { streamSSE, type SSEStreamingApi } from "hono/streaming";
 import { z } from "zod";
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,6 +39,7 @@ import type {
   IdentityDefinition,
   NewsEvent,
   RunResult,
+  RunManifest,
   IdentityOutput,
   SimilarityResult,
 } from "../benchmark/uniqueness-poc/types.js";
@@ -299,6 +301,33 @@ function startCompareRun(
         }
       : undefined;
 
+  let gitHash: string | null = null;
+  try { gitHash = execSync("git rev-parse --short HEAD", { encoding: "utf-8" }).trim(); } catch { /* noop */ }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const isBun = typeof globalThis.Bun !== "undefined";
+  const manifest: RunManifest = {
+    version: 1,
+    timestamp: new Date().toISOString(),
+    gitCommitHash: gitHash,
+    source: "dashboard",
+    runtime: { name: isBun ? "bun" : "node", version: process.version },
+    memoryBackend: "none",
+    editorialMemoryState: null,
+    stagesEnabled: {
+      stage1: true, stage2: true, stage3: true,
+      stage4: enabled.has(4), stage5: enabled.has(5),
+      stage6: enabled.has(6), stage7: enabled.has(7),
+    },
+    cliFlags: [],
+    fixtureId: event.id,
+    eventIds: [event.id],
+    personaIds: tenantPersonas.map((p) => p.id),
+    identityIds: [...new Set(tenantIdentityIds.filter((id): id is string => id != null))],
+    sequenceId: null,
+    sequenceStep: null,
+    sequenceStepCount: null,
+  };
+
   const entry: RunEntry = {
     runId,
     events: [],
@@ -339,6 +368,7 @@ function startCompareRun(
       const result = await runUniquenessPoc(
         {
           event,
+          manifest,
           ...(withReproducibility ? { withReproducibility } : {}),
           ...(withCrossTenantMatrix ? { withCrossTenantMatrix } : {}),
         },

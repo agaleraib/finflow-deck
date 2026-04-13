@@ -147,6 +147,33 @@ export function renderReport(result: RunResult): string {
   lines.push(`**Total cost:** ${formatUsd(result.totalCostUsd)}`);
   lines.push("");
 
+  // ───────── Setup ─────────
+  const m = result.manifest;
+  const enabledStages = [1, 2, 3,
+    ...(m.stagesEnabled.stage4 ? [4] : []),
+    ...(m.stagesEnabled.stage5 ? [5] : []),
+    ...(m.stagesEnabled.stage6 ? [6] : []),
+    ...(m.stagesEnabled.stage7 ? [7] : []),
+  ].join(", ");
+  lines.push(`## Setup`);
+  lines.push("");
+  lines.push(`**Git:** \`${m.gitCommitHash ?? "unknown"}\``);
+  lines.push(`**Runtime:** ${m.runtime.name} ${m.runtime.version}`);
+  lines.push(`**Source:** ${m.source}`);
+  lines.push(`**Memory backend:** ${m.memoryBackend}`);
+  lines.push(`**Stages:** ${enabledStages}`);
+  lines.push(`**Fixture:** ${m.fixtureId} — events: ${m.eventIds.join(", ")}`);
+  lines.push(`**Personas:** ${m.personaIds.length > 0 ? m.personaIds.join(", ") : "none"}`);
+  if (m.cliFlags.length > 0) {
+    lines.push(`**CLI flags:** \`${m.cliFlags.join(" ")}\``);
+  }
+  if (m.sequenceId) {
+    lines.push(`**Sequence:** ${m.sequenceId} (step ${m.sequenceStep}/${m.sequenceStepCount})`);
+  }
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
   // ───────── Verdict ─────────
   lines.push(verdictBanner(result));
   lines.push("");

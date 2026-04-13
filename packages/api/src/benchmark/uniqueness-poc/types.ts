@@ -11,6 +11,52 @@
  * scores below the uniqueness gate's cross-tenant thresholds.
  */
 
+import { z } from "zod";
+
+// ─── Run Manifest ──────────────────────────────────────────────────
+// Captures the exact setup/configuration of every PoC run so results
+// can be compared, reproduced, and grouped by the cross-run comparator.
+// Spec: docs/specs/2026-04-13-run-manifest.md
+
+export const RunManifestSchema = z.object({
+  version: z.literal(1),
+  timestamp: z.string(),
+  gitCommitHash: z.string().nullable(),
+  source: z.enum(["cli", "dashboard"]),
+  runtime: z.object({
+    name: z.string(),
+    version: z.string(),
+  }),
+  memoryBackend: z.enum([
+    "editorial-memory-postgres",
+    "editorial-memory-inmemory",
+    "narrative-state",
+    "none",
+  ]),
+  editorialMemoryState: z
+    .object({ articleCountByTenant: z.record(z.string(), z.number()) })
+    .nullable(),
+  stagesEnabled: z.object({
+    stage1: z.literal(true),
+    stage2: z.literal(true),
+    stage3: z.literal(true),
+    stage4: z.boolean(),
+    stage5: z.boolean(),
+    stage6: z.boolean(),
+    stage7: z.boolean(),
+  }),
+  cliFlags: z.array(z.string()),
+  fixtureId: z.string(),
+  eventIds: z.array(z.string()),
+  personaIds: z.array(z.string()),
+  identityIds: z.array(z.string()),
+  sequenceId: z.string().nullable(),
+  sequenceStep: z.number().nullable(),
+  sequenceStepCount: z.number().nullable(),
+});
+
+export type RunManifest = z.infer<typeof RunManifestSchema>;
+
 export interface NewsEvent {
   id: string;
   title: string;
@@ -390,6 +436,8 @@ export interface RunResult {
   runId: string;
   startedAt: string;
   finishedAt: string;
+  /** Run configuration snapshot — see docs/specs/2026-04-13-run-manifest.md. */
+  manifest: RunManifest;
   event: NewsEvent;
   coreAnalysis: CoreAnalysis;
   identityOutputs: IdentityOutput[];

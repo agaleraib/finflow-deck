@@ -26,6 +26,7 @@ import type {
   NarrativeStateTestResult,
   TenantTopicNarrativeState,
   RunResult,
+  RunManifest,
   SimilarityStatus,
   JudgeFailureRecord,
 } from "./types.js";
@@ -1165,6 +1166,8 @@ function aggregateVerdict(similarities: SimilarityResult[]): { verdict: RunResul
 
 export interface RunOptions {
   event: NewsEvent;
+  /** Run configuration snapshot — see docs/specs/2026-04-13-run-manifest.md. */
+  manifest: RunManifest;
   /** Run the reproducibility test (Stage 4)? Adds ~$0.30 in calls. */
   withReproducibility?: { identityId: string; runs: number };
   /** Run the persona-overlay differentiation test (Stage 5)? Adds ~$0.20. */
@@ -1550,6 +1553,7 @@ export async function runUniquenessPoc(
     runId,
     startedAt,
     finishedAt,
+    manifest: opts.manifest,
     event: opts.event,
     coreAnalysis,
     identityOutputs,
