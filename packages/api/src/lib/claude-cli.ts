@@ -21,8 +21,25 @@
  *   output → { text, inputTokens, outputTokens, durationMs, costUsd }
  */
 
-import { spawn } from "bun";
 import { tmpdir } from "node:os";
+
+// Lazy-load Bun.spawn so this module can be imported under Node.js (via tsx).
+// The spawn function is only needed when callClaudeCli is actually invoked,
+// which is gated behind FINFLOW_USE_CLAUDE_CLI=1.
+let _bunSpawn: typeof import("bun").spawn | undefined;
+async function getBunSpawn(): Promise<typeof import("bun").spawn> {
+  if (_bunSpawn) return _bunSpawn;
+  try {
+    const bun = await import("bun");
+    _bunSpawn = bun.spawn;
+    return _bunSpawn;
+  } catch {
+    throw new Error(
+      "callClaudeCli requires the Bun runtime (uses Bun.spawn). " +
+        "Disable FINFLOW_USE_CLAUDE_CLI when running under Node.js/tsx.",
+    );
+  }
+}
 
 const CLAUDE_PATH = process.env.CLAUDE_PATH || "claude";
 const IS_MACOS = process.platform === "darwin";
@@ -334,6 +351,7 @@ export async function callClaudeCli(
   const env = buildChildEnv(process.env);
 
   const start = Date.now();
+  const spawn = await getBunSpawn();
   const proc = spawn({
     cmd,
     cwd,

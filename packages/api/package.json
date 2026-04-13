@@ -11,6 +11,10 @@
     "poc:uniqueness:full": "bun run src/benchmark/uniqueness-poc/index.ts --full",
     "poc:uniqueness:all": "bun run src/benchmark/uniqueness-poc/index.ts --all --full",
     "poc:uniqueness:sequence": "bun run src/benchmark/uniqueness-poc/index.ts --sequence",
+    "poc:node": "tsx src/benchmark/uniqueness-poc/index.ts",
+    "poc:node:full": "tsx src/benchmark/uniqueness-poc/index.ts --full",
+    "poc:node:all": "tsx src/benchmark/uniqueness-poc/index.ts --all --full",
+    "poc:node:sequence": "tsx src/benchmark/uniqueness-poc/index.ts --sequence",
     "drizzle:generate": "bunx drizzle-kit generate",
     "drizzle:migrate": "bunx drizzle-kit migrate"
   },
@@ -26,6 +30,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "drizzle-kit": "^0.31.10",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.0"
   }
 }
