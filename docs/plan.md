@@ -30,7 +30,7 @@
 |----|------|--------|-----------|-----------|
 | A  | Cleanup & docs | ongoing | _n/a — maintenance track_ | `finflow/` legacy Python directory deleted; `architecture.md` + `pipeline-reference.md` current |
 | B  | @wfx/sources (universal ingest) | **paused** — no code | `docs/specs/2026-04-07-data-sources.md` (Draft) | `packages/sources/` published with RSS + YouTube + HTML adapters |
-| C  | FinFlow content pipeline | **active — current focus** | `docs/specs/2026-04-07-content-pipeline.md` | advisor loop passes full corpus validation; editorial memory system deployed; first tenant shipping content |
+| C  | FinFlow content pipeline | **active — current focus** | `docs/specs/2026-04-07-content-pipeline.md` | demo MVP passes E2E walkthrough with prospect; advisor loop passes full corpus validation; editorial memory system deployed; first tenant shipping content |
 | D  | @wfx/publishers (output adapters) | planned | `docs/specs/2026-04-07-publishers.md` | `packages/publishers/` adapters (Telegram/Instagram/WordPress/email) shippable |
 
 > **Note on B vs C:** the now-retired `workstream-b-playground` branch carried uniqueness PoC + MemPalace integration work. That work is **content-pipeline (C)**, not @wfx/sources (B). The branch name was misleading.
@@ -40,6 +40,7 @@
 - **A — next action:** resolve the open naming question below (realign `.harness-profile` or keep as-is); continue Python deletion in `finflow/`.
 - **B — next action:** none (paused). Resume by scaffolding `packages/sources/` once C unblocks.
 - **C — next action:** run full corpus validation for advisor loop (blocker — see `feedback_unified_pass_risk.md`). ~~Implement editorial memory Phase 1~~ (done in 5797f96 + 0f69454). ~~Phase 2 — contradiction detection~~ (done in 75aaa8b). Phase 3 near-complete — ~~Task 10: Drizzle schema~~ (done in 1141dd8), ~~Task 11: Postgres store~~ (done in ef147c4), Task 12 blocked on production pipeline.
+- **Pipeline audit trail (demo → production bridge):** `PipelineRun` type + `PipelineRunStore` interface ship with demo (in-memory); `PostgresRunStore` implementation ships with Postgres workstream. Pipeline History UI works against the interface — same screens serve both. See `docs/specs/2026-04-13-demo-mvp.md` Tasks 1, 7, and new history tasks (13c, 13d).
 - **D — next action:** none (planned). First adapter scoping waits on C reaching first-tenant-shipping milestone.
 
 ## Active-now focus (Workstream C)
@@ -47,6 +48,7 @@
 **This week:** advisor loop validation + editorial memory system (supersedes MemPalace integration).
 
 **Active C specs:**
+- `docs/specs/2026-04-13-demo-mvp.md` — **Draft** (20 tasks across 4 phases). Sales-ready E2E demo with full pipeline, publishing, per-client rebranding, and pipeline audit trail
 - `docs/specs/2026-04-12-editorial-memory.md` — **Phase 3 near-complete** (Tasks 10-11 done; Task 12 blocked on workstream C production pipeline). PoC testable now via `--editorial-memory` flag against Postgres. Supersedes `2026-04-10-mempalace-integration.md`
 - `docs/specs/2026-04-12-postgres-lxc.md` — **Phases 1-2 Complete** (CT 230 live, Postgres 16.13 + pgvector 0.8.2). Phases 3-5 pending (firewall, backup, CT 101 connectivity)
 - `docs/specs/2026-04-10-advisor-pipeline-loop.md` — implemented, default-on in master (commit `a44fdca`); pending full corpus validation
