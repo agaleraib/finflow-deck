@@ -32,7 +32,7 @@ stack:
 
 workstreams:
   mode: multi
-  plan_location: second-brain
+  plan_location: docs/plan.md
   active:
     - {id: A, name: "Cleanup & docs — finish Python deletion, architecture + specs"}
     - {id: B, name: "@wfx/sources — universal ingest (RSS/YouTube/HTML), reusable across projects"}
@@ -50,16 +50,16 @@ compliance:
   notes: "In test/staging only; revisit GDPR + MiFID scope before first paying client goes live"
 
 team:
-  size: solo-with-collaborators
-  handoff_ready: false
+  size: team
+  handoff_ready: true
 
 methodology:
   phase_gates: strict
-  drift_detector: on
+  drift_detector: off  # disabled 2026-04-12 due to Stop hook deadlock bug
   drift_sensitivity: high
   model_routing: on
   parking_lot_enabled: true
   exit_ritual_mode: prompted-and-advisory
   pivot_check_auto_days: 14
   session_state_local: .harness-state/
-  session_state_remote: second-brain
+  session_state_remote: none  # shared repo file; Second Brain stays personal to Albert (run project-tracker manually)
