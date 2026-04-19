@@ -188,6 +188,20 @@ export async function runIdentity(
   ) => string;
 
   let userMessage = userMessageBuilder(coreAnalysisBody, persona, options);
+
+  // Self-documenting guardrail: when a non-default structural variant is in
+  // play (N ≥ 2), log the variant choice so runs advertise which variant
+  // produced each output without having to diff the user message against a
+  // baseline. Variant 1 / undefined is the pre-Wave-1 byte-identical path
+  // (spec §8, §10 OQ#1) and stays silent to keep Stage 2 / legacy runs
+  // noise-free. See docs/specs/2026-04-16-structural-variants.md §6.10.
+  const variantForLog = persona?.structuralVariant;
+  if (variantForLog !== undefined && variantForLog !== 1) {
+    console.log(
+      `[runner]   · ${registered.definition.id} using structural variant ${variantForLog} (persona=${persona?.id ?? "unknown"})`,
+    );
+  }
+
   if (options?.targetWordCount && options.targetWordCount > 0) {
     userMessage += `\n\n# WORD-COUNT OVERRIDE — HARD CONSTRAINT\n\nTarget word count: ${options.targetWordCount} words. This is a hard limit, not a guideline. It overrides any word count range specified in your system prompt. Allowed band: ±10%.`;
   }
