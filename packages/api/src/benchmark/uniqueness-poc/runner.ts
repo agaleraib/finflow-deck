@@ -238,6 +238,11 @@ export async function runIdentity(
       durationMs: cli.durationMs,
       costUsd: computeCostUsd(model, cli.inputTokens, cli.outputTokens),
       personaId: persona?.id,
+      // Record the structural variant used so raw-data.json + the text
+      // report can segment cross-tenant pairs by variant. Undefined when
+      // no persona is threaded (Stage 2) — documented as "variant 1 /
+      // baseline" per spec §6.11.
+      ...(persona ? { structuralVariant: persona.structuralVariant ?? 1 } : {}),
     };
   }
 
@@ -270,6 +275,11 @@ export async function runIdentity(
     durationMs: Date.now() - start,
     costUsd: computeCostUsd(model, response.usage.input_tokens, response.usage.output_tokens),
     personaId: persona?.id,
+    // Record the structural variant used so raw-data.json + the text
+    // report can segment cross-tenant pairs by variant. Undefined when
+    // no persona is threaded (Stage 2) — documented as "variant 1 /
+    // baseline" per spec §6.11.
+    ...(persona ? { structuralVariant: persona.structuralVariant ?? 1 } : {}),
   };
 }
 
