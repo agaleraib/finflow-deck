@@ -43,7 +43,7 @@
 - **B — next action:** none (paused). Resume by scaffolding `packages/sources/` once C unblocks.
 - **C — next action (design):** validate framework archetype model -- build 3-event x 4-framework fixture set, measure cross-framework cosine (target < 0.80), measure same-framework overlay divergence (ROUGE-L < 0.55). See `docs/specs/2026-04-16-content-uniqueness-v2.md` section 7.
 - **C — next action (TA port):** Phase 1 tasks (types, indicator computation, instrument catalog, fixture data provider). See `docs/specs/2026-04-16-ta-typescript-port.md` Tasks 1-4.
-- **C — next action (structural variants):** ~~Phase 1 (Tasks 1-2: type extension + assignment fn)~~ done in `c317102`. Phase 2 next — per-identity variant prompts (Tasks 3-9, parallelizable across the 6 identity files). See `docs/specs/2026-04-16-structural-variants.md`.
+- **C — next action (structural variants):** ~~Phase 1 (Tasks 1-2: type extension + assignment fn)~~ done in `c317102`. Phases 2-4 broken into waves below — see "Wave Plan — Structural Variants" section. Dispatch Wave 1 with `/run-wave 1`.
 - **C — ongoing:** run full corpus validation for advisor loop (blocker — see `feedback_unified_pass_risk.md`). Editorial memory Phase 3 near-complete — ~~Task 10: Drizzle schema~~ (done in 1141dd8), ~~Task 11: Postgres store~~ (done in ef147c4), Task 12 blocked on production pipeline.
 - **Pipeline audit trail (demo → production bridge):** `PipelineRun` type + `PipelineRunStore` interface ship with demo (in-memory); `PostgresRunStore` implementation ships with Postgres workstream. Pipeline History UI works against the interface — same screens serve both. See `docs/specs/2026-04-13-demo-mvp.md` Tasks 1, 7, and new history tasks (13c, 13d).
 - **D — next action:** none (planned). First adapter scoping waits on C reaching first-tenant-shipping milestone.
@@ -71,6 +71,68 @@
 
 - `docs/specs/2026-04-07-deployment-stack.md` — Ubuntu/Caddy/Bun/Postgres+pgvector/Drizzle/Vercel AI SDK; applies to every workstream
 - `docs/specs/2026-04-06-syntactic-calculus.md` — **pending** (design complete, implementation queued)
+
+## Wave Plan — Structural Variants
+
+Source spec: [`docs/specs/2026-04-16-structural-variants.md`](./specs/2026-04-16-structural-variants.md). Phase 1 (type extension + variant-assignment fn) shipped in `c317102` — waves below cover Phases 2-4.
+
+Conventions:
+- Sub-bullets are authoritative scope (per `feedback_plan_md_sub_bullets_win.md`).
+- Each wave is one rollback-safe batch dispatched via `/run-wave N`.
+- All work targets `packages/api/src/benchmark/uniqueness-poc/` — PoC harness, not the production pipeline.
+
+### Wave 1 — Per-identity variant prompt files
+
+**Why this wave:** Phase 2 of the spec. Build the 6 per-identity variant prompts and update the registry. Tasks 3-8 are independent (one file each) and parallelizable; Task 9 depends on them. No harness, runner, or fixture changes — purely additive prompt data behind the existing `buildXxxUserMessage` signature.
+
+- [ ] **V1 Identity variant prompts — Size: M**
+  - [spec: structural-variants](./specs/2026-04-16-structural-variants.md)
+  - Task 3: Trading Desk variants (3 variants) — `prompts/identities/trading-desk.ts`
+  - Task 4: In-House Journalist variants (3 variants) — `prompts/identities/in-house-journalist.ts`
+  - Task 5: Senior Strategist variants (3 variants) — `prompts/identities/senior-strategist.ts`
+  - Task 6: Newsletter Editor variants (2 variants) — `prompts/identities/newsletter-editor.ts`
+  - Task 7: Educator variants (3 variants) — `prompts/identities/educator.ts`
+  - Task 8: Beginner Blogger variants (2 variants) — `prompts/identities/beginner-blogger.ts`
+  - Task 9: Identity registry exposes variant maps + `variantCount` — `prompts/identities/index.ts` (depends on Tasks 3-8)
+
+**Wave 1 exit gate:** `bun run typecheck` passes from `packages/api/`. For each of the 6 identities, calling `buildXxxUserMessage(analysis, { ...persona, structuralVariant: N })` for every valid N returns a string that contains the variant-N structural directive header (e.g. `# STRUCTURAL FORMAT: <name>`). Variant 1 output for each identity is byte-identical to the pre-change current template (backward compatibility check — diff a captured pre-change rendering against the variant-1 rendering and confirm zero delta). The identity registry exports `IDENTITY_VARIANT_COUNTS` matching the per-identity totals (3/3/3/2/3/2 = 16).
+
+**Pre-implementation decisions to resolve before dispatch (spec §10 Open Questions):**
+- OQ#1 — system prompt vs user message injection (spec currently says user message; confirm).
+- OQ#2 — Senior Strategist variant 3 word-count override (600-800 vs 1000-1400) — does it override the identity's `targetWordCount`?
+- OQ#4 — does adding variants count as a prompt change for hash-tracking purposes?
+
+### Wave 2 — Harness integration (fixtures, runner, manifest)
+
+**Why this wave:** Phase 3 of the spec. Wire the variant prompts through the runner and persist variant choice in run output. Splits cleanly from Wave 1 because nothing here changes the prompts themselves — only how they get selected and recorded.
+
+- [ ] **V2 Persona fixtures — Size: S**
+  - [spec: structural-variants](./specs/2026-04-16-structural-variants.md)
+  - Task 10: Distribute structural variants across `broker-{a,b,c,d}.json` per spec §6.9
+
+- [ ] **V3 Runner + manifest wiring — Size: M**
+  - [spec: structural-variants](./specs/2026-04-16-structural-variants.md)
+  - Task 11: Wire `persona.structuralVariant` through Stage 2 + Stage 6 in `runner.ts` and `index.ts` (depends on Wave 1 Task 9 + V2 Task 10)
+  - Task 12: Record `structuralVariant` on `IdentityOutput`, persist in raw-data.json, surface in text report — `types.ts`, `persist.ts`, `report.ts` (depends on Task 11)
+
+**Wave 2 exit gate:** `bun run typecheck` passes. Run `bun run poc:uniqueness -- --stage 2` against a persona with `structuralVariant: 2` and confirm the rendered output follows variant 2's structural format (not variant 1). A `--full` PoC run produces a `raw-data.json` where every entry under the cross-tenant matrix has a `structuralVariant: 1|2|3` field, and the text report names the variant ID per output. Personas with different variants for the same identity show structurally different outputs (visual sanity check on at least one identity).
+
+### Wave 3 — Validation run + writeup
+
+**Why this wave:** Phase 4 of the spec. The point of the whole effort: prove structural variants actually move uniqueness metrics in the right direction without hurting fidelity. Pure measurement wave — no code changes.
+
+- [ ] **V4 Structural variant validation — Size: S (no code, ops + analysis)**
+  - [spec: structural-variants](./specs/2026-04-16-structural-variants.md)
+  - Task 13: Run `--full --editorial-memory` on ≥2 events, capture cosine + ROUGE-L for cross-tenant pairs that differ in structural variant vs pairs that share variant 1, write up findings under `uniqueness-poc-runs/<run-id>/analysis.md`
+
+**Wave 3 exit gate:** Run completed against ≥2 events with `--full --editorial-memory`. Cross-tenant pairs using *different* structural variants show lower mean cosine similarity than the pre-Wave-1 baseline (delta documented; spec §5.1 estimates 0.03-0.08 drop). ROUGE-L drops on the same pairs (spec §5.1 estimates 0.08-0.15). LLM judge factual fidelity is unchanged within noise (≥ 0.90 mean, no regression > 0.02 vs baseline). Writeup committed to the run directory with the specific numbers and a verdict (ship to production wiring vs. iterate on variants).
+
+**Operating Rules (apply to all waves):**
+- Stage files explicitly — never `git add -A` / `git add .`
+- `--no-ff` merges on the wave branch into master
+- Strict TS, no `any` — `bun run typecheck` is blocking
+- Variant 1 = current template for every identity (backward compat is non-negotiable per spec §8)
+- No system-prompt changes — variants inject via user message only (spec §8, OQ#1 caveat)
 
 ## Open decision (Workstream A scope)
 
