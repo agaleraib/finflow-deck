@@ -4,6 +4,44 @@ Track of every prompt change with the full prompt text. Each entry records what 
 
 ---
 
+## 2026-04-19 — Wave 1: per-identity structural variant maps (Phase 2 of 2026-04-16-structural-variants.md)
+
+Each of the 6 identity files now exports a `*_VARIANTS` map keyed by `StructuralVariantId` (1 | 2 | 3) carrying a `StructuralVariantEntry` shape (`{ directive: string; targetWordCount?: IdentityDefinition["targetWordCount"] }`). The per-identity maps are:
+
+| Identity | Variants | Map |
+|----------|----------|-----|
+| trading-desk | 3 | `TRADING_DESK_VARIANTS` — Signal-First Alert / Context-Setup-Execute / Snapshot Grid |
+| in-house-journalist | 3 | `IN_HOUSE_JOURNALIST_VARIANTS` — Classic Column / Inverted Pyramid with Data Sidebar / Market Dispatch |
+| senior-strategist | 3 | `SENIOR_STRATEGIST_VARIANTS` — Full Positioning Note / Thesis-Antithesis-Synthesis / Executive Briefing |
+| newsletter-editor | 2 | `NEWSLETTER_EDITOR_VARIANTS` — Conversational Email / Three Things |
+| educator | 3 | `EDUCATOR_VARIANTS` — Concept Walkthrough / Before-and-After Case Study / Socratic Dialogue |
+| beginner-blogger | 2 | `BEGINNER_BLOGGER_VARIANTS` — Story-Led Blog Post / Visual Explainer |
+| **Total** | **16** | |
+
+### Backward compatibility
+
+Variant 1 for every identity is the current template. When `persona.structuralVariant` is `undefined` OR `1`, the user-message builder emits the **byte-identical** pre-Wave-1 rendering — no structural directive is injected, the system prompt's default structure is used as-is. This preserves all existing validation runs and run-manifest comparisons. Diff-zero against a captured pre-change baseline was confirmed for all 6 identities at Wave 1 exit gate.
+
+Only variants ≥ 2 cause the builder to inject an OVERRIDE block into the user message under the `# STRUCTURAL FORMAT: ...` header. The override explicitly supersedes the system-prompt structure block for that invocation (spec §2.4).
+
+### Registry changes
+
+`packages/api/src/benchmark/uniqueness-poc/prompts/identities/index.ts` now exposes `variantCount` and `variants` on each `RegisteredIdentity`. `IDENTITY_VARIANT_COUNTS` and `StructuralVariantEntry` are re-exported from the registry so Wave 2 code (runner, report, judges) has a single import path.
+
+### Word-count override
+
+The only variant that overrides the identity's default `targetWordCount` is `SENIOR_STRATEGIST_VARIANTS[3]` (Executive Briefing, 600-800 words vs. the identity default 1000-1400). The override is present both as `targetWordCount` metadata on the variant entry and inline in the directive text, so any downstream word-count validator — whether it reads the metadata or the prose — will pick it up (OQ#2 decision, 2026-04-19).
+
+### Prompt hashes
+
+System prompts for all 6 identities are **unchanged** in Wave 1 (spec §8: no system-prompt changes). The prompt hashes recorded in the 2026-04-13 entry below remain valid. Wave 1 adds user-message content for variants ≥ 2 only; that content is sourced from the exported `*_VARIANTS` maps and is hashable independently from the system prompt if the harness wants to track variant-level drift.
+
+### Related spec
+
+- `docs/specs/2026-04-16-structural-variants.md` Phase 2 (Tasks 3-9). Phase 1 (types + assignStructuralVariant) landed in commit `c317102`.
+
+---
+
 ## 2026-04-13 — f1c2b20: Add factual fidelity hard constraint to all identities
 
 All 6 identities received the same new section before "What NOT to do":
