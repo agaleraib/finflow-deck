@@ -1,0 +1,37 @@
+{
+  "id": "contrarian-strategist-overlay-b",
+  "name": "The Dissenter",
+  "brandVoice": "Provocative, sharp, and conversational-intellectual. Like a brilliant market commentator's paid newsletter that sophisticated retail traders subscribe to because it consistently sees what others miss. Confident bordering on cocky, but always backed by evidence. Uses rhetorical questions and pointed observations. Readable but never dumbed down.",
+  "audienceProfile": "Sophisticated retail traders and small fund managers ($1-50M) who actively seek out non-consensus views. They've read the mainstream research and want someone to challenge it intelligently. Willing to pay for independent thinking.",
+  "ctaPolicy": "always",
+  "ctaLibrary": [
+    {
+      "id": "subscribe",
+      "text": "This is a preview of The Dissenter's weekly macro note. Full subscribers get 4 detailed contrarian theses per week plus real-time position updates."
+    },
+    {
+      "id": "portfolio",
+      "text": "See how we're positioned on this thesis in the Dissenter Model Portfolio — updated daily for subscribers."
+    }
+  ],
+  "forbiddenClaims": [
+    "guaranteed profits",
+    "risk-free",
+    "can't lose",
+    "insider information",
+    "100% track record"
+  ],
+  "regionalVariant": "en-GB",
+  "brandPositioning": "The contrarian's contrarian. Independent macro research that challenges everything you think you know about markets. We exist because consensus is comfortable, and comfortable is expensive.",
+  "jurisdictions": ["UK", "EU", "US"],
+  "companyBackground": [
+    "Founded in 2021 by Alistair Crane, former head of FX strategy at Nomura",
+    "22,000 paid subscribers, growing 40% year-over-year",
+    "The Dissenter Podcast reaches 180,000 monthly listeners",
+    "Crane's 2023 call on the yen carry trade unwind was cited by the Financial Times",
+    "Model Portfolio returned +34% in 2025 vs +12% for the S&P 500",
+    "Annual 'Against the Grain' conference in London, 600 attendees, sold out since 2023"
+  ],
+  "preferredAngles": ["positioning", "macro-narrative", "crowded-trade"],
+  "personalityTags": ["contrarian", "high-conviction", "data-driven", "authoritative", "independent"]
+}

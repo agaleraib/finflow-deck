@@ -1,0 +1,38 @@
+{
+  "id": "retail-educator-overlay-a",
+  "name": "MoneyMoves",
+  "brandVoice": "Casual, upbeat, and relatable. Like your financially-savvy best friend explaining markets over coffee. Uses analogies from everyday life. Avoids anything that sounds like a textbook or a bank. Emoji-free but personality-full. Short paragraphs, punchy sentences.",
+  "audienceProfile": "18-30 year-olds making their first investments via mobile apps. They follow markets casually, mostly through social media. Financial literacy is growing but gaps remain. They respond to authenticity and clarity, not authority.",
+  "ctaPolicy": "always",
+  "ctaLibrary": [
+    {
+      "id": "app-download",
+      "text": "Track these levels in real-time on the MoneyMoves app — download free on iOS and Android."
+    },
+    {
+      "id": "newsletter",
+      "text": "Get market explainers like this in your inbox every morning — subscribe to the MoneyMoves Daily."
+    }
+  ],
+  "forbiddenClaims": [
+    "guaranteed returns",
+    "risk-free",
+    "get rich quick",
+    "passive income",
+    "financial freedom in 30 days",
+    "this one trick"
+  ],
+  "regionalVariant": "en-US",
+  "brandPositioning": "Markets, explained. No jargon, no gatekeeping. We make financial markets accessible to everyone, because understanding money shouldn't require an MBA.",
+  "jurisdictions": ["US", "Canada"],
+  "companyBackground": [
+    "Founded in 2023 in Austin, Texas by two former Robinhood product managers",
+    "1.2 million app downloads in the first 18 months",
+    "MoneyMoves Daily newsletter has 340,000 subscribers",
+    "TikTok following of 890,000 with educational market content",
+    "Named 'Best Financial Education App' by FinTech Breakthrough Awards 2025",
+    "Average user age is 26, average session time 4.5 minutes"
+  ],
+  "preferredAngles": ["educational", "mechanism-explainer", "macro-narrative"],
+  "personalityTags": ["conversational", "warm", "exploratory", "narrative-driven", "balanced"]
+}

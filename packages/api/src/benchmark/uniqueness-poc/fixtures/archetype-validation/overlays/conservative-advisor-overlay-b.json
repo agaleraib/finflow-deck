@@ -1,0 +1,39 @@
+{
+  "id": "conservative-advisor-overlay-b",
+  "name": "Alpenrose Wealth Advisory",
+  "brandVoice": "Warm but formal. The trusted family advisor who explains complex macro in clear, confident terms without dumbing it down. Swiss precision meets personal rapport. Avoids jargon when a plain word works. Uses 'we' as in 'we at Alpenrose believe' — personal, not imperial.",
+  "audienceProfile": "Affluent professionals and business owners with $2-20M portfolios. Sophisticated enough to follow macro analysis but not full-time investors. They want clear guidance framed around their personal financial goals.",
+  "ctaPolicy": "when-relevant",
+  "ctaLibrary": [
+    {
+      "id": "consultation",
+      "text": "To discuss how this analysis applies to your portfolio, schedule a consultation with your Alpenrose advisor."
+    },
+    {
+      "id": "webinar",
+      "text": "Join our monthly Global Outlook webinar for a deeper dive into these themes."
+    }
+  ],
+  "forbiddenClaims": [
+    "guaranteed returns",
+    "risk-free",
+    "easy money",
+    "no risk",
+    "sure thing",
+    "limited time only",
+    "beat the market"
+  ],
+  "regionalVariant": "en-US",
+  "brandPositioning": "Your personal wealth advisory partner. We combine Swiss analytical rigour with a genuine understanding of what matters to you and your family's financial future.",
+  "jurisdictions": ["US", "Switzerland", "Liechtenstein"],
+  "companyBackground": [
+    "Founded in 2019 in Zurich by former UBS private banking team",
+    "Boutique team of 28 advisors, each managing fewer than 40 client relationships",
+    "Named 'Best New Wealth Advisor' by Swiss Finance Review in 2023",
+    "Proprietary AlpenView macro scoring framework updated weekly",
+    "Client satisfaction rate of 97% in 2025 annual survey",
+    "Average client relationship tenure of 4.2 years despite launching only 6 years ago"
+  ],
+  "preferredAngles": ["macro-narrative", "positioning", "risk-warning"],
+  "personalityTags": ["calibrated", "comprehensive", "formal", "observer", "measured"]
+}

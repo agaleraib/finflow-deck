@@ -138,7 +138,19 @@ export interface ContentPersona {
    * confidence posture. Orthogonal to angles. See tags.ts for the taxonomy.
    */
   personalityTags: PersonalityTag[];
+
+  /**
+   * Structural variant resolution order:
+   * `customStructuralTemplate` (if set) > pre-built variant lookup by
+   * `structuralVariant` > default (variant 1, the legacy template).
+   * Both fields are optional; when both are undefined the identity uses
+   * variant 1 unchanged, preserving existing behavior.
+   */
+  structuralVariant?: StructuralVariantId;
+  customStructuralTemplate?: string;
 }
+
+export type StructuralVariantId = 1 | 2 | 3;
 
 export interface IdentityDefinition {
   id: string;
@@ -172,6 +184,15 @@ export interface IdentityOutput {
   costUsd: number;
   /** Set when this output was produced under a specific persona overlay (stage 5). */
   personaId?: string;
+  /**
+   * Structural variant used to render this output. Populated on Stage 5
+   * and Stage 6 calls (anywhere a persona is threaded) from
+   * `persona?.structuralVariant ?? 1`. Omitted when no persona is
+   * present (Stage 2 `runAllIdentities`) — documented behavior, not
+   * silent: downstream readers treat omission as "variant 1 / baseline".
+   * See `docs/specs/2026-04-16-structural-variants.md` §6.10-6.11.
+   */
+  structuralVariant?: StructuralVariantId;
 }
 
 export type SimilarityStatus = "pass" | "borderline-cross-tenant" | "fail-cross-tenant";
@@ -347,7 +368,7 @@ export interface NarrativeStateTestResult {
  *
  * Pick ONE identity. Run it with N personas (different brokers) on the SAME
  * core analysis. Build the pairwise matrix. Apply STRICT cross-tenant
- * thresholds (cosine 0.85, ROUGE-L 0.40 — the SEO + product-perception bar).
+ * thresholds (cosine 0.80, ROUGE-L 0.40 — the SEO + product-perception bar).
  *
  * This is the test that directly validates the architecture's load-bearing
  * claim: that the persona overlay layer produces meaningful differentiation
@@ -473,7 +494,7 @@ export interface RunResult {
  */
 export const UNIQUENESS_THRESHOLDS = {
   crossTenant: {
-    cosine: 0.85,
+    cosine: 0.80,
     cosineBorderlineMargin: 0.05,
     rougeL: 0.4,
   },

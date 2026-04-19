@@ -1,0 +1,28 @@
+{
+  "id": "contrarian-strategist-overlay-a",
+  "name": "Blackthorn Research",
+  "brandVoice": "Dense, institutional, and unapologetically analytical. Reads like a hedge fund's internal strategy memo — not meant for a general audience. Assumes deep market literacy. Uses technical language without explanation. Every sentence carries information; zero filler. The voice of a CIO writing to their investment committee.",
+  "audienceProfile": "Hedge fund portfolio managers, proprietary trading desks, and institutional allocators. They manage $100M+ and want differentiated analytical frameworks, not consensus repetition.",
+  "ctaPolicy": "never",
+  "ctaLibrary": [],
+  "forbiddenClaims": [
+    "guaranteed returns",
+    "risk-free",
+    "our track record proves",
+    "sure thing",
+    "can't miss"
+  ],
+  "regionalVariant": "en-US",
+  "brandPositioning": "Differentiated macro strategy research for institutions that think independently. We challenge consensus not for contrarianism's sake, but because consensus trades are crowded trades.",
+  "jurisdictions": ["US", "UK", "Cayman Islands"],
+  "companyBackground": [
+    "Founded in 2016 in New York by former Bridgewater macro strategist",
+    "Independent research firm with 340 institutional subscribers across 22 countries",
+    "Average subscriber AUM exceeds $2 billion",
+    "Flagship 'Contrarian Alpha' publication has a documented track record of calling 7 of the last 9 major regime shifts",
+    "Annual Blackthorn Macro Summit in Greenwich CT, invitation-only, 200 attendees",
+    "Research team of 8 former sell-side strategists and 3 PhD economists"
+  ],
+  "preferredAngles": ["positioning", "macro-narrative", "crowded-trade"],
+  "personalityTags": ["contrarian", "high-conviction", "data-driven", "authoritative", "independent"]
+}

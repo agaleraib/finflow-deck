@@ -4,6 +4,90 @@ Track of every prompt change with the full prompt text. Each entry records what 
 
 ---
 
+## 2026-04-19 — Wave 2: harness integration (Phase 3 of 2026-04-16-structural-variants.md)
+
+Wires the Wave 1 variant maps into the PoC harness. No system-prompt changes — this wave is harness plumbing only. The 2026-04-13 prompt hashes remain valid and no prompt-hash tracker updates are needed.
+
+### Persona fixture schema
+
+`structuralVariant` now populated on all four `broker-*.json` fixtures:
+
+| Fixture | Persona ID | `structuralVariant` |
+|---------|-----------|---------------------|
+| `broker-a.json` | `premium-capital-markets` | 1 |
+| `broker-b.json` | `fasttrade-pro` | 2 |
+| `broker-c.json` | `helix-markets` | 3 |
+| `broker-d.json` | `northbridge-wealth` | 1 |
+
+Three distinct variant values across four fixtures. Broker-d shares variant 1 with broker-a intentionally — this tests whether two personas with the same structural variant still differ via other layers (brand voice, company background, regional variant, angles, personality).
+
+### Type surface
+
+`IdentityOutput.structuralVariant?: StructuralVariantId` added — optional, backward compatible. Populated on Stage 5 / Stage 6 calls from `persona?.structuralVariant ?? 1`. Omitted when no persona is threaded (Stage 2 `runAllIdentities`). Downstream readers treat omission as "variant 1 / baseline" per the spec amendment.
+
+### Runner plumbing
+
+`runIdentity` already forwarded `persona` to the variant-aware `buildXxxUserMessage` builder (shipped in Wave 1) — Stages 5 and 6 that wrap `runIdentity` therefore thread the variant end-to-end. Wave 2 adds:
+
+- A self-documenting guardrail log line whenever `persona.structuralVariant` is non-default (N ≥ 2). Variant 1 / undefined stays silent to preserve the Wave 1 byte-identity path on Stage 2 + legacy runs.
+- `structuralVariant` populated on every `IdentityOutput` produced with a persona, so `persist.ts` (direct JSON.stringify of RunResult) propagates the field into `raw-data.json` without schema-layer changes.
+
+### Report annotations
+
+`report.ts` Stage 6 section:
+
+- Per-output header now reads `#### {persona} — {locale} (variant N)` and the stats line appends `· structural variant N`.
+- Pairwise similarity matrix gains a **Variants** column rendering each pair's IDs as `A↔B` (e.g. `1↔2`, `2↔3`). Readers can now separate same-variant from different-variant pairs when analyzing cross-tenant similarity distributions.
+
+### Spec amendment
+
+§6.10 and §7 Task 11 Verify narrowed to Stage 5 and Stage 6 only. Stage 2 (`runAllIdentities`) has no persona today and is intentionally excluded — it continues to render variant 1 as a neutral baseline, preserving the Wave 1 byte-identity guarantee. §10 Open Questions gains row OQ#5 documenting the amendment.
+
+### Related spec
+
+- `docs/specs/2026-04-16-structural-variants.md` Phase 3 (Tasks 10-12 + amendment).
+- Wave 1 (Phase 2, Tasks 3-9 + CHANGELOG) merged in `73da433` (2026-04-19).
+
+---
+
+## 2026-04-19 — Wave 1: per-identity structural variant maps (Phase 2 of 2026-04-16-structural-variants.md)
+
+Each of the 6 identity files now exports a `*_VARIANTS` map keyed by `StructuralVariantId` (1 | 2 | 3) carrying a `StructuralVariantEntry` shape (`{ directive: string; targetWordCount?: IdentityDefinition["targetWordCount"] }`). The per-identity maps are:
+
+| Identity | Variants | Map |
+|----------|----------|-----|
+| trading-desk | 3 | `TRADING_DESK_VARIANTS` — Signal-First Alert / Context-Setup-Execute / Snapshot Grid |
+| in-house-journalist | 3 | `IN_HOUSE_JOURNALIST_VARIANTS` — Classic Column / Inverted Pyramid with Data Sidebar / Market Dispatch |
+| senior-strategist | 3 | `SENIOR_STRATEGIST_VARIANTS` — Full Positioning Note / Thesis-Antithesis-Synthesis / Executive Briefing |
+| newsletter-editor | 2 | `NEWSLETTER_EDITOR_VARIANTS` — Conversational Email / Three Things |
+| educator | 3 | `EDUCATOR_VARIANTS` — Concept Walkthrough / Before-and-After Case Study / Socratic Dialogue |
+| beginner-blogger | 2 | `BEGINNER_BLOGGER_VARIANTS` — Story-Led Blog Post / Visual Explainer |
+| **Total** | **16** | |
+
+### Backward compatibility
+
+Variant 1 for every identity is the current template. When `persona.structuralVariant` is `undefined` OR `1`, the user-message builder emits the **byte-identical** pre-Wave-1 rendering — no structural directive is injected, the system prompt's default structure is used as-is. This preserves all existing validation runs and run-manifest comparisons. Diff-zero against a captured pre-change baseline was confirmed for all 6 identities at Wave 1 exit gate.
+
+Only variants ≥ 2 cause the builder to inject an OVERRIDE block into the user message under the `# STRUCTURAL FORMAT: ...` header. The override explicitly supersedes the system-prompt structure block for that invocation (spec §2.4).
+
+### Registry changes
+
+`packages/api/src/benchmark/uniqueness-poc/prompts/identities/index.ts` now exposes `variantCount` and `variants` on each `RegisteredIdentity`. `IDENTITY_VARIANT_COUNTS` and `StructuralVariantEntry` are re-exported from the registry so Wave 2 code (runner, report, judges) has a single import path.
+
+### Word-count override
+
+The only variant that overrides the identity's default `targetWordCount` is `SENIOR_STRATEGIST_VARIANTS[3]` (Executive Briefing, 600-800 words vs. the identity default 1000-1400). The override is present both as `targetWordCount` metadata on the variant entry and inline in the directive text, so any downstream word-count validator — whether it reads the metadata or the prose — will pick it up (OQ#2 decision, 2026-04-19).
+
+### Prompt hashes
+
+System prompts for all 6 identities are **unchanged** in Wave 1 (spec §8: no system-prompt changes). The prompt hashes recorded in the 2026-04-13 entry below remain valid. Wave 1 adds user-message content for variants ≥ 2 only; that content is sourced from the exported `*_VARIANTS` maps and is hashable independently from the system prompt if the harness wants to track variant-level drift.
+
+### Related spec
+
+- `docs/specs/2026-04-16-structural-variants.md` Phase 2 (Tasks 3-9). Phase 1 (types + assignStructuralVariant) landed in commit `c317102`.
+
+---
+
 ## 2026-04-13 — f1c2b20: Add factual fidelity hard constraint to all identities
 
 All 6 identities received the same new section before "What NOT to do":

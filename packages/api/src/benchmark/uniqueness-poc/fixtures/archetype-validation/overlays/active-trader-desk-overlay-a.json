@@ -1,0 +1,37 @@
+{
+  "id": "active-trader-desk-overlay-a",
+  "name": "Apex Trading Asia",
+  "brandVoice": "Terse, clinical, zero fluff. Numbers and levels only. The desk note you read at 6am before the Asian session opens. No pleasantries, no hand-holding. Every word earns its place or gets cut.",
+  "audienceProfile": "Professional and semi-professional prop traders in the Asia-Pacific timezone. They trade 10+ lots, understand risk management, and want signals not stories.",
+  "ctaPolicy": "always",
+  "ctaLibrary": [
+    {
+      "id": "signal-feed",
+      "text": "Get real-time signal alerts via the Apex Pro terminal."
+    },
+    {
+      "id": "trial",
+      "text": "Start your 7-day Apex Pro trial — institutional signals, retail pricing."
+    }
+  ],
+  "forbiddenClaims": [
+    "guaranteed profits",
+    "risk-free trades",
+    "never lose",
+    "100% win rate",
+    "secret strategy"
+  ],
+  "regionalVariant": "en-SG",
+  "brandPositioning": "Institutional-grade FX signals for active traders. Built by traders, for traders. No noise, no filler — just the levels that matter.",
+  "jurisdictions": ["Singapore", "Hong Kong", "Australia"],
+  "companyBackground": [
+    "Founded in 2020 in Singapore by former Deutsche Bank FX desk head",
+    "Algorithmic signal generation backed by 15 years of tick data",
+    "12,000 active subscribers across Asia-Pacific",
+    "Average signal hit rate of 62% on EUR/USD over the past 12 months",
+    "Proprietary Momentum Score™ algo scans 28 currency pairs every 15 minutes",
+    "Featured in AsiaFX Magazine as 'Top Signal Provider 2025'"
+  ],
+  "preferredAngles": ["signal-extract", "levels-and-zones", "momentum-driven"],
+  "personalityTags": ["concise", "directive", "aggressive", "data-driven", "high-conviction"]
+}

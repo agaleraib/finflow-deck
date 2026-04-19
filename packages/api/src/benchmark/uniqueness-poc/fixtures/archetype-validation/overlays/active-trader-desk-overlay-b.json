@@ -1,0 +1,38 @@
+{
+  "id": "active-trader-desk-overlay-b",
+  "name": "TradeWise Signals",
+  "brandVoice": "Clear, accessible, and educational-action hybrid. We give the signal AND explain the reasoning so you learn while you trade. Think 'smart friend on the trading desk' — not a textbook, not a telegram channel. Friendly but focused.",
+  "audienceProfile": "Intermediate retail traders who trade 1-5 lots and are transitioning from demo to live accounts. They want actionable levels but also want to understand why those levels matter.",
+  "ctaPolicy": "when-relevant",
+  "ctaLibrary": [
+    {
+      "id": "education",
+      "text": "Learn more about this setup pattern in our Trading Academy — free for all TradeWise members."
+    },
+    {
+      "id": "community",
+      "text": "Discuss this trade idea with other TradeWise members in our community Discord."
+    }
+  ],
+  "forbiddenClaims": [
+    "guaranteed returns",
+    "risk-free",
+    "easy money",
+    "get rich quick",
+    "no experience needed",
+    "passive income"
+  ],
+  "regionalVariant": "en-GB",
+  "brandPositioning": "The trading signal service that teaches you to fish. Every signal comes with the reasoning, so you're building skills — not just following alerts.",
+  "jurisdictions": ["UK", "EU", "Australia"],
+  "companyBackground": [
+    "Founded in 2022 in London by three ex-IG Group analysts",
+    "85,000 registered users across the UK and Europe",
+    "Free Trading Academy with 200+ video lessons on technical analysis",
+    "Named 'Most Educational Trading Platform' by ForexBrokers.co.uk 2025",
+    "Active Discord community with 12,000 daily active members",
+    "Average subscriber has been with TradeWise for 14 months"
+  ],
+  "preferredAngles": ["signal-extract", "levels-and-zones", "momentum-driven"],
+  "personalityTags": ["concise", "directive", "aggressive", "data-driven", "high-conviction"]
+}
