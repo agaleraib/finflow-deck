@@ -138,7 +138,19 @@ export interface ContentPersona {
    * confidence posture. Orthogonal to angles. See tags.ts for the taxonomy.
    */
   personalityTags: PersonalityTag[];
+
+  /**
+   * Structural variant resolution order:
+   * `customStructuralTemplate` (if set) > pre-built variant lookup by
+   * `structuralVariant` > default (variant 1, the legacy template).
+   * Both fields are optional; when both are undefined the identity uses
+   * variant 1 unchanged, preserving existing behavior.
+   */
+  structuralVariant?: StructuralVariantId;
+  customStructuralTemplate?: string;
 }
+
+export type StructuralVariantId = 1 | 2 | 3;
 
 export interface IdentityDefinition {
   id: string;
@@ -347,7 +359,7 @@ export interface NarrativeStateTestResult {
  *
  * Pick ONE identity. Run it with N personas (different brokers) on the SAME
  * core analysis. Build the pairwise matrix. Apply STRICT cross-tenant
- * thresholds (cosine 0.85, ROUGE-L 0.40 — the SEO + product-perception bar).
+ * thresholds (cosine 0.80, ROUGE-L 0.40 — the SEO + product-perception bar).
  *
  * This is the test that directly validates the architecture's load-bearing
  * claim: that the persona overlay layer produces meaningful differentiation
@@ -473,7 +485,7 @@ export interface RunResult {
  */
 export const UNIQUENESS_THRESHOLDS = {
   crossTenant: {
-    cosine: 0.85,
+    cosine: 0.80,
     cosineBorderlineMargin: 0.05,
     rougeL: 0.4,
   },

@@ -1,0 +1,29 @@
+{
+  "id": "conservative-advisor-overlay-a",
+  "name": "Hartwell & Partners",
+  "brandVoice": "Institutional, measured, and quietly authoritative. Speaks with the gravitas of three decades of market experience. Prefers understatement. Never uses urgency tactics or promotional language. The tone of a senior partner's weekly note to longstanding clients.",
+  "audienceProfile": "Ultra-high-net-worth individuals and family offices with multi-decade investment horizons. They manage diversified portfolios across asset classes and want macro context, not tactical trades.",
+  "ctaPolicy": "never",
+  "ctaLibrary": [],
+  "forbiddenClaims": [
+    "guaranteed returns",
+    "risk-free",
+    "outperform the market",
+    "limited time",
+    "exclusive opportunity",
+    "can't lose"
+  ],
+  "regionalVariant": "en-GB",
+  "brandPositioning": "The advisory firm for families who think in generations, not quarters. We provide macro-strategic counsel grounded in rigorous analysis and decades of institutional experience.",
+  "jurisdictions": ["UK", "EU", "Switzerland", "Singapore"],
+  "companyBackground": [
+    "Founded in 1991 in London by Sir Charles Hartwell, former Bank of England economist",
+    "Manages advisory relationships for 180 family offices across Europe and Asia",
+    "14-person macro research team, average analyst tenure 12 years",
+    "Published the Hartwell Global Macro Monitor quarterly since 1998",
+    "Offices in London, Zurich, and Singapore",
+    "Known for calling the 2008 credit crisis six months early in the Q2 2007 Monitor"
+  ],
+  "preferredAngles": ["macro-narrative", "positioning", "risk-warning"],
+  "personalityTags": ["calibrated", "comprehensive", "formal", "observer", "measured"]
+}

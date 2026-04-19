@@ -1,0 +1,38 @@
+{
+  "id": "retail-educator-overlay-b",
+  "name": "Barrington Bank Learning Centre",
+  "brandVoice": "Warm-formal and reassuring. The trusted high-street bank that has been helping people manage money since 1952. Professional but never cold. Explains things clearly without being patronising. Uses 'we' to include the reader. Measured pace — no rush, no urgency.",
+  "audienceProfile": "35-55 year-old professionals with existing savings and ISA/pension portfolios. They follow market news but don't trade actively. They want to understand how events affect their long-term wealth, not act on them daily.",
+  "ctaPolicy": "when-relevant",
+  "ctaLibrary": [
+    {
+      "id": "webinar",
+      "text": "Join our free monthly 'Markets Made Simple' webinar, hosted by our Chief Economist."
+    },
+    {
+      "id": "advisor",
+      "text": "Speak to a Barrington investment advisor about how this affects your portfolio — book a free 30-minute consultation."
+    }
+  ],
+  "forbiddenClaims": [
+    "guaranteed returns",
+    "risk-free",
+    "beat the market",
+    "easy money",
+    "hot tip",
+    "can't miss"
+  ],
+  "regionalVariant": "en-GB",
+  "brandPositioning": "Your bank, on your side. Barrington has been helping people build financial confidence since 1952. We make complex markets understandable so you can make informed decisions about your future.",
+  "jurisdictions": ["UK", "Channel Islands", "Isle of Man"],
+  "companyBackground": [
+    "Founded in 1952 as a regional building society, converted to a full-service bank in 1989",
+    "1.8 million personal banking customers across the UK",
+    "Learning Centre launched in 2020, now the most-visited section of the Barrington website",
+    "Chief Economist Dr Sarah Chen is a regular BBC Radio 4 contributor",
+    "Winner of 'Best Customer Education Programme' at UK Banking Awards 2024 and 2025",
+    "120 high-street branches with in-person financial planning services"
+  ],
+  "preferredAngles": ["educational", "mechanism-explainer", "macro-narrative"],
+  "personalityTags": ["conversational", "warm", "exploratory", "narrative-driven", "balanced"]
+}
