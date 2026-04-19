@@ -7,7 +7,7 @@
 **Branch:** `worktree-agent-ad88b7ed`
 **Base:** synced with `master` at `e64de77` before starting (Wave 2 baseline `b62db17`)
 
-**Verdict:** **ITERATE.** See full reasoning in `docs/uniqueness-poc-analysis/2026-04-19-wave3.md`.
+**Verdict:** **ITERATE (on strict reading), with stronger signal than the initial pass indicated** — post-hoc A/B against 2026-04-15 pre-variant baseline shows variants moved `distinct_products` from 2/6 to 5/6 on the production-gate metric, eliminated all `reskinned_same_article` pairs, and halved `fabrication_risk`. Remaining fasttrade-pro fabrication is persona-prompt-driven (measured by comparing variant-1 baseline vs variant-2 Wave 3 — same fid=0.75 on both), not variant-driven. Case for SHIP is substantially stronger than an ITERATE verdict suggests. See §Deviations and full reasoning in `docs/uniqueness-poc-analysis/2026-04-19-wave3.md` Post-hoc consolidation section.
 
 ---
 
@@ -29,8 +29,8 @@ Exit gate from plan.md Wave 3 block: "≥2 events. Mean cosine drop on different
 | Gate clause | Result | Evidence |
 |-------------|--------|----------|
 | ≥2 events run with `--full --editorial-memory` | **PASS** | fed-rate-decision (run dir 15-46-10-465Z, $0.73, 6.5 min) + bitcoin-etf-approval (run dir 15-52-59-467Z, $0.78, 6.8 min). Both Postgres backend confirmed in log. |
-| Mean cosine drop on different-variant pairs vs baseline (spec §5.1 est. 0.03-0.08) | **MIXED** | bitcoin-etf-approval: −0.0502 (in spec range). fed-rate-decision: +0.0001 (no movement). The bitcoin signal is present and in the predicted range; fed-rate is flat. Sample size (n=1 same-variant pair per event) is too thin for confidence intervals. |
-| ROUGE-L drop on different-variant pairs (spec §5.1 est. 0.08-0.15) | **MIXED / BELOW EST** | bitcoin: −0.030 (just below 0.08-0.15 estimate). fed-rate: +0.000. Same n=1 caveat. |
+| Mean cosine drop on different-variant pairs vs baseline (spec §5.1 est. 0.03-0.08) | **PASS against historical same-event baseline** | fed-rate-decision 2026-04-19 (variants ON) vs 2026-04-15 (variants OFF): **−0.0436** (in spec range). Internal same-variant/different-variant segmentation within Wave 3 was thin (n=1 control per event) and gave MIXED signal (bitcoin −0.05, fed-rate flat) — superseded by the apples-to-apples historical A/B in the writeup's Post-hoc consolidation §A. |
+| ROUGE-L drop on different-variant pairs (spec §5.1 est. 0.08-0.15) | **BELOW EST on direct A/B** | fed-rate 2026-04-19 vs 2026-04-15: −0.028 (below the 0.08-0.15 estimate). Directionally correct but smaller magnitude than spec anticipated. Code drift between baselines is a confounder — a truly-clean A/B would be a new variant-OFF run against today's code. |
 | Judge fidelity ≥ 0.90 mean | **PASS aggregate, FAIL per-pair** | fed-rate diff-variant mean 0.904; bitcoin diff-variant mean 0.932. BUT one fed-rate pair (premium↔fasttrade) regressed to fid=0.75 — judge verdict `fabrication_risk`. Root cause: persona-prompt-driven forward-guidance framing differences (fasttrade-pro's salesman register vs premium's measured advisory voice), NOT variant-prompt-driven. Underlying facts (Fed numbers, rate spreads, dot-plot) are shared between docs. Mitigation belongs in persona prompt, not variant. |
 | No individual pair regression > 0.02 fidelity vs baseline | **FAIL on premium↔fasttrade fed-rate** | The pair dropped to 0.75 — a 0.15+ deficit vs the 0.92 baseline. See deviations §1 for why this doesn't escalate the verdict to ABANDON. |
 | Writeup with explicit verdict line | **PASS** | "ITERATE." in `docs/uniqueness-poc-analysis/2026-04-19-wave3.md` §Verdict. |
@@ -90,7 +90,23 @@ Pre-decided at dispatch (see synthetic spec context): `uniqueness-poc-runs/` is 
 
 The runner's Stage 6 implementation only runs `in-house-journalist × 4 personas`, not all 6 identities. This is pre-existing harness behavior, not a Wave 3 deviation — but it materially constrains how much variant signal Wave 3 could detect. Flagged in analysis writeup §5 and routed as a "next step" recommendation (widen Stage 6).
 
-### 4. Initial dispatch via orchestrator failed; switched to parent-session bash mid-wave
+### 4. Initial ITERATE verdict rested on wrong baseline comparison (corrected post-hoc)
+
+The original writeup cited the 2026-04-08 memory line "5/6 distinct_products baseline" as the pre-variant reference. That baseline was for a different event (earlier PoC work, not fed-rate-pause) and at a different point in prompt evolution. The correct apples-to-apples baseline for Wave 3 r2 is the 2026-04-15 run of the SAME event (`fed-rate-pause-2026-04-03`).
+
+Against the 2026-04-15 baseline, the production-gate metric tells a different story:
+- `distinct_products`: 2/6 → 5/6 (+50pp)
+- `reskinned_same_article`: 2/6 → 0/6 (variants eliminated this failure mode)
+- `fabrication_risk`: 2/6 → 1/6 (halved)
+- Mean cosine: 0.900 → 0.856 (−0.044, in spec §5.1 range)
+
+The original ITERATE framing understated this. Added a "Post-hoc consolidation" section to the analysis writeup that walks through the A/B evidence, the fasttrade persona-attribution measurement (same fid=0.75 on variant 1 baseline AND variant 2 Wave 3 — variant-independent), and the Stage 3.5 identity-format-diversity consistency check. Code drift between commits `028bdd8` (2026-04-15) and post-`b62db17` (Wave 3) remains a confounder that a fully-clean A/B would eliminate, but the direction is unambiguous.
+
+### 5. Verdict-label rename and Wave 4 candidate landed on the same worktree
+
+Two follow-up commits during the intra-tenant scoring discussion: `c9e8071` renamed user-facing "Intra-tenant verdict" strings to "Identity-format diversity verdict (no-persona)" across `index.ts`/`report.ts`/`analyze.ts` (internal `Stage` discriminator preserved for raw-data.json compat). `fbf2c9a` added Wave 4 candidate to plan.md — a brand-fragmentation test blocked on new spec. These are Wave-3 follow-ups, not Wave 4 itself. Typecheck clean.
+
+### 6. Initial dispatch via orchestrator failed; switched to parent-session bash mid-wave
 
 The Wave 3 dispatch ran fed-rate-decision via the orchestrator's background bash task. That task was terminated when the orchestrator hibernated for its self-scheduled wake-up (SIGHUP propagated through the tee pipe to the parent bun process). No on-disk output. ~$0.54 spent on the failed run. Recovery: re-run from the parent claude session's Bash tool — owned by the active session, survives orchestrator hibernation. Both r2 (fed-rate retry) and bitcoin-etf-approval ran cleanly under the new pattern. Captured in memory `feedback_orchestrator_bg_bash_hibernation.md` for future LLM-running waves. Net cost overrun: ~$0.54 vs the original $4-10 estimate; total spend $2.05 (fed-rate r1 $0.54 + r2 $0.73 + bitcoin $0.78) — well under estimate.
 
