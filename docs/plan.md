@@ -129,6 +129,25 @@ Conventions:
 
 **Dependencies:** Wave 2.
 
+### Wave 4 candidate — Brand-fragmentation test for intra-tenant cross-pipeline (NEW SPEC NEEDED, NOT SCHEDULED)
+
+**Why this candidate exists:** Wave 3 surfaced a metric-architecture gap. The PoC's existing "intra-tenant" verdict (Stage 3.5) compares 6 different identity agents *with no persona overlay applied* — it measures **identity-format diversity** (do different identity templates produce visibly different formats? — design intent, should be high), NOT brand coherence. The actual intra-tenant brand-fragmentation question — *does the same identity for the same tenant produce a recognizable house voice across multiple pipeline runs?* — is **unmeasured anywhere in the PoC today**. This matters before scaling cross-tenant variant rollout, because variants could amplify within-tenant brand drift without us noticing.
+
+User-facing labels in `index.ts` / `report.ts` / `analyze.ts` were renamed in Wave 3 follow-up to clarify the semantics ("Intra-tenant verdict" → "Identity-format diversity verdict (no-persona)"). Internal `Stage` discriminator (`"intra-tenant" | "cross-tenant"`) stays for raw-data.json compatibility.
+
+**Pre-requisite (blocking):** new spec at `docs/specs/2026-04-XX-brand-fragmentation.md` (not yet written). Spec should define:
+- Test design — same tenant + same identity, N invocations across N events (or N briefs for the same event)
+- Inverted judge rubric polarity for intra-tenant: `reskinned_same_article` = PASS (consistent house voice), `distinct_products` = yellow flag (brand fragmenting), `fabrication_risk` = HALT (universal — factual integrity is context-free)
+- Threshold semantics — spec already permits cosine < 0.92 / ROUGE < 0.50 for intra-tenant cross-pipeline; new test should USE those, not the strict cross-tenant 0.80/0.40
+- Where the gate sits in the production pipeline (per-article post-conformance vs. periodic audit)
+- What "consistent house voice" looks like to the judge (extends `judgePairUniqueness` rubric or new prompt variant)
+
+**Likely runner change:** new test stage in `runner.ts` (Stage 7 or 4.5) running same-identity across N events for one persona, plus a context-aware verdict aggregator (`computeIntraTenantBrandVerdict` with inverted polarity). New judge rubric variant in `llm-judge.ts` or a rubric flag on the existing call.
+
+**Estimated effort:** spec (M), runner extension (M), validation run (S — but needs ≥3 events × ≥1 persona × ≥1 identity = 3+ harness runs at ~$0.75 each).
+
+**Not scheduled** — gated on whether continued investment in structural variants (post-Wave-3 ITERATE verdict) makes sense. The brand-fragmentation question still applies regardless of variant rollout direction (it's a persona-overlay-layer concern), so worth specifying even if structural variants stall.
+
 **Operating Rules (apply to all waves):**
 - Stage files explicitly — never `git add -A` / `git add .`
 - `--no-ff` merges on the wave branch into master
